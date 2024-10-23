@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'plot1.dart';
 
 void main() {
-  runApp(Menu1Screen());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
+  runApp(Menu2Screen());
 }
 
-class Menu1Screen extends StatelessWidget {
+class Menu2Screen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: Text('เจ้าของ'),
+          title: Text('คนงาน'),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -78,110 +78,28 @@ class Menu1Screen extends StatelessWidget {
                 ),
               ),
 
-          Positioned(  //
-            top: 260,
-            left: 130,
-            child: SizedBox(
-              width: 114,
-              height: 23,
-              child: Text(
-                'Main menu',
-                style: TextStyle(
-                  color: Color(0xFF25624B),
-                  fontSize: 20,
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w500,
-                  height: 0,
-                ),
-              ),
-            ),
-          ),
-
-
-          Positioned(
-          top: 320,
-          left: 20,
-            child: GestureDetector(
-              onTap: () {
-                // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
-                );
-              },
-              child: Container(
-                width: 149,
-                height: 133,
-                decoration: ShapeDecoration(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(19),
-                  ),
-                  shadows: [
-                    BoxShadow(
-                      color: Color(0x3F000000),
-                      blurRadius: 4,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Center(
+              Positioned(  //
+                top: 260,
+                left: 130,
+                child: SizedBox(
+                  width: 114,
+                  height: 23,
                   child: Text(
-                    'แปลงปลูก',
+                    'Main menu',
                     style: TextStyle(
+                      color: Color(0xFF25624B),
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w500,
+                      height: 0,
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
+
 
               Positioned(
                 top: 320,
-                right: 20,
-                child: GestureDetector(
-                  onTap: () {
-                    // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
-                    );
-                  },
-                  child: Container(
-                    width: 149,
-                    height: 133,
-                    decoration: ShapeDecoration(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(19),
-                      ),
-                      shadows: [
-                        BoxShadow(
-                          color: Color(0x3F000000),
-                          blurRadius: 4,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        'คนงาน',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              Positioned(
-                top: 500,
                 left: 20,
                 child: GestureDetector(
                   onTap: () {
@@ -209,7 +127,7 @@ class Menu1Screen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        'ลูกไร่',
+                        'แปลงปลูก',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -221,8 +139,10 @@ class Menu1Screen extends StatelessWidget {
                 ),
               ),
 
+
+
               Positioned(
-                top: 500,
+                top: 320,
                 right: 20,
                 child: GestureDetector(
                   onTap: () {
@@ -262,21 +182,50 @@ class Menu1Screen extends StatelessWidget {
                 ),
               ),
 
-
-          Positioned(
-            top: 500,
-            left: 20,
-            child: Container(
-                width: 113,
-                height: 86,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage("https://via.placeholder.com/113x86"),
-                    fit: BoxFit.fill,
+              Positioned(
+                top: 500,
+                right: 120,
+                child: GestureDetector(
+                  onTap: () {
+                    // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                    );
+                  },
+                  child: Container(
+                    width: 149,
+                    height: 133,
+                    decoration: ShapeDecoration(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(19),
+                      ),
+                      shadows: [
+                        BoxShadow(
+                          color: Color(0x3F000000),
+                          blurRadius: 4,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        'เบิกล่วงหน้า',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              )
-          )
+              ),
+
+
+
+
 
             ],
           ),

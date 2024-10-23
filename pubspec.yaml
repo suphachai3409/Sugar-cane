@@ -27,6 +27,13 @@ environment:
 # dependencies can be manually updated by changing the version numbers below to
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`
+flutter:
+  assets:
+    - assets/trackter.jpg
+    - assets/kid.jpg
+    - assets/human.jpg
+    - assets/human1.jpg
+
 dependencies:
   flutter:
     sdk: flutter
