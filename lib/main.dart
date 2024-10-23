@@ -58,31 +58,49 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // ส่งข้อมูลไปยังเซิร์ฟเวอร์เพื่อตรวจสอบ
-    final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/register'),  // เปลี่ยน URL ตามที่คุณใช้งานจริง
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'username': username,
-        'password': password,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      // ล็อกอินสำเร็จ, เปลี่ยนไปหน้าเมนู
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => Menu1Screen()),  // ไปที่หน้า Menu1Screen
+    try {
+      // ส่งข้อมูลไปยังเซิร์ฟเวอร์เพื่อตรวจสอบ
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/login'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'username': username,
+          'password': password,
+        }),
       );
-    } else {
-      // ล็อกอินไม่สำเร็จ
+
+      // แสดง response body เพื่อดูข้อความที่ส่งกลับจากเซิร์ฟเวอร์
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      // ตรวจสอบ response status code ว่าล็อกอินสำเร็จหรือไม่
+      if (response.statusCode == 200) {
+        // ล็อกอินสำเร็จ, เปลี่ยนไปหน้าเมนู
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Menu1Screen()),  // ไปที่หน้า Menu1Screen
+        );
+      } else if (response.statusCode == 401) {
+        // ล็อกอินไม่สำเร็จ (เช่น รหัสผ่านผิด)
+        setState(() {
+          _errorMessage = 'Username หรือ Password ไม่ถูกต้อง';
+        });
+      } else {
+        // เกิดข้อผิดพลาดอื่นๆ
+        setState(() {
+          _errorMessage = 'เกิดข้อผิดพลาดในการล็อกอิน: ${response.statusCode}';
+        });
+      }
+    } catch (error) {
+      // แสดงข้อความข้อผิดพลาดหากเกิดข้อผิดพลาดในการเชื่อมต่อ API
       setState(() {
-        _errorMessage = 'Username หรือ Password ไม่ถูกต้อง';
+        _errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์: $error';
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
