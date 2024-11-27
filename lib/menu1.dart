@@ -80,86 +80,86 @@ class Menu1Screen extends StatelessWidget {
                 ),
               ),
 
-          Positioned(  //
-            top: 260,
-            left: 130,
-            child: SizedBox(
-              width: 114,
-              height: 23,
-              child: Text(
-                'Main menu',
-                style: TextStyle(
-                  color: Color(0xFF25624B),
-                  fontSize: 20,
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w500,
-                  height: 0,
-                ),
-              ),
-            ),
-          ),
-
-
-
-
-
-          //แปลงไร่
-          Positioned(
-          top: 320,
-          left: 20,
-            child: GestureDetector(
-              onTap: () {
-                // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
-                );
-              },
-              child: Container(
-                width: 149,
-                height: 133,
-                decoration: ShapeDecoration(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(19),
-                  ),
-                  shadows: [
-                    BoxShadow(
-                      color: Color(0x3F000000),
-                      blurRadius: 4,
-                      offset: Offset(0, 4),
+              Positioned(  //
+                top: 260,
+                left: 130,
+                child: SizedBox(
+                  width: 114,
+                  height: 23,
+                  child: Text(
+                    'Main menu',
+                    style: TextStyle(
+                      color: Color(0xFF25624B),
+                      fontSize: 20,
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w500,
+                      height: 0,
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(19),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Image.asset(
-                          'assets/kid.png',
-                          fit: BoxFit.cover,
-                          width: 149,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          'แปลงปลูก',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
-            ),
-          ),
+
+
+
+
+
+              //แปลงไร่
+              Positioned(
+                top: 320,
+                left: 20,
+                child: GestureDetector(
+                  onTap: () {
+                    // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                    );
+                  },
+                  child: Container(
+                    width: 149,
+                    height: 133,
+                    decoration: ShapeDecoration(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(19),
+                      ),
+                      shadows: [
+                        BoxShadow(
+                          color: Color(0x3F000000),
+                          blurRadius: 4,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(19),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Image.asset(
+                              'assets/kid.png',
+                              fit: BoxFit.cover,
+                              width: 149,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              'แปลงปลูก',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
 
 
 

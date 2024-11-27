@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'plot1.dart';
 
 void main() {
-  runApp(Menu1Screen());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
+  runApp(Menu2Screen());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
 }
 
-class Menu1Screen extends StatelessWidget {
+class Menu2Screen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

@@ -40,3 +40,4 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^0.13.3
+  mongo_dart: ^0.10.1

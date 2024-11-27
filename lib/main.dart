@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'register_screen.dart';
 import 'package:http/http.dart' as http;  // สำหรับเชื่อมต่อกับ API
 import 'dart:convert';  // สำหรับแปลงข้อมูล JSON
-import 'menu1.dart';    // Import menu1.dart
+import 'menu1.dart';
+import 'menu2.dart';
+import 'menu3.dart';    // Import menu1.dart
+import 'datahuman.dart'; // เพิ่มไฟล์ datahuman.dart ที่คุณเขียนไว้
+
 
 void main() {
   runApp(MyApp());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
@@ -17,6 +21,11 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: LoginScreen(),
+      routes: {
+        '/menu1': (context) => Menu1Screen(), // เส้นทางหน้า Menu 1
+        '/menu2': (context) => Menu2Screen(), // เส้นทางหน้า Menu 2
+        '/menu3': (context) => Menu3Screen(), // เส้นทางหน้า Menu 3
+      },
     );
   }
 }
@@ -31,12 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   String? _errorMessage;
 
-  // ฟังก์ชันเชื่อมต่อกับ MongoDB ผ่าน API
   Future<void> _login() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
 
-    // ตรวจสอบว่ากรอกข้อมูลครบหรือไม่
     if (username.isEmpty || password.isEmpty) {
       showDialog(
         context: context,
@@ -71,35 +78,57 @@ class _LoginScreenState extends State<LoginScreen> {
         }),
       );
 
-      // แสดง response body เพื่อดูข้อความที่ส่งกลับจากเซิร์ฟเวอร์
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
-      // ตรวจสอบ response status code ว่าล็อกอินสำเร็จหรือไม่
+
       if (response.statusCode == 200) {
-        // ล็อกอินสำเร็จ, เปลี่ยนไปหน้าเมนู
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Menu1Screen()),  // ไปที่หน้า Menu1Screen
-        );
+        final data = jsonDecode(response.body);
+        final userMenu = data['user']['menu']; // ดึงค่า menu จาก user
+
+        // Debug: พิมพ์ค่า userMenu
+        print('Received menu: $userMenu');
+
+        if (userMenu == 1) {
+          Navigator.pushNamed(context, '/menu1');
+        } else if (userMenu == 2) {
+          Navigator.pushNamed(context, '/menu2');
+        } else if (userMenu == 3) {
+          Navigator.pushNamed(context, '/menu3');
+        } else {
+          print('Invalid menu value received: $userMenu');
+        }
       } else if (response.statusCode == 401) {
-        // ล็อกอินไม่สำเร็จ (เช่น รหัสผ่านผิด)
-        setState(() {
-          _errorMessage = 'Username หรือ Password ไม่ถูกต้อง';
-        });
+        _showErrorDialog('Username หรือ Password ไม่ถูกต้อง');
       } else {
-        // เกิดข้อผิดพลาดอื่นๆ
-        setState(() {
-          _errorMessage = 'เกิดข้อผิดพลาดในการล็อกอิน: ${response.statusCode}';
-        });
+        _showErrorDialog('เกิดข้อผิดพลาดในการล็อกอิน: ${response.statusCode}');
       }
     } catch (error) {
-      // แสดงข้อความข้อผิดพลาดหากเกิดข้อผิดพลาดในการเชื่อมต่อ API
-      setState(() {
-        _errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์: $error';
-      });
+      _showErrorDialog('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์: $error');
     }
   }
+
+// ฟังก์ชันสำหรับแสดงข้อผิดพลาดใน AlertDialog
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
 
   @override
@@ -142,6 +171,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 );
               },
               child: Text('สมัครสมาชิก'),
+            ),
+            SizedBox(height: 20), // เพิ่มพื้นที่ว่าง
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => DataHumanScreen()),
+                );
+              },
+              child: Text('ไปที่หน้าข้อมูลสมาชิก (DataHuman)'),
             ),
           ],
         ),

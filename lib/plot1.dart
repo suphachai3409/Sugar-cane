@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-
+void main() {
+  runApp(Plot1Screen());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
+}
 
 class Plot1Screen extends StatelessWidget {
   @override
@@ -23,7 +25,7 @@ class Plot1Screen extends StatelessWidget {
 
               // Container ปุ่ม
               Positioned(
-                top: 680,
+                top: 675,
                 left: 10,
                 child: Container(
                   width: 363,
@@ -75,6 +77,39 @@ class Plot1Screen extends StatelessWidget {
               )
           ),
 
+
+              //ปุ่มล่างสุด ซ้าย
+              Positioned(
+                  top: 690,
+                  left: 25,
+                  child: Container(
+                    width: 50,
+                    height:45,
+                    decoration: ShapeDecoration(
+                      color: Color(0xFF34D396),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(38),
+                      ),
+                    ),
+                  )
+              ),
+
+
+              //ปุ่มล่างสุด ขวา
+              Positioned(
+                  top: 690,
+                  right: 25,
+                  child: Container(
+                    width: 50,
+                    height:45,
+                    decoration: ShapeDecoration(
+                      color: Color(0xFF34D396),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(38),
+                      ),
+                    ),
+                  )
+              ),
 
             ],
           ),
