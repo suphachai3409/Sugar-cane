@@ -41,3 +41,5 @@ dependencies:
     sdk: flutter
   http: ^0.13.3
   mongo_dart: ^0.10.1
+  provider: ^6.0.5
+  image_picker: ^1.1.2
