@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -23,84 +26,140 @@ class MyApp extends StatelessWidget {
 class SoilAnalysis {
   String date;
   File? image;
-  String topic; // เพิ่มหัวข้อ
+  String topic;
 
-  // กำหนดคอนสตรัคเตอร์
   SoilAnalysis({required this.date, this.image, required this.topic});
 }
 
 class SoilAnalysisProvider with ChangeNotifier {
-  List<SoilAnalysis> _analyses = [];
+  final List<SoilAnalysis> _analyses = [];
 
   List<SoilAnalysis> get analyses => _analyses;
 
-  // ฟังก์ชันเพิ่มข้อมูลการวิเคราะห์
   void addAnalysis(SoilAnalysis analysis) {
-    _analyses.add(analysis);
-    notifyListeners();
+    _analyses.add(analysis); // Adding analysis to the list
+    notifyListeners(); // Notify listeners after modifying the list
+  }
+
+  void removeAnalysis(SoilAnalysis analysis) {
+    _analyses.remove(analysis); // Removing analysis from the list
+    notifyListeners(); // Notify listeners after modifying the list
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String? _weatherDescription;
+  double? _temperature;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchWeather();
+  }
+
+  Future<void> _fetchWeather() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      String apiKey = "88b04d1d67ea346bd97a4a465832a484"; // ใช้ API key ของคุณ
+      String url =
+          "https://api.openweathermap.org/data/2.5/weather?lat=${position.latitude}&lon=${position.longitude}&units=metric&appid=$apiKey";
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _weatherDescription = data["weather"][0]["description"];
+          _temperature = data["main"]["temp"];
+        });
+      } else {
+        print("Failed to load weather data: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error fetching weather: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3, // จำนวนแท็บ
+      length: 3,
       child: Scaffold(
-        backgroundColor: Colors.grey[100], // เพิ่มสีพื้นหลังเบาๆ
+        backgroundColor: Color(0xFF34D396),
         appBar: AppBar(
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.green),
+            icon: Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {},
           ),
           title: Text(
             "อ้อย",
-            style: TextStyle(color: Colors.black),
+            style: TextStyle(color: Colors.white),
           ),
           actions: [
             TextButton(
               onPressed: () {},
               child: Text(
                 "เลิกปลูก",
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: Colors.redAccent),
               ),
             ),
           ],
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.green[700],
           elevation: 0,
           bottom: TabBar(
             indicator: BoxDecoration(
-              color: Colors.green[700],
+              color: Colors.green[900],
               borderRadius: BorderRadius.circular(20),
             ),
             labelColor: Colors.white,
-            unselectedLabelColor: Colors.black,
+            unselectedLabelColor: Color(0xFF25634B),
             tabs: [
-              Tab(
-                icon: Icon(Icons.history),
-                text: "ประวัติ",
-              ),
-              Tab(
-                icon: Icon(Icons.lightbulb),
-                text: "แนะนำ",
-              ),
-              Tab(
-                icon: Icon(Icons.info),
-                text: "ข้อมูลแปลง",
-              ),
+              Tab(icon: Icon(Icons.history), text: "ประวัติ"),
+              Tab(icon: Icon(Icons.lightbulb), text: "แนะนำ"),
+              Tab(icon: Icon(Icons.info), text: "ข้อมูลแปลง"),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            // เนื้อหาแท็บ: ประวัติ
             HistoryTab(),
-
-            // เนื้อหาแท็บ: แนะนำ
-            SuggestionTab(),
-
-            // เนื้อหาแท็บ: ข้อมูลแปลง
-            Center(child: Text("เนื้อหาแท็บ: ข้อมูลแปลง")),
+            SuggestionTab(
+              weatherDescription: _weatherDescription,
+              temperature: _temperature,
+            ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_weatherDescription != null && _temperature != null) ...[
+                    Text(
+                      "สภาพอากาศปัจจุบัน: $_weatherDescription",
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      "อุณหภูมิ: ${_temperature?.toStringAsFixed(1)} °C",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ] else ...[
+                    Text(
+                      "กำลังโหลดข้อมูลสภาพอากาศ...",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -109,117 +168,250 @@ class HomeScreen extends StatelessWidget {
 }
 
 class SuggestionTab extends StatelessWidget {
+  final String? weatherDescription;
+  final double? temperature;
+
+  SuggestionTab({this.weatherDescription, this.temperature});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // ส่วนแนะนำ
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.blue[300]!, Colors.blue[100]!],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "ศุกร์, 09/08/2567",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    "26°C\nฝนตกหนัก",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              Icon(Icons.cloud, size: 48, color: Colors.white),
-            ],
-          ),
-        ),
-
-        // ปุ่มวิเคราะห์ดิน
+        _buildHeader(),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: GridView.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              children: [
-                _buildOptionCard("วิเคราะห์ดิน", context),
-                _buildOptionCard("บำรุงดิน", context),
-                _buildOptionCard("ไถดินดาน", context),
-                _buildOptionCard("ไถดะ", context),
-                _buildOptionCard("ไถแปร", context),
-                _buildOptionCard("ไถดิน", context),
-                _buildOptionCard("ใส่ปุ๋ยรองพื้น", context),
-                _buildOptionCard("ใส่ปุ๋ยกรุ่น", context),
-                _buildOptionCard("ใส่ปุ๋ยแต่งหน้า", context),
-                _buildOptionCard("ฉีดยาคุมวัชพืช", context),
-                _buildOptionCard("กำจัดวัชพืช", context),
-                _buildOptionCard("เริ่มเก็บเกี่ยว", context),
-                _buildOptionCard("ขายผลผลิต", context),
-              ],
-            ),
+          child: ListView.builder(
+            padding: EdgeInsets.all(16),
+            itemCount: _topics.length,
+            itemBuilder: (context, index) {
+              return _buildOptionCard(_topics[index], context);
+            },
           ),
         ),
       ],
     );
   }
 
-  // ฟังก์ชันสร้าง Card สำหรับแต่ละปุ่ม
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue[300]!, Colors.blue[100]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // แสดงข้อมูลสภาพอากาศ
+              if (weatherDescription != null && temperature != null) ...[
+                Text(
+                  "สภาพอากาศปัจจุบัน: $weatherDescription",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  "อุณหภูมิ: ${temperature?.toStringAsFixed(1)} °C",
+                  style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+              ] else ...[
+                Text(
+                  "กำลังโหลดข้อมูลสภาพอากาศ...",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ],
+            ],
+          ),
+          Icon(Icons.cloud, size: 48, color: Colors.white),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOptionCard(String text, BuildContext context) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // ส่งค่า topic ไปที่ AnalyzeSoilScreen
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  AnalyzeSoilScreen(topic: text), // ส่งค่า topic
-            ),
+                builder: (context) => AnalyzeSoilScreen(topic: text)),
           );
         },
         child: Center(
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(18),
             child: Text(
               text,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.green),
+              style: TextStyle(fontSize: 18, color: Color(0xFF25634B)),
             ),
           ),
         ),
       ),
     );
   }
+
+  final List<String> _topics = [
+    "วิเคราะห์ดิน",
+    "บำรุงดิน",
+    "ไถดินดาน",
+    "ไถดะ",
+    "ไถแปร",
+    "ไถดิน",
+    "ใส่ปุ๋ยรองพื้น",
+    "ใส่ปุ๋ยกรุ่น",
+    "ใส่ปุ๋ยแต่งหน้า",
+    "ฉีดยาคุมวัชพืช",
+    "กำจัดวัชพืช",
+    "เริ่มเก็บเกี่ยว",
+    "ขายผลผลิต",
+  ];
+}
+
+class HistoryTab extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<SoilAnalysisProvider>(
+      builder: (context, provider, child) {
+        final groupedAnalyses = _groupByDate(provider.analyses);
+
+        return ListView(
+          padding: EdgeInsets.all(16),
+          children: groupedAnalyses.entries.map((entry) {
+            final date = entry.key;
+            final analyses = entry.value;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today, color: Color(0xFF25634B)),
+                          SizedBox(width: 8),
+                          Text(
+                            date,
+                            style: TextStyle(
+                              color: Color(0xFF25634B),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12),
+                      Column(
+                        children: analyses.map((analysis) {
+                          return _buildAnalysisTile(analysis, context);
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnalysisTile(SoilAnalysis analysis, BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: Color(0xFF34D396),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        title: Text(
+          analysis.topic,
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          "วันที่: ${analysis.date}",
+          style: TextStyle(color: Colors.white70),
+        ),
+        trailing: IconButton(
+          icon: Icon(Icons.delete, color: Colors.red),
+          onPressed: () {
+            _showDeleteConfirmationDialog(context, analysis);
+          },
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ImageDetailScreen(analysis: analysis)),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(
+      BuildContext context, SoilAnalysis analysis) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("ยืนยันการลบ"),
+          content: Text("คุณต้องการลบข้อมูลนี้หรือไม่?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("ยกเลิก"),
+            ),
+            TextButton(
+              onPressed: () {
+                Provider.of<SoilAnalysisProvider>(context, listen: false)
+                    .removeAnalysis(analysis); // Using removeAnalysis here
+                Navigator.of(context).pop();
+              },
+              child: Text("ลบ", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Map<String, List<SoilAnalysis>> _groupByDate(List<SoilAnalysis> analyses) {
+    final Map<String, List<SoilAnalysis>> grouped = {};
+    for (var analysis in analyses) {
+      grouped.putIfAbsent(analysis.date, () => []).add(analysis);
+    }
+    return grouped;
+  }
 }
 
 class AnalyzeSoilScreen extends StatefulWidget {
-  final String topic; // รับ topic ที่ส่งมาจาก _buildOptionCard
+  final String topic;
 
   AnalyzeSoilScreen({required this.topic});
 
@@ -230,9 +422,8 @@ class AnalyzeSoilScreen extends StatefulWidget {
 class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
-  TextEditingController _dateController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
 
-  // ฟังก์ชันถ่ายรูป
   Future<void> _takePicture() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
@@ -240,6 +431,26 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
         _image = File(pickedFile.path);
       });
     }
+  }
+
+  void _showAlertDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("แจ้งเตือน"),
+          content: Text("กรุณาใส่วันที่ก่อนบันทึก"),
+          actions: [
+            TextButton(
+              child: Text("ตกลง"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -258,107 +469,66 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
         padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // แสดงหัวข้อที่ส่งมา
             Text(
               "หัวข้อ: ${widget.topic}",
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green),
+                  color: Color(0xFF25634B)),
             ),
-
-            // ฟอร์มเลือกวันที่
             TextField(
               controller: _dateController,
+              readOnly: true,
               decoration: InputDecoration(
                 labelText: "วันที่",
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.calendar_today),
-                  onPressed: () async {
-                    DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2101),
-                    );
-                    if (pickedDate != null) {
-                      setState(() {
-                        _dateController.text =
-                            "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-                      });
-                    }
-                  },
-                ),
+                labelStyle: TextStyle(color: Color(0xFF25634B)),
+                suffixIcon:
+                    Icon(Icons.calendar_today, color: Color(0xFF25634B)),
               ),
+              onTap: () async {
+                DateTime? selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+
+                if (selectedDate != null) {
+                  setState(() {
+                    _dateController.text =
+                        "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+                  });
+                }
+              },
             ),
-
-            SizedBox(height: 16),
-
-            // ปุ่มถ่ายรูป
             ElevatedButton(
               onPressed: _takePicture,
               child: Text("ถ่ายรูป"),
             ),
-
-            // แสดงรูปที่ถ่าย
             if (_image != null) ...[
               SizedBox(height: 16),
               Image.file(_image!),
             ],
-
-            SizedBox(height: 16),
-
-            // ปุ่มบันทึก
             ElevatedButton(
               onPressed: () {
-                // เพิ่มข้อมูลการวิเคราะห์ดินใน provider
-                Provider.of<SoilAnalysisProvider>(context, listen: false)
-                    .addAnalysis(SoilAnalysis(
-                  date: _dateController.text,
-                  image: _image,
-                  topic: widget.topic, // ส่งหัวข้อที่เลือกไปตอนบันทึก
-                ));
+                if (_dateController.text.isEmpty) {
+                  _showAlertDialog(context);
+                } else {
+                  Provider.of<SoilAnalysisProvider>(context, listen: false)
+                      .addAnalysis(SoilAnalysis(
+                    date: _dateController.text,
+                    image: _image,
+                    topic: widget.topic,
+                  ));
 
-                Navigator.pop(context);
+                  Navigator.pop(context);
+                }
               },
               child: Text("บันทึก"),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class HistoryTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<SoilAnalysisProvider>(
-      builder: (context, provider, child) {
-        return ListView.builder(
-          itemCount: provider.analyses.length,
-          itemBuilder: (context, index) {
-            SoilAnalysis analysis = provider.analyses[index];
-            return ListTile(
-              title: Text(analysis.topic),
-              subtitle: Text(analysis.date),
-              leading: analysis.image != null
-                  ? Image.file(analysis.image!, width: 50, height: 50)
-                  : Icon(Icons.image, size: 50),
-              trailing: Icon(Icons.arrow_forward),
-              onTap: () {
-                // ไปหน้าจอ ImageDetailScreen พร้อมส่งข้อมูล
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ImageDetailScreen(analysis: analysis),
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
     );
   }
 }
@@ -372,36 +542,20 @@ class ImageDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("รายละเอียดการวิเคราะห์ดิน"),
+        title: Text("รายละเอียด"),
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (analysis.image != null)
-              Center(
-                child: Image.file(
-                  analysis.image!,
-                  width: 300,
-                  height: 300,
-                  fit: BoxFit.cover,
-                ),
-              )
-            else
-              Center(
-                child: Icon(Icons.image_not_supported, size: 100),
-              ),
-            SizedBox(height: 16),
+            if (analysis.image != null) Image.file(analysis.image!),
             Text(
               "หัวข้อ: ${analysis.topic}",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
-            Text(
-              "วันที่: ${analysis.date}",
-              style: TextStyle(fontSize: 16),
-            ),
+            Text("วันที่: ${analysis.date}", style: TextStyle(fontSize: 16)),
           ],
         ),
       ),
