@@ -55,6 +55,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? _weatherDescription;
   double? _temperature;
+  String? _currentAddress; // ตัวแปรเก็บที่อยู่
 
   @override
   void initState() {
@@ -68,10 +69,10 @@ class _HomeScreenState extends State<HomeScreen> {
           desiredAccuracy: LocationAccuracy.high);
 
       String apiKey = "88b04d1d67ea346bd97a4a465832a484"; // ใช้ API key ของคุณ
-      String url =
+      String weatherUrl =
           "https://api.openweathermap.org/data/2.5/weather?lat=${position.latitude}&lon=${position.longitude}&units=metric&appid=$apiKey";
 
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(Uri.parse(weatherUrl));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -79,11 +80,36 @@ class _HomeScreenState extends State<HomeScreen> {
           _weatherDescription = data["weather"][0]["description"];
           _temperature = data["main"]["temp"];
         });
+
+        // เรียกใช้ Geocoding API เพื่อดึงข้อมูลที่อยู่
+        await _getAddress(position.latitude, position.longitude);
       } else {
         print("Failed to load weather data: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching weather: $e");
+    }
+  }
+
+  Future<void> _getAddress(double latitude, double longitude) async {
+    try {
+      String apiKey = "88b04d1d67ea346bd97a4a465832a484"; // ใช้ API key ของคุณ
+      String geocodeUrl =
+          "https://api.openweathermap.org/data/2.5/weather?lat=$latitude&lon=$longitude&appid=$apiKey";
+
+      final response = await http.get(Uri.parse(geocodeUrl));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _currentAddress =
+              data["name"]; // หรือจะใช้ฟิลด์อื่น ๆ ที่ให้ข้อมูลที่อยู่
+        });
+      } else {
+        print("Failed to load address data: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error fetching address: $e");
     }
   }
 
@@ -154,6 +180,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ] else ...[
                     Text(
                       "กำลังโหลดข้อมูลสภาพอากาศ...",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ],
+                  SizedBox(height: 8),
+                  // แสดงที่อยู่
+                  if (_currentAddress != null) ...[
+                    Text(
+                      "ที่อยู่ปัจจุบัน: $_currentAddress",
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ],
