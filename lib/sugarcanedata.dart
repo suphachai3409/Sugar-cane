@@ -5,8 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 void main() {
+  Intl.defaultLocale = "th_TH";
   runApp(MyApp());
 }
 
@@ -37,13 +39,13 @@ class SoilAnalysisProvider with ChangeNotifier {
   List<SoilAnalysis> get analyses => _analyses;
 
   void addAnalysis(SoilAnalysis analysis) {
-    _analyses.add(analysis); // Adding analysis to the list
-    notifyListeners(); // Notify listeners after modifying the list
+    _analyses.add(analysis);
+    notifyListeners();
   }
 
   void removeAnalysis(SoilAnalysis analysis) {
-    _analyses.remove(analysis); // Removing analysis from the list
-    notifyListeners(); // Notify listeners after modifying the list
+    _analyses.remove(analysis);
+    notifyListeners();
   }
 }
 
@@ -55,7 +57,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? _weatherDescription;
   double? _temperature;
-  String? _currentAddress; // ตัวแปรเก็บที่อยู่
+  String? _location;
 
   @override
   void initState() {
@@ -79,10 +81,8 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _weatherDescription = data["weather"][0]["description"];
           _temperature = data["main"]["temp"];
+          _location = data["name"];
         });
-
-        // เรียกใช้ Geocoding API เพื่อดึงข้อมูลที่อยู่
-        await _getAddress(position.latitude, position.longitude);
       } else {
         print("Failed to load weather data: ${response.statusCode}");
       }
@@ -91,30 +91,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _getAddress(double latitude, double longitude) async {
-    try {
-      String apiKey = "88b04d1d67ea346bd97a4a465832a484"; // ใช้ API key ของคุณ
-      String geocodeUrl =
-          "https://api.openweathermap.org/data/2.5/weather?lat=$latitude&lon=$longitude&appid=$apiKey";
-
-      final response = await http.get(Uri.parse(geocodeUrl));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _currentAddress =
-              data["name"]; // หรือจะใช้ฟิลด์อื่น ๆ ที่ให้ข้อมูลที่อยู่
-        });
-      } else {
-        print("Failed to load address data: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Error fetching address: $e");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    String currentDate = DateFormat('d MMMM yyyy', 'th').format(DateTime.now());
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -159,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SuggestionTab(
               weatherDescription: _weatherDescription,
               temperature: _temperature,
+              location: _location,
             ),
             Center(
               child: Column(
@@ -184,10 +165,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                   SizedBox(height: 8),
-                  // แสดงที่อยู่
-                  if (_currentAddress != null) ...[
+                  if (_location != null) ...[
                     Text(
-                      "ที่อยู่ปัจจุบัน: $_currentAddress",
+                      "ตำแหน่งปัจจุบัน: $_location",
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ],
@@ -204,8 +184,9 @@ class _HomeScreenState extends State<HomeScreen> {
 class SuggestionTab extends StatelessWidget {
   final String? weatherDescription;
   final double? temperature;
+  final String? location;
 
-  SuggestionTab({this.weatherDescription, this.temperature});
+  SuggestionTab({this.weatherDescription, this.temperature, this.location});
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +227,6 @@ class SuggestionTab extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // แสดงข้อมูลสภาพอากาศ
               if (weatherDescription != null && temperature != null) ...[
                 Text(
                   "สภาพอากาศปัจจุบัน: $weatherDescription",
@@ -263,6 +243,13 @@ class SuggestionTab extends StatelessWidget {
               ] else ...[
                 Text(
                   "กำลังโหลดข้อมูลสภาพอากาศ...",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ],
+              if (location != null) ...[
+                SizedBox(height: 8),
+                Text(
+                  "ตำแหน่งปัจจุบัน: $location",
                   style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ],
