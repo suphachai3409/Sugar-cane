@@ -5,10 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:intl/intl.dart';
 
 void main() {
-  Intl.defaultLocale = "th_TH";
   runApp(MyApp());
 }
 
@@ -93,8 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    String currentDate = DateFormat('d MMMM yyyy', 'th').format(DateTime.now());
-
     return DefaultTabController(
       length: 3,
       child: Scaffold(
