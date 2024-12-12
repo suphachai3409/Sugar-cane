@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(MyApp());
@@ -56,11 +57,13 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _weatherDescription;
   double? _temperature;
   String? _location;
+  String? _date;
 
   @override
   void initState() {
     super.initState();
     _fetchWeather();
+    _fetchCurrentDate();
   }
 
   Future<void> _fetchWeather() async {
@@ -68,7 +71,8 @@ class _HomeScreenState extends State<HomeScreen> {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
 
-      String apiKey = "88b04d1d67ea346bd97a4a465832a484"; // ใช้ API key ของคุณ
+      String apiKey =
+          "88b04d1d67ea346bd97a4a465832a484"; // Replace with your API key
       String weatherUrl =
           "https://api.openweathermap.org/data/2.5/weather?lat=${position.latitude}&lon=${position.longitude}&units=metric&appid=$apiKey";
 
@@ -87,6 +91,14 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       print("Error fetching weather: $e");
     }
+  }
+
+  void _fetchCurrentDate() {
+    final now = DateTime.now();
+    final formatter = DateFormat('dd/MM/yyyy');
+    setState(() {
+      _date = formatter.format(now);
+    });
   }
 
   @override
@@ -136,37 +148,22 @@ class _HomeScreenState extends State<HomeScreen> {
               weatherDescription: _weatherDescription,
               temperature: _temperature,
               location: _location,
+              date: _date,
             ),
             Center(
+              // Updated content for "ข้อมูลแปลง"
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (_weatherDescription != null && _temperature != null) ...[
-                    Text(
-                      "สภาพอากาศปัจจุบัน: $_weatherDescription",
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      "อุณหภูมิ: ${_temperature?.toStringAsFixed(1)} °C",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ] else ...[
-                    Text(
-                      "กำลังโหลดข้อมูลสภาพอากาศ...",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ],
+                  Text(
+                    "ข้อมูลแปลง",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
                   SizedBox(height: 8),
-                  if (_location != null) ...[
-                    Text(
-                      "ตำแหน่งปัจจุบัน: $_location",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ],
+                  Text(
+                    "ยังไม่มีข้อมูลแปลง",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
                 ],
               ),
             ),
@@ -181,8 +178,10 @@ class SuggestionTab extends StatelessWidget {
   final String? weatherDescription;
   final double? temperature;
   final String? location;
+  final String? date;
 
-  SuggestionTab({this.weatherDescription, this.temperature, this.location});
+  SuggestionTab(
+      {this.weatherDescription, this.temperature, this.location, this.date});
 
   @override
   Widget build(BuildContext context) {
@@ -217,41 +216,36 @@ class SuggestionTab extends StatelessWidget {
           bottomRight: Radius.circular(20),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (weatherDescription != null && temperature != null) ...[
-                Text(
-                  "สภาพอากาศปัจจุบัน: $weatherDescription",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  "อุณหภูมิ: ${temperature?.toStringAsFixed(1)} °C",
-                  style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
-              ] else ...[
-                Text(
-                  "กำลังโหลดข้อมูลสภาพอากาศ...",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ],
-              if (location != null) ...[
-                SizedBox(height: 8),
-                Text(
-                  "ตำแหน่งปัจจุบัน: $location",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ],
-            ],
-          ),
-          Icon(Icons.cloud, size: 48, color: Colors.white),
+          if (date != null) ...[
+            Text(
+              "วันที่: $date",
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
+          ],
+          if (location != null) ...[
+            SizedBox(height: 8),
+            Text(
+              "ตำแหน่งปัจจุบัน: $location",
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
+          ],
+          if (temperature != null) ...[
+            SizedBox(height: 8),
+            Text(
+              "อุณหภูมิ: ${temperature!.toStringAsFixed(1)}°C",
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
+          ],
+          if (weatherDescription != null) ...[
+            SizedBox(height: 8),
+            Text(
+              "สภาพอากาศ: $weatherDescription",
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
+          ],
         ],
       ),
     );
