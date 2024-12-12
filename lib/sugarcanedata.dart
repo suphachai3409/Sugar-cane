@@ -239,13 +239,6 @@ class SuggestionTab extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.white),
             ),
           ],
-          if (weatherDescription != null) ...[
-            SizedBox(height: 8),
-            Text(
-              "สภาพอากาศ: $weatherDescription",
-              style: TextStyle(fontSize: 16, color: Colors.white),
-            ),
-          ],
         ],
       ),
     );
@@ -373,10 +366,17 @@ class HistoryTab extends StatelessWidget {
           },
         ),
         onTap: () {
+          // แก้ไขข้อมูลที่เลือก
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => ImageDetailScreen(analysis: analysis)),
+                builder: (context) => AnalyzeSoilScreen(
+                      topic: analysis.topic,
+                      date: analysis.date,
+                      image: analysis.image,
+                      isEditing: true,
+                      analysis: analysis,
+                    )),
           );
         },
       ),
@@ -401,7 +401,7 @@ class HistoryTab extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Provider.of<SoilAnalysisProvider>(context, listen: false)
-                    .removeAnalysis(analysis); // Using removeAnalysis here
+                    .removeAnalysis(analysis); // ใช้ removeAnalysis ที่นี่
                 Navigator.of(context).pop();
               },
               child: Text("ลบ", style: TextStyle(color: Colors.red)),
@@ -423,8 +423,17 @@ class HistoryTab extends StatelessWidget {
 
 class AnalyzeSoilScreen extends StatefulWidget {
   final String topic;
+  final String? date;
+  final File? image;
+  final bool isEditing;
+  final SoilAnalysis? analysis;
 
-  AnalyzeSoilScreen({required this.topic});
+  AnalyzeSoilScreen(
+      {required this.topic,
+      this.date,
+      this.image,
+      this.isEditing = false,
+      this.analysis});
 
   @override
   _AnalyzeSoilScreenState createState() => _AnalyzeSoilScreenState();
@@ -434,6 +443,15 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _dateController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing && widget.analysis != null) {
+      _dateController.text = widget.analysis!.date;
+      _image = widget.analysis!.image;
+    }
+  }
 
   Future<void> _takePicture() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
@@ -468,7 +486,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("บันทึกการวิเคราะห์ดิน"),
+        title: Text(widget.isEditing ? "แก้ไขข้อมูล" : "บันทึกข้อมูล"),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -525,6 +543,11 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                 if (_dateController.text.isEmpty) {
                   _showAlertDialog(context);
                 } else {
+                  if (widget.isEditing) {
+                    // แก้ไขข้อมูลที่มีอยู่แล้ว
+                    Provider.of<SoilAnalysisProvider>(context, listen: false)
+                        .removeAnalysis(widget.analysis!);
+                  }
                   Provider.of<SoilAnalysisProvider>(context, listen: false)
                       .addAnalysis(SoilAnalysis(
                     date: _dateController.text,
@@ -535,7 +558,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                   Navigator.pop(context);
                 }
               },
-              child: Text("บันทึก"),
+              child: Text(widget.isEditing ? "บันทึกการแก้ไข" : "บันทึก"),
             ),
           ],
         ),
