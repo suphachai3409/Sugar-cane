@@ -28,8 +28,14 @@ class SoilAnalysis {
   String date;
   File? image;
   String topic;
+  String message; // เพิ่มฟิลด์ข้อความ
 
-  SoilAnalysis({required this.date, this.image, required this.topic});
+  SoilAnalysis({
+    required this.date,
+    this.image,
+    required this.topic,
+    this.message = "", // ค่าพื้นฐานเป็นข้อความว่าง
+  });
 }
 
 class SoilAnalysisProvider with ChangeNotifier {
@@ -151,7 +157,6 @@ class _HomeScreenState extends State<HomeScreen> {
               date: _date,
             ),
             Center(
-              // Updated content for "ข้อมูลแปลง"
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -168,6 +173,52 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 5,
+              ),
+            ],
+          ),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // Handle Home button press
+                  },
+                  icon: Icon(Icons.home, color: Colors.white),
+                  label: Text("Home"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[700],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Handle Profile button press
+                  },
+                  child: Icon(Icons.person, color: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[700],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -291,56 +342,54 @@ class SuggestionTab extends StatelessWidget {
 class HistoryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<SoilAnalysisProvider>(
-      builder: (context, provider, child) {
-        final groupedAnalyses = _groupByDate(provider.analyses);
+    return Consumer<SoilAnalysisProvider>(builder: (context, provider, child) {
+      final groupedAnalyses = _groupByDate(provider.analyses);
 
-        return ListView(
-          padding: EdgeInsets.all(16),
-          children: groupedAnalyses.entries.map((entry) {
-            final date = entry.key;
-            final analyses = entry.value;
+      return ListView(
+        padding: EdgeInsets.all(16),
+        children: groupedAnalyses.entries.map((entry) {
+          final date = entry.key;
+          final analyses = entry.value;
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.calendar_today, color: Color(0xFF25634B)),
-                          SizedBox(width: 8),
-                          Text(
-                            date,
-                            style: TextStyle(
-                              color: Color(0xFF25634B),
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today, color: Color(0xFF25634B)),
+                        SizedBox(width: 8),
+                        Text(
+                          date,
+                          style: TextStyle(
+                            color: Color(0xFF25634B),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 12),
-                      Column(
-                        children: analyses.map((analysis) {
-                          return _buildAnalysisTile(analysis, context);
-                        }).toList(),
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    Column(
+                      children: analyses.map((analysis) {
+                        return _buildAnalysisTile(analysis, context);
+                      }).toList(),
+                    ),
+                  ],
                 ),
               ),
-            );
-          }).toList(),
-        );
-      },
-    );
+            ),
+          );
+        }).toList(),
+      );
+    });
   }
 
   Widget _buildAnalysisTile(SoilAnalysis analysis, BuildContext context) {
@@ -355,60 +404,24 @@ class HistoryTab extends StatelessWidget {
           analysis.topic,
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(
-          "วันที่: ${analysis.date}",
-          style: TextStyle(color: Colors.white70),
-        ),
-        trailing: IconButton(
-          icon: Icon(Icons.delete, color: Colors.red),
-          onPressed: () {
-            _showDeleteConfirmationDialog(context, analysis);
-          },
-        ),
         onTap: () {
-          // แก้ไขข้อมูลที่เลือก
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => AnalyzeSoilScreen(
-                      topic: analysis.topic,
-                      date: analysis.date,
-                      image: analysis.image,
-                      isEditing: true,
-                      analysis: analysis,
-                    )),
+              builder: (context) => AnalyzeSoilScreen(
+                topic: analysis.topic,
+                date: analysis.date,
+                image: analysis.image,
+                message: analysis.message,
+                isEditing: true,
+                analysis: analysis,
+              ),
+            ),
           );
         },
+        // ลบปุ่ม "ลบ" ออกจาก ListTile
+        // ไม่ต้องมี IconButton ที่นี่อีกแล้ว
       ),
-    );
-  }
-
-  void _showDeleteConfirmationDialog(
-      BuildContext context, SoilAnalysis analysis) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("ยืนยันการลบ"),
-          content: Text("คุณต้องการลบข้อมูลนี้หรือไม่?"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("ยกเลิก"),
-            ),
-            TextButton(
-              onPressed: () {
-                Provider.of<SoilAnalysisProvider>(context, listen: false)
-                    .removeAnalysis(analysis); // ใช้ removeAnalysis ที่นี่
-                Navigator.of(context).pop();
-              },
-              child: Text("ลบ", style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -425,36 +438,39 @@ class AnalyzeSoilScreen extends StatefulWidget {
   final String topic;
   final String? date;
   final File? image;
+  final String? message; // เพิ่มข้อความ
   final bool isEditing;
   final SoilAnalysis? analysis;
 
-  AnalyzeSoilScreen(
-      {required this.topic,
-      this.date,
-      this.image,
-      this.isEditing = false,
-      this.analysis});
+  AnalyzeSoilScreen({
+    required this.topic,
+    this.date,
+    this.image,
+    this.message = "",
+    this.isEditing = false,
+    this.analysis,
+  });
 
   @override
   _AnalyzeSoilScreenState createState() => _AnalyzeSoilScreenState();
 }
 
 class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
+  late TextEditingController _dateController;
+  late TextEditingController _messageController;
   File? _image;
-  final ImagePicker _picker = ImagePicker();
-  final TextEditingController _dateController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    if (widget.isEditing && widget.analysis != null) {
-      _dateController.text = widget.analysis!.date;
-      _image = widget.analysis!.image;
-    }
+    _dateController = TextEditingController(text: widget.date ?? "");
+    _messageController = TextEditingController(text: widget.message ?? "");
+    _image = widget.image;
   }
 
   Future<void> _takePicture() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -462,58 +478,20 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
     }
   }
 
-  void _showAlertDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("แจ้งเตือน"),
-          content: Text("กรุณาใส่วันที่ก่อนบันทึก"),
-          actions: [
-            TextButton(
-              child: Text("ตกลง"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditing ? "แก้ไขข้อมูล" : "บันทึกข้อมูล"),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        title: Text(widget.isEditing ? "รายละเอียดข้อมูล" : "บันทึกข้อมูล"),
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(
-              "หัวข้อ: ${widget.topic}",
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF25634B)),
-            ),
             TextField(
               controller: _dateController,
+              decoration: InputDecoration(labelText: 'วันที่'),
               readOnly: true,
-              decoration: InputDecoration(
-                labelText: "วันที่",
-                labelStyle: TextStyle(color: Color(0xFF25634B)),
-                suffixIcon:
-                    Icon(Icons.calendar_today, color: Color(0xFF25634B)),
-              ),
               onTap: () async {
                 DateTime? selectedDate = await showDatePicker(
                   context: context,
@@ -521,7 +499,6 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                   firstDate: DateTime(2000),
                   lastDate: DateTime(2100),
                 );
-
                 if (selectedDate != null) {
                   setState(() {
                     _dateController.text =
@@ -530,36 +507,76 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                 }
               },
             ),
+            TextField(
+              controller: _messageController,
+              decoration: InputDecoration(labelText: 'ข้อความ'),
+              keyboardType: TextInputType.text, // รองรับการพิมพ์ภาษาไทย
+              style: TextStyle(fontFamily: 'Sarabun'), // ใช้ฟอนต์ภาษาไทย
+            ),
             ElevatedButton(
               onPressed: _takePicture,
               child: Text("ถ่ายรูป"),
             ),
-            if (_image != null) ...[
-              SizedBox(height: 16),
-              Image.file(_image!),
-            ],
+            if (_image != null) Image.file(_image!), // แสดงภาพถ่าย
+            SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                if (_dateController.text.isEmpty) {
-                  _showAlertDialog(context);
-                } else {
-                  if (widget.isEditing) {
-                    // แก้ไขข้อมูลที่มีอยู่แล้ว
-                    Provider.of<SoilAnalysisProvider>(context, listen: false)
-                        .removeAnalysis(widget.analysis!);
-                  }
+                final analysis = SoilAnalysis(
+                  date: _dateController.text,
+                  image: _image,
+                  topic: widget.topic,
+                  message: _messageController.text,
+                );
+                if (widget.isEditing) {
                   Provider.of<SoilAnalysisProvider>(context, listen: false)
-                      .addAnalysis(SoilAnalysis(
-                    date: _dateController.text,
-                    image: _image,
-                    topic: widget.topic,
-                  ));
-
-                  Navigator.pop(context);
+                      .removeAnalysis(widget.analysis!);
                 }
+                Provider.of<SoilAnalysisProvider>(context, listen: false)
+                    .addAnalysis(analysis);
+                Navigator.pop(context);
               },
               child: Text(widget.isEditing ? "บันทึกการแก้ไข" : "บันทึก"),
             ),
+            if (widget.isEditing)
+              ElevatedButton(
+                onPressed: () {
+                  // แสดง dialog ยืนยันการลบ
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text("ยืนยันการลบ"),
+                      content: Text("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context); // ปิด dialog
+                          },
+                          child: Text("ยกเลิก"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            // ลบข้อมูลจาก Provider
+                            Provider.of<SoilAnalysisProvider>(context,
+                                    listen: false)
+                                .removeAnalysis(widget.analysis!);
+
+                            Navigator.pop(context); // ปิด dialog
+                            Navigator.pop(context); // กลับไปที่หน้าก่อนหน้า
+                          },
+                          child: Text("ลบ"),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text("ลบ", style: TextStyle(color: Colors.white)),
+              ),
           ],
         ),
       ),
