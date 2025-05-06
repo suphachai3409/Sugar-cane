@@ -35,6 +35,10 @@ flutter:
     - assets/kid.png
     - assets/human.png
     - assets/human1.png
+    - assets/พืชผัก.jpg
+    - assets/พืชไร่.jpg
+    - assets/ผลไม้.jpg
+    - assets/พืชสวน.jpg
 
 dependencies:
   flutter:

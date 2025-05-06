@@ -8,6 +8,10 @@ void main() {
 class Menu2Screen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -19,12 +23,12 @@ class Menu2Screen extends StatelessWidget {
             children: [
               // Container เขียว
               Positioned(
-                top: 250,
+                top: height * 0.3, // 30% ของความสูงหน้าจอ
                 left: 0,
                 right: 0,
                 child: Container(
-                  width: 380,
-                  height: 486,
+                  width: width * 0.9, // 90% ของความกว้างหน้าจอ
+                  height: height * 0.5,
                   decoration: ShapeDecoration(
                     color: Color(0xFF34D396),
                     shape: RoundedRectangleBorder(
@@ -36,11 +40,11 @@ class Menu2Screen extends StatelessWidget {
 
               // Container ฟ้า
               Positioned(
-                top: 20,
-                left: 22,
+                top: height * 0.02, // 2% ของความสูงหน้าจอ
+                left: width * 0.01, // 5% ของความกว้างหน้าจอ
                 child: Container(
-                  width: 334,
-                  height: 200,
+                  width: width * 0.9, // 90% ของความกว้างหน้าจอ
+                  height: height * 0.25,
                   padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 19),
                   decoration: ShapeDecoration(
                     gradient: LinearGradient(
@@ -57,12 +61,11 @@ class Menu2Screen extends StatelessWidget {
 
               // Container ปุ่ม
               Positioned(
-                top: 680,
-                left: 10,
-                right: 10,
+                bottom: height * 0, // 2% จากด้านล่าง
+                left: width * 0.03, // 3% จากด้านซ้าย
+                right: width * 0.03,
                 child: Container(
-                  width: 363,
-                  height: 73,
+                  height: height * 0.07,
                   decoration: ShapeDecoration(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
