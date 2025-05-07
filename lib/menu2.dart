@@ -59,7 +59,7 @@ class Menu2Screen extends StatelessWidget {
                 ),
               ),
 
-              // Container ปุ่ม
+              // Container ปุ่มขาว
               Positioned(
                 bottom: height * 0, // 2% จากด้านล่าง
                 left: width * 0.03, // 3% จากด้านซ้าย
@@ -83,20 +83,19 @@ class Menu2Screen extends StatelessWidget {
                 ),
               ),
 
-              Positioned(  //
-                top: 260,
-                left: 130,
-                child: SizedBox(
-                  width: 114,
-                  height: 23,
+              // Text 'Main menu'
+              Positioned(
+                top: height * 0.31, // 31% ของความสูงหน้าจอ
+                left: 0,
+                right: 0,
+                child: Center(
                   child: Text(
                     'Main menu',
                     style: TextStyle(
                       color: Color(0xFF25624B),
-                      fontSize: 20,
+                      fontSize: width * 0.055, // 5% ของความกว้างหน้าจอ
                       fontFamily: 'Roboto',
                       fontWeight: FontWeight.w500,
-                      height: 0,
                     ),
                   ),
                 ),
@@ -108,8 +107,8 @@ class Menu2Screen extends StatelessWidget {
 
               //แปลงไร่
               Positioned(
-                top: 320,
-                left: 20,
+                top: height * 0.36,
+                left: width * 0.06,
                 child: GestureDetector(
                   onTap: () {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
@@ -119,8 +118,8 @@ class Menu2Screen extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    width: 149,
-                    height: 133,
+                    height: height * 0.165,
+                    width: width * 0.36,
                     decoration: ShapeDecoration(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -170,8 +169,8 @@ class Menu2Screen extends StatelessWidget {
 
               //คนงาน
               Positioned(
-                top: 320,
-                right: 20,
+                top: height * 0.36,
+                right: width * 0.06,
                 child: GestureDetector(
                   onTap: () {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
@@ -181,8 +180,8 @@ class Menu2Screen extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    width: 149,
-                    height: 133,
+                    height: height * 0.165,
+                    width: width * 0.36,
                     decoration: ShapeDecoration(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -232,8 +231,8 @@ class Menu2Screen extends StatelessWidget {
 
               //อุปกรณ์
               Positioned(
-                top: 500,
-                left: 20,
+                top: height * 0.57,
+                left: width * 0.06,
                 child: GestureDetector(
                   onTap: () {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
@@ -243,8 +242,8 @@ class Menu2Screen extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    width: 149,
-                    height: 133,
+                    height: height * 0.165,
+                    width: width * 0.36,
                     decoration: ShapeDecoration(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -296,8 +295,8 @@ class Menu2Screen extends StatelessWidget {
 
               //เบิกเงินทุน
               Positioned(
-                top: 500,
-                right: 20,
+                top: height * 0.57,
+                right: width * 0.06,
                 child: GestureDetector(
                   onTap: () {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
@@ -307,8 +306,8 @@ class Menu2Screen extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    width: 149,
-                    height: 133,
+                    height: height * 0.165,
+                    width: width * 0.36,
                     decoration: ShapeDecoration(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -358,11 +357,11 @@ class Menu2Screen extends StatelessWidget {
 
               //ปุ่มล่างสุด ซ้าย
               Positioned(
-                  top: 690,
-                  left: 25,
+                  bottom: height * 0.01, // 3% จากด้านล่าง
+                  left: width * 0.07,
                   child: Container(
-                    width: 50,
-                    height:45,
+                    width: width * 0.12, // 12% ของความกว้างหน้าจอ
+                    height: height * 0.05,
                     decoration: ShapeDecoration(
                       color: Color(0xFF34D396),
                       shape: RoundedRectangleBorder(
@@ -375,11 +374,11 @@ class Menu2Screen extends StatelessWidget {
 
               //ปุ่มล่างสุด ขวา
               Positioned(
-                  top: 690,
-                  right: 25,
+                  bottom: height * 0.01, // 3% จากด้านล่าง
+                  right: width * 0.07,
                   child: Container(
-                    width: 50,
-                    height:45,
+                    width: width * 0.12, // 12% ของความกว้างหน้าจอ
+                    height: height * 0.05,
                     decoration: ShapeDecoration(
                       color: Color(0xFF34D396),
                       shape: RoundedRectangleBorder(

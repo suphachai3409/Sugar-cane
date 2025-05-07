@@ -8,6 +8,9 @@ void main() {
 class Menu1Screen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -19,12 +22,12 @@ class Menu1Screen extends StatelessWidget {
             children: [
               // Container เขียว
               Positioned(
-                top: 250,
+                top: height * 0.3, // 30% ของความสูงหน้าจอ
                 left: 0,
                 right: 0,
                 child: Container(
-                  width: 380,
-                  height: 486,
+                  width: width * 0.9, // 90% ของความกว้างหน้าจอ
+                  height: height * 0.5,
                   decoration: ShapeDecoration(
                     color: Color(0xFF34D396),
                     shape: RoundedRectangleBorder(
@@ -36,11 +39,11 @@ class Menu1Screen extends StatelessWidget {
 
               // Container ฟ้า
               Positioned(
-                top: 20,
-                left: 22,
+                top: height * 0.02, // 2% ของความสูงหน้าจอ
+                left: width * 0.01, // 5% ของความกว้างหน้าจอ
                 child: Container(
-                  width: 334,
-                  height: 200,
+                  width: width * 0.9, // 90% ของความกว้างหน้าจอ
+                  height: height * 0.25,
                   padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 19),
                   decoration: ShapeDecoration(
                     gradient: LinearGradient(
@@ -55,58 +58,33 @@ class Menu1Screen extends StatelessWidget {
                 ),
               ),
 
-              // Container ปุ่ม
-              Positioned(
-                top: 680,
-                left: 10,
-                right: 10,
-                child: Container(
-                  width: 363,
-                  height: 73,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(83.50),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x7F646464),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
 
-              Positioned(  //
-                top: 260,
-                left: 130,
-                child: SizedBox(
-                  width: 114,
-                  height: 23,
+
+              // Text 'Main menu'
+              Positioned(
+                top: height * 0.31, // 31% ของความสูงหน้าจอ
+                left: 0,
+                right: 0,
+                child: Center(
                   child: Text(
                     'Main menu',
                     style: TextStyle(
                       color: Color(0xFF25624B),
-                      fontSize: 20,
+                      fontSize: width * 0.055, // 5% ของความกว้างหน้าจอ
                       fontFamily: 'Roboto',
                       fontWeight: FontWeight.w500,
-                      height: 0,
                     ),
                   ),
                 ),
               ),
-
 
 
 
 
               //แปลงไร่
               Positioned(
-                top: 320,
-                left: 20,
+                top: height * 0.36,
+                left: width * 0.06,
                 child: GestureDetector(
                   onTap: () {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
@@ -116,8 +94,8 @@ class Menu1Screen extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    width: 149,
-                    height: 133,
+                    height: height * 0.165,
+                    width: width * 0.36,
                     decoration: ShapeDecoration(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -166,11 +144,11 @@ class Menu1Screen extends StatelessWidget {
 
               // คนงาน
               Positioned(
-                top: 320,
-                right: 20,
+                top: height * 0.36,
+                right: width * 0.06,
                 child: Container(
-                  width: 149, // ขนาดของกล่อง
-                  height: 133,
+                  height: height * 0.165,
+                  width: width * 0.36,
                   decoration: ShapeDecoration(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -218,11 +196,11 @@ class Menu1Screen extends StatelessWidget {
 
               //ลูกไร่
               Positioned(
-                top: 500,
-                left: 20,
+                top: height * 0.57,
+                left: width * 0.06,
                 child: Container(
-                  width: 149, // ขนาดของกล่อง
-                  height: 133,
+                  height: height * 0.165,
+                  width: width * 0.36,
                   decoration: ShapeDecoration(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -269,11 +247,11 @@ class Menu1Screen extends StatelessWidget {
 
 //อุปกรณ์
               Positioned(
-                top: 500,
-                right: 20,
+                top: height * 0.57,
+                right: width * 0.06,
                 child: Container(
-                  width: 149, // ขนาดของกล่อง
-                  height: 133,
+                  height: height * 0.165,
+                  width: width * 0.36,
                   decoration: ShapeDecoration(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -317,13 +295,41 @@ class Menu1Screen extends StatelessWidget {
               ),
 
 
+
+              // Container ปุ่ม
+              Positioned(
+                bottom: height * 0, // 2% จากด้านล่าง
+                left: width * 0.03, // 3% จากด้านซ้าย
+                right: width * 0.03,
+                child: Container(
+                  height: height * 0.07,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(83.50),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x7F646464),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                        spreadRadius: 0,
+                      )
+                    ],
+                  ),
+                ),
+              ),
+
+
+
+
               //ปุ่มล่างสุด ซ้าย
               Positioned(
-                  top: 690,
-                  left: 25,
+                  bottom: height * 0.01, // 3% จากด้านล่าง
+                  left: width * 0.07,
                   child: Container(
-                    width: 50,
-                    height:45,
+                    width: width * 0.12, // 12% ของความกว้างหน้าจอ
+                    height: height * 0.05,
                     decoration: ShapeDecoration(
                       color: Color(0xFF34D396),
                       shape: RoundedRectangleBorder(
@@ -336,11 +342,11 @@ class Menu1Screen extends StatelessWidget {
 
               //ปุ่มล่างสุด ขวา
               Positioned(
-                  top: 690,
-                  right: 25,
+                  bottom: height * 0.01, // 3% จากด้านล่าง
+                  right: width * 0.07,
                   child: Container(
-                    width: 50,
-                    height:45,
+                    width: width * 0.12, // 12% ของความกว้างหน้าจอ
+                    height: height * 0.05,
                     decoration: ShapeDecoration(
                       color: Color(0xFF34D396),
                       shape: RoundedRectangleBorder(
@@ -349,6 +355,7 @@ class Menu1Screen extends StatelessWidget {
                     ),
                   )
               ),
+
 
             ],
           ),
