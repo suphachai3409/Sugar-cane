@@ -1,11 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'weather_widget.dart';
 import 'plot1.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('th_TH', null);
   runApp(Menu2Screen());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
 }
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Farm Management App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        fontFamily: 'Kanit', // ฟอนต์ภาษาไทย
+      ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('th', 'TH'), // Thai
+        Locale('en', 'US'), // English
+      ],
+      home: const Menu2Screen(),
+    );
+  }
+}
 class Menu2Screen extends StatelessWidget {
+  const Menu2Screen({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -16,6 +47,7 @@ class Menu2Screen extends StatelessWidget {
       home: Scaffold(
         appBar: AppBar(
           title: Text('ลูกไร่'),
+          automaticallyImplyLeading: false,
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -38,25 +70,11 @@ class Menu2Screen extends StatelessWidget {
                 ),
               ),
 
-              // Container ฟ้า
+              // WeatherWidget - widget สภาพอากาศ
               Positioned(
-                top: height * 0.02, // 2% ของความสูงหน้าจอ
-                left: width * 0.01, // 5% ของความกว้างหน้าจอ
-                child: Container(
-                  width: width * 0.9, // 90% ของความกว้างหน้าจอ
-                  height: height * 0.25,
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 19),
-                  decoration: ShapeDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment(0.98, -0.20),
-                      end: Alignment(-0.98, 0.2),
-                      colors: [Color(0xFF325FD1), Color(0xFF4F7EF9)],
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
+                top: height * 0.02,
+                left: width * 0.05,
+                child: const WeatherWidget(),
               ),
 
               // Container ปุ่มขาว

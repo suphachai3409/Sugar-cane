@@ -1,10 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'weather_widget.dart';
 import 'plot1.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
-  runApp(Menu3Screen());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('th_TH', null);
+  runApp(Menu3Screen()); // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
 }
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Farm Management App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        fontFamily: 'Kanit', // ฟอนต์ภาษาไทย
+      ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('th', 'TH'), // Thai
+        Locale('en', 'US'), // English
+      ],
+      home: const Menu3Screen(),
+    );
+  }
+}
+
 class Menu3Screen extends StatelessWidget {
+  const Menu3Screen({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -36,29 +70,12 @@ class Menu3Screen extends StatelessWidget {
                 ),
               ),
 
-              // Container ฟ้า
+              // WeatherWidget - widget สภาพอากาศ
               Positioned(
-                top: height * 0.02, // 2% ของความสูงหน้าจอ
-                left: width * 0.01, // 5% ของความกว้างหน้าจอ
-                child: Container(
-                  width: width * 0.9, // 90% ของความกว้างหน้าจอ
-                  height: height * 0.25,
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 19),
-                  decoration: ShapeDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment(0.98, -0.20),
-                      end: Alignment(-0.98, 0.2),
-                      colors: [Color(0xFF325FD1), Color(0xFF4F7EF9)],
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
+                top: height * 0.02,
+                left: width * 0.05,
+                child: const WeatherWidget(),
               ),
-
-
-
 
               // Text 'Main menu'
               Positioned(
@@ -78,9 +95,6 @@ class Menu3Screen extends StatelessWidget {
                 ),
               ),
 
-
-
-
               //แปลงไร่
               Positioned(
                 top: height * 0.38,
@@ -90,7 +104,8 @@ class Menu3Screen extends StatelessWidget {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                      MaterialPageRoute(
+                          builder: (context) => Plot1Screen()), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
@@ -139,24 +154,17 @@ class Menu3Screen extends StatelessWidget {
                 ),
               ),
 
-
-
-
-
-
-
-
-
               //อุปกรณ์
               Positioned(
                 top: height * 0.38,
-                right:  width * 0.06,
+                right: width * 0.06,
                 child: GestureDetector(
                   onTap: () {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                      MaterialPageRoute(
+                          builder: (context) => Plot1Screen()), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
@@ -205,22 +213,17 @@ class Menu3Screen extends StatelessWidget {
                 ),
               ),
 
-
-
-
-
-
-
               //เบิกเงินทุน
               Positioned(
                 top: height * 0.60,
-                right:  width * 0.28,
+                right: width * 0.28,
                 child: GestureDetector(
                   onTap: () {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                      MaterialPageRoute(
+                          builder: (context) => Plot1Screen()), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
@@ -269,9 +272,6 @@ class Menu3Screen extends StatelessWidget {
                 ),
               ),
 
-
-
-
               // Container ปุ่ม
               Positioned(
                 bottom: height * 0, // 2% จากด้านล่าง
@@ -296,9 +296,6 @@ class Menu3Screen extends StatelessWidget {
                 ),
               ),
 
-
-
-
               //ปุ่มล่างสุด ซ้าย
               Positioned(
                   bottom: height * 0.01, // 3% จากด้านล่าง
@@ -312,9 +309,7 @@ class Menu3Screen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(38),
                       ),
                     ),
-                  )
-              ),
-
+                  )),
 
               //ปุ่มล่างสุด ขวา
               Positioned(
@@ -329,9 +324,7 @@ class Menu3Screen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(38),
                       ),
                     ),
-                  )
-              ),
-
+                  )),
             ],
           ),
         ),
