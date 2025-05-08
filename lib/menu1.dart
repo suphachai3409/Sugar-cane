@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart'; // สำหรับภาษาไทย
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'weather_widget.dart';
 import 'plot1.dart';
 import 'package:intl/date_symbol_data_local.dart';
-void main() async{
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('th_TH', null);
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -18,7 +20,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.green,
-        fontFamily: 'Kanit', // ถ้าต้องการใช้ฟอนต์ภาษาไทย
+        fontFamily: 'Kanit', // ฟอนต์ภาษาไทย
       ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -39,25 +41,30 @@ class Menu1Screen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ขนาดหน้าจอสำหรับการสร้าง responsive layout
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('เจ้าของ'),
+        title: const Text('เจ้าของ'),
         automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Stack(
           children: [
-            // Container เขียว
+            // Container เขียว - พื้นหลัง
             Positioned(
-              top: 250,
+              top: height * 0.3,
               left: 0,
               right: 0,
               child: Container(
-                width: 380,
-                height: 486,
+                width: width * 0.9,
+                height: height * 0.5,
                 decoration: ShapeDecoration(
-                  color: Color(0xFF34D396),
+                  color: const Color(0xFF34D396),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
@@ -65,61 +72,35 @@ class Menu1Screen extends StatelessWidget {
               ),
             ),
 
-            // Container ฟ้าที่มี WeatherWidget
+            // WeatherWidget - widget สภาพอากาศ
             Positioned(
-              top: 20,
-              left: 22,
-              child: const WeatherWidget(), // ใช้ WeatherWidget แทน Container เดิม
+              top: height * 0.02,
+              left: width * 0.05,
+              child: const WeatherWidget(),
             ),
 
-            // Container ปุ่ม
+            // หัวข้อ Main menu
             Positioned(
-              top: 680,
-              left: 10,
-              right: 10,
-              child: Container(
-                width: 363,
-                height: 73,
-                decoration: ShapeDecoration(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(83.50),
-                  ),
-                  shadows: [
-                    BoxShadow(
-                      color: Color(0x7F646464),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                      spreadRadius: 0,
-                    )
-                  ],
-                ),
-              ),
-            ),
-
-            Positioned(
-              top: 260,
-              left: 130,
-              child: SizedBox(
-                width: 114,
-                height: 23,
+              top: height * 0.31,
+              left: 0,
+              right: 0,
+              child: Center(
                 child: Text(
                   'Main menu',
                   style: TextStyle(
-                    color: Color(0xFF25624B),
-                    fontSize: 20,
+                    color: const Color(0xFF25624B),
+                    fontSize: width * 0.055,
                     fontFamily: 'Roboto',
                     fontWeight: FontWeight.w500,
-                    height: 0,
                   ),
                 ),
               ),
             ),
 
-            //แปลงไร่
+            // ปุ่มแปลงปลูก
             Positioned(
-              top: 320,
-              left: 20,
+              top: height * 0.36,
+              left: width * 0.06,
               child: GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -128,14 +109,14 @@ class Menu1Screen extends StatelessWidget {
                   );
                 },
                 child: Container(
-                  width: 149,
-                  height: 133,
+                  height: height * 0.165,
+                  width: width * 0.36,
                   decoration: ShapeDecoration(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(19),
                     ),
-                    shadows: [
+                    shadows: const [
                       BoxShadow(
                         color: Color(0x3F000000),
                         blurRadius: 4,
@@ -152,15 +133,15 @@ class Menu1Screen extends StatelessWidget {
                           child: Image.asset(
                             'assets/kid.png',
                             fit: BoxFit.cover,
-                            width: 149,
+                            width: double.infinity,
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Text(
                             'แปลงปลูก',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: width * 0.045,
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
@@ -173,19 +154,19 @@ class Menu1Screen extends StatelessWidget {
               ),
             ),
 
-            // คนงาน
+            // ปุ่มคนงาน
             Positioned(
-              top: 320,
-              right: 20,
+              top: height * 0.36,
+              right: width * 0.06,
               child: Container(
-                width: 149,
-                height: 133,
+                height: height * 0.165,
+                width: width * 0.36,
                 decoration: ShapeDecoration(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(19),
                   ),
-                  shadows: [
+                  shadows: const [
                     BoxShadow(
                       color: Color(0x3F000000),
                       blurRadius: 4,
@@ -202,15 +183,15 @@ class Menu1Screen extends StatelessWidget {
                         child: Image.asset(
                           'assets/worker.jpg',
                           fit: BoxFit.cover,
-                          width: 149,
+                          width: double.infinity,
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Text(
                           'คนงาน',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: width * 0.045,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
@@ -222,19 +203,19 @@ class Menu1Screen extends StatelessWidget {
               ),
             ),
 
-            //ลูกไร่
+            // ปุ่มลูกไร่
             Positioned(
-              top: 500,
-              left: 20,
+              top: height * 0.57,
+              left: width * 0.06,
               child: Container(
-                width: 149,
-                height: 133,
+                height: height * 0.165,
+                width: width * 0.36,
                 decoration: ShapeDecoration(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(19),
                   ),
-                  shadows: [
+                  shadows: const [
                     BoxShadow(
                       color: Color(0x3F000000),
                       blurRadius: 4,
@@ -251,15 +232,15 @@ class Menu1Screen extends StatelessWidget {
                         child: Image.asset(
                           'assets/human1.png',
                           fit: BoxFit.cover,
-                          width: 149,
+                          width: double.infinity,
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Text(
                           'ลูกไร่',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: width * 0.045,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
@@ -271,19 +252,19 @@ class Menu1Screen extends StatelessWidget {
               ),
             ),
 
-            //อุปกรณ์
+            // ปุ่มอุปกรณ์
             Positioned(
-              top: 500,
-              right: 20,
+              top: height * 0.57,
+              right: width * 0.06,
               child: Container(
-                width: 149,
-                height: 133,
+                height: height * 0.165,
+                width: width * 0.36,
                 decoration: ShapeDecoration(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(19),
                   ),
-                  shadows: [
+                  shadows: const [
                     BoxShadow(
                       color: Color(0x3F000000),
                       blurRadius: 4,
@@ -300,15 +281,15 @@ class Menu1Screen extends StatelessWidget {
                         child: Image.asset(
                           'assets/trackter.png',
                           fit: BoxFit.cover,
-                          width: 149,
+                          width: double.infinity,
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Text(
                           'อุปกรณ์',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: width * 0.045,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
@@ -320,44 +301,68 @@ class Menu1Screen extends StatelessWidget {
               ),
             ),
 
-            //ปุ่มล่างสุด ซ้าย
+            // Container สำหรับ Navigation bar ด้านล่าง
             Positioned(
-                top: 690,
-                left: 25,
-                child: Container(
-                  width: 50,
-                  height: 45,
-                  decoration: ShapeDecoration(
-                    color: Color(0xFF34D396),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(38),
-                    ),
+              bottom: height * 0.01,
+              left: width * 0.03,
+              right: width * 0.03,
+              child: Container(
+                height: height * 0.07,
+                decoration: ShapeDecoration(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(83.50),
                   ),
-                  child: const Icon(
-                    Icons.home,
-                    color: Colors.white,
-                  ),
-                )
+                  shadows: const [
+                    BoxShadow(
+                      color: Color(0x7F646464),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                      spreadRadius: 0,
+                    )
+                  ],
+                ),
+              ),
             ),
 
-            //ปุ่มล่างสุด ขวา
+            // ปุ่ม Home
             Positioned(
-                top: 690,
-                right: 25,
-                child: Container(
-                  width: 50,
-                  height: 45,
-                  decoration: ShapeDecoration(
-                    color: Color(0xFF34D396),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(38),
-                    ),
+              bottom: height * 0.015,
+              left: width * 0.07,
+              child: Container(
+                width: width * 0.12,
+                height: height * 0.055,
+                decoration: ShapeDecoration(
+                  color: const Color(0xFF34D396),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(38),
                   ),
-                  child: const Icon(
-                    Icons.settings,
-                    color: Colors.white,
+                ),
+                child: const Icon(
+                  Icons.home,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            // ปุ่ม Settings
+            Positioned(
+              bottom: height * 0.015,
+              right: width * 0.07,
+              child: Container(
+                width: width * 0.12,
+                height: height * 0.055,
+                decoration: ShapeDecoration(
+                  color: const Color(0xFF34D396),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(38),
                   ),
-                )
+                ),
+                child: const Icon(
+                  Icons.settings,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),
