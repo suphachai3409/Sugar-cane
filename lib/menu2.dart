@@ -373,37 +373,44 @@ class Menu2Screen extends StatelessWidget {
 
 
 
-              //ปุ่มล่างสุด ซ้าย
+              // ปุ่ม Home
               Positioned(
-                  bottom: height * 0.01, // 3% จากด้านล่าง
-                  left: width * 0.07,
-                  child: Container(
-                    width: width * 0.12, // 12% ของความกว้างหน้าจอ
-                    height: height * 0.05,
-                    decoration: ShapeDecoration(
-                      color: Color(0xFF34D396),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(38),
-                      ),
+                bottom: height * 0.018,
+                left: width * 0.07,
+                child: Container(
+                  width: width * 0.12,
+                  height: height * 0.055,
+                  decoration: ShapeDecoration(
+                    color: const Color(0xFF34D396),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
                     ),
-                  )
+                  ),
+                  child: const Icon(
+                    Icons.home,
+                    color: Colors.white,
+                  ),
+                ),
               ),
 
-
-              //ปุ่มล่างสุด ขวา
+              // ปุ่ม Settings
               Positioned(
-                  bottom: height * 0.01, // 3% จากด้านล่าง
-                  right: width * 0.07,
-                  child: Container(
-                    width: width * 0.12, // 12% ของความกว้างหน้าจอ
-                    height: height * 0.05,
-                    decoration: ShapeDecoration(
-                      color: Color(0xFF34D396),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(38),
-                      ),
+                bottom: height * 0.018,
+                right: width * 0.07,
+                child: Container(
+                  width: width * 0.12,
+                  height: height * 0.055,
+                  decoration: ShapeDecoration(
+                    color: const Color(0xFF34D396),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
                     ),
-                  )
+                  ),
+                  child: const Icon(
+                    Icons.settings,
+                    color: Colors.white,
+                  ),
+                ),
               ),
 
             ],

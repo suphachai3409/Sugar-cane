@@ -327,7 +327,7 @@ class Menu1Screen extends StatelessWidget {
 
             // ปุ่ม Home
             Positioned(
-              bottom: height * 0.015,
+              bottom: height * 0.018,
               left: width * 0.07,
               child: Container(
                 width: width * 0.12,
@@ -347,7 +347,7 @@ class Menu1Screen extends StatelessWidget {
 
             // ปุ่ม Settings
             Positioned(
-              bottom: height * 0.015,
+              bottom: height * 0.018,
               right: width * 0.07,
               child: Container(
                 width: width * 0.12,
