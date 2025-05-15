@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'weather_widget.dart';
-import 'plot1.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {

@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'weather_service.dart';
 import 'location_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 class WeatherWidget extends StatefulWidget {

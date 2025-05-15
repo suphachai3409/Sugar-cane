@@ -6,11 +6,18 @@ import 'weather_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   await initializeDateFormatting('th_TH', null);
-  runApp(sugarcanedata()); // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
+  runApp(sugarcanedata());
 }
 
 class MyApp extends StatelessWidget {
@@ -19,7 +26,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Farm Management App',
+      title: 'ระบบจัดการบริหารไร่อ้อย',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.green,
@@ -51,6 +58,34 @@ class sugarcanedata extends StatelessWidget {
         home: HomeScreen(),
       ),
     );
+  }
+}
+
+// ยูทิลิตี้คลาสสำหรับไอคอน
+class TopicIcons {
+  // ไอคอนตามประเภทกิจกรรม
+  static IconData getIconForTopic(String topic) {
+    if (topic.contains("วิเคราะห์ดิน")) return MdiIcons.microscope;
+    if (topic.contains("บำรุงดิน")) return MdiIcons.sprout;
+    if (topic.contains("ไถดินดาน")) return MdiIcons.terrain;
+    if (topic.contains("ไถดะ")) return MdiIcons.landPlots;
+    if (topic.contains("ไถแปร")) return MdiIcons.tractor;
+    if (topic.contains("ไถดิน")) return MdiIcons.tractor;
+    if (topic.contains("ใส่ปุ๋ยรองพื้น")) return MdiIcons.seedOutline;
+    if (topic.contains("ใส่ปุ๋ยทำรุ่น")) return MdiIcons.flowerOutline;
+    if (topic.contains("ใส่ปุ๋ยแต่งหน้า")) return MdiIcons.nature;
+    if (topic.contains("ปุ๋ย")) return MdiIcons.seedOutline;
+    if (topic.contains("ฉีดยาคุมวัชพืช")) return MdiIcons.spray;
+    if (topic.contains("ฉีดยาหลังวัชพืชงอก")) return MdiIcons.bottleTonicPlus;
+    if (topic.contains("กำจัดวัชพืช")) return MdiIcons.naturePeople;
+    if (topic.contains("วัชพืช")) return MdiIcons.spray;
+    if (topic.contains("เริ่มเก็บเกี่ยว")) return MdiIcons.contentCut;
+    if (topic.contains("เก็บเกี่ยว")) return MdiIcons.contentCut;
+    if (topic.contains("ขายผลผลิต")) return MdiIcons.cash;
+    if (topic.contains("ขาย")) return MdiIcons.cash;
+
+    // ค่าเริ่มต้นถ้าไม่พบประเภท
+    return MdiIcons.sprout;
   }
 }
 
@@ -104,6 +139,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // ตำแหน่งของ Container สีเขียว ซึ่งสามารถปรับได้ด้วยการลากแถบ
+  double _greenContainerTop = 0.3;
+  // ความสูงของ Container สีเขียว
+  double _greenContainerHeight = 0.5;
+
+  // ค่าเริ่มต้นสำหรับ Y offset เมื่อเริ่มการลาก
+  double? _startDragYOffset;
+  // ค่าเริ่มต้นของตำแหน่ง Container เมื่อเริ่มการลาก
+  double? _startDragContainerPosition;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -142,83 +187,151 @@ class _HomeScreenState extends State<HomeScreen> {
               left: width * 0.05,
               child: const WeatherWidget(),
             ),
-            // Main green container as background for content
+
+            // กล่องสีเขียวหลัก
             Positioned(
-              top: height * 0.3,
+              top: height * _greenContainerTop,
               left: 0,
               right: 0,
-              child: Container(
-                width: width * 0.9,
-                height: height * 0.5,
-                decoration: ShapeDecoration(
-                  color: const Color(0xFF34D396),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-                // Now tabs will be placed inside this container
-                child: Padding(
-                  padding: EdgeInsets.only(top: 10),
-                  child: DefaultTabController(
-                    length: 3,
-                    child: Column(
-                      children: [
-                        // Tab controls inside green container
-                        Container(
-                          margin: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                children: [
+                  // แถบสำหรับลาก (Drag Handle)
+                  GestureDetector(
+                    onVerticalDragStart: (details) {
+                      // บันทึกตำแหน่งเริ่มต้นเมื่อเริ่มลาก
+                      _startDragYOffset = details.globalPosition.dy;
+                      _startDragContainerPosition = _greenContainerTop;
+                    },
+                    onVerticalDragUpdate: (details) {
+                      if (_startDragYOffset != null && _startDragContainerPosition != null) {
+                        // คำนวณระยะที่เปลี่ยนแปลงในแนวดิ่ง
+                        final dragDelta = details.globalPosition.dy - _startDragYOffset!;
+
+                        // คำนวณตำแหน่งใหม่ของ Container
+                        double newPosition = _startDragContainerPosition! + (dragDelta / height);
+
+                        // จำกัดตำแหน่งไม่ให้เลื่อนเกินขอบเขตที่กำหนด
+                        if (newPosition < 0) newPosition = 0; // ไม่เลื่อนขึ้นเกินส่วนบนของหน้าจอ
+                        if (newPosition > 0.3) newPosition = 0.3;   // ไม่เลื่อนลงเกินครึ่งหน้าจอ
+
+                        setState(() {
+                          _greenContainerTop = newPosition;
+                          // ปรับความสูงของ Container ตามตำแหน่ง
+                          _greenContainerHeight = 0.8 - newPosition;
+                        });
+                      }
+                    },
+                    onVerticalDragEnd: (_) {
+                      // รีเซ็ตค่าเริ่มต้นเมื่อสิ้นสุดการลาก
+                      _startDragYOffset = null;
+                      _startDragContainerPosition = null;
+                    },
+                    child: Container(
+                      width: width * 0.9,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF34D396),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(18),
+                          topRight: Radius.circular(18),
+                        ),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0),
+                            color: Color(0xFF25634B),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: TabBar(
-                            indicator: BoxDecoration(
-                              color: Color(0xFF25634B),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            labelColor: Colors.white,
-                            unselectedLabelColor: Color(0xFF25634B),
-                            labelStyle: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                            dividerColor: Colors.transparent,
-                            tabs: [
-                              Tab(icon: Icon(Icons.history), text: "ประวัติ"),
-                              Tab(icon: Icon(Icons.lightbulb), text: "แนะนำ"),
-                              Tab(icon: Icon(Icons.info), text: "ข้อมูลแปลง"),
-                            ],
-                          ),
                         ),
-                        SizedBox(height: 0),
-                        // Tab views inside green container
-                        Expanded(
-                          child: TabBarView(
-                            children: [
-                              HistoryTab(),
-                              SuggestionTab(),
-                              Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "ข้อมูลแปลง",
-                                      style: TextStyle(
-                                          fontSize: 18, color: Colors.white),
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      "ยังไม่มีข้อมูลแปลง",
-                                      style: TextStyle(
-                                          fontSize: 16, color: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+
+                  // ส่วนหลักของ Container สีเขียว
+                  Container(
+                    width: width * 0.9,
+                    height: height * _greenContainerHeight,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF34D396),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(18),
+                        bottomRight: Radius.circular(18),
+                      ),
+                    ),
+                    // แท็บที่จะถูกวางภายใน container นี้
+                    child: DefaultTabController(
+                      length: 3,
+                      child: Column(
+                        children: [
+                          // ส่วนควบคุมแท็บ
+                          Container(
+                            margin: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: TabBar(
+                              indicator: BoxDecoration(
+                                color: Color(0xFF25634B),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              labelColor: Colors.white,
+                              unselectedLabelColor: Color(0xFF25634B),
+                              labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              dividerColor: Colors.transparent,
+                              tabs: [
+                                Tab(
+                                  icon: Icon(Icons.history),
+                                  text: "ประวัติ",
+                                  iconMargin: EdgeInsets.only(bottom: 4),
+                                ),
+                                Tab(
+                                  icon: Icon(Icons.lightbulb),
+                                  text: "แนะนำ",
+                                  iconMargin: EdgeInsets.only(bottom: 4),
+                                ),
+                                Tab(
+                                  icon: Icon(Icons.info),
+                                  text: "ข้อมูลแปลง",
+                                  iconMargin: EdgeInsets.only(bottom: 4),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // มุมมองแท็บ
+                          Expanded(
+                            child: TabBarView(
+                              children: [
+                                HistoryTab(),
+                                SuggestionTab(),
+                                Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "ข้อมูลแปลง",
+                                        style: TextStyle(
+                                            fontSize: 18, color: Color(0xFF25634B)),
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        "ยังไม่มีข้อมูลแปลง",
+                                        style: TextStyle(
+                                            fontSize: 16, color: Color(0xFF25634B)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -292,25 +405,121 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// แท็บแนะนำ
 class SuggestionTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<SoilAnalysisProvider>(builder: (context, provider, child) {
-      return ListView.builder(
-        padding: EdgeInsets.all(20),
-        itemCount: _topics.length,
-        itemBuilder: (context, index) {
-          final topic = _topics[index];
-          // ตรวจสอบว่าหัวข้อนี้มีการบันทึกแล้วหรือไม่
-          final isSaved = provider.isTopicSaved(topic);
+      // จัดกลุ่มหัวข้อตามประเภทกิจกรรม
+      final Map<String, List<TopicItem>> groupedTopics = {
+        'การเตรียมดิน': [
+          TopicItem('วิเคราะห์ดิน', MdiIcons.microscope, 'เพื่อตรวจสอบคุณภาพและความอุดมสมบูรณ์ของดิน'),
+          TopicItem('บำรุงดิน', MdiIcons.sprout, 'เพิ่มธาตุอาหารและปรับปรุงโครงสร้างดิน'),
+          TopicItem('ไถดินดาน', MdiIcons.terrain, 'แก้ไขปัญหาดินแน่นและระบายน้ำไม่ดี'),
+          TopicItem('ไถดะ', MdiIcons.landPlots, 'ไถครั้งแรกเพื่อพลิกหน้าดิน'),
+          TopicItem('ไถแปร', MdiIcons.tractor, 'ไถครั้งที่สองตัดแนวไถดะ'),
+          TopicItem('ไถดิน', MdiIcons.tractor, 'การไถเตรียมดินก่อนปลูก'),
+        ],
+        'การใส่ปุ๋ย': [
+          TopicItem('ใส่ปุ๋ยรองพื้น', MdiIcons.seedOutline, 'ใส่ปุ๋ยก่อนการปลูกเพื่อเตรียมธาตุอาหาร'),
+          TopicItem('ใส่ปุ๋ยทำรุ่น', MdiIcons.flowerOutline, 'ใส่ปุ๋ยช่วงอ้อยเริ่มเจริญเติบโต'),
+          TopicItem('ใส่ปุ๋ยแต่งหน้า', MdiIcons.nature, 'ใส่ปุ๋ยช่วงอ้อยเจริญเติบโตเต็มที่'),
+        ],
+        'การจัดการวัชพืช': [
+          TopicItem('ฉีดยาคุมวัชพืช', MdiIcons.spray, 'ฉีดพ่นสารเคมีกำจัดวัชพืช'),
+          TopicItem('ฉีดยาหลังวัชพืชงอก', MdiIcons.bottleTonicPlus, 'ฉีดพ่นสารเคมีหลังวัชพืชงอก'),
+          TopicItem('กำจัดวัชพืช', MdiIcons.naturePeople, 'กำจัดวัชพืชโดยวิธีต่างๆ'),
+        ],
+        'การเก็บเกี่ยว': [
+          TopicItem('เริ่มเก็บเกี่ยว', MdiIcons.contentCut, 'เก็บเกี่ยวผลผลิตอ้อย'),
+          TopicItem('ขายผลผลิต', MdiIcons.cash, 'การจำหน่ายผลผลิตอ้อย'),
+        ],
+      };
 
-          return _buildOptionCard(topic, context, isSaved);
-        },
+      return SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        physics: BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // คำแนะนำการใช้งาน
+            Container(
+              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.lightbulb, color: Color(0xFF25634B)),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'เลือกกิจกรรมที่คุณต้องการบันทึกข้อมูล',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // แสดงหัวข้อตามกลุ่ม
+            ...groupedTopics.entries.map((entry) {
+              return _buildTopicGroup(entry.key, entry.value, provider, context);
+            }).toList(),
+          ],
+        ),
       );
     });
   }
 
-  Widget _buildOptionCard(String text, BuildContext context, bool isSaved) {
+  // สร้างกลุ่มหัวข้อ
+  Widget _buildTopicGroup(String groupTitle, List<TopicItem> topics, SoilAnalysisProvider provider, BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // หัวข้อกลุ่ม
+        Container(
+          margin: EdgeInsets.only(bottom: 12, top: 8),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Color(0xFF25634B),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            groupTitle,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+
+        // รายการในกลุ่ม
+        ...topics.map((topic) {
+          final isSaved = provider.isTopicSaved(topic.title);
+          return _buildOptionCard(topic, context, isSaved);
+        }).toList(),
+
+        SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildOptionCard(TopicItem topic, BuildContext context, bool isSaved) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -324,9 +533,8 @@ class SuggestionTab extends StatelessWidget {
           final currentDate = formatter.format(now);
 
           // ตรวจสอบว่ามีข้อมูลเดิมหรือไม่
-          final provider =
-              Provider.of<SoilAnalysisProvider>(context, listen: false);
-          final existingAnalysis = provider.getAnalysisByTopic(text);
+          final provider = Provider.of<SoilAnalysisProvider>(context, listen: false);
+          final existingAnalysis = provider.getAnalysisByTopic(topic.title);
 
           if (existingAnalysis != null) {
             // ถ้ามีข้อมูลอยู่แล้ว ให้เปิดหน้าแก้ไข
@@ -334,7 +542,7 @@ class SuggestionTab extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => AnalyzeSoilScreen(
-                  topic: text,
+                  topic: topic.title,
                   date: existingAnalysis.date,
                   image: existingAnalysis.image,
                   message: existingAnalysis.message,
@@ -349,34 +557,67 @@ class SuggestionTab extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => AnalyzeSoilScreen(
-                  topic: text,
+                  topic: topic.title,
                   date: currentDate,
                 ),
               ),
             );
           }
         },
-        child: Stack(
-          children: [
-            Center(
-              child: Padding(
-                padding: EdgeInsets.all(18),
-                child: Text(
-                  text,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Color(0xFF25634B)),
+        child: Container(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // ไอคอนที่เกี่ยวข้องกับหัวข้อ
+              Container(
+                width: 45,
+                height: 45,
+                decoration: BoxDecoration(
+                  color: Color(0xFF34D396).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  topic.icon,
+                  color: Color(0xFF25634B),
+                  size: 24,
                 ),
               ),
-            ),
-            // แสดงไอคอนติกถูกถ้ามีการบันทึกแล้ว
-            if (isSaved)
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Container(
+              SizedBox(width: 16),
+
+              // รายละเอียดหัวข้อ
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      topic.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF25634B),
+                      ),
+                    ),
+                    if (topic.description.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text(
+                          topic.description,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // สถานะการบันทึก
+              if (isSaved)
+                Container(
                   padding: EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.green,
+                    color: Color(0xFF25634B),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -384,31 +625,38 @@ class SuggestionTab extends StatelessWidget {
                     color: Colors.white,
                     size: 16,
                   ),
+                )
+              else
+                Container(
+                  padding: EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: Color(0xFF25634B),
+                    size: 16,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-
-  final List<String> _topics = [
-    "วิเคราะห์ดิน",
-    "บำรุงดิน",
-    "ไถดินดาน",
-    "ไถดะ",
-    "ไถแปร",
-    "ไถดิน",
-    "ใส่ปุ๋ยรองพื้น",
-    "ใส่ปุ๋ยกรุ่น",
-    "ใส่ปุ๋ยแต่งหน้า",
-    "ฉีดยาคุมวัชพืช",
-    "กำจัดวัชพืช",
-    "เริ่มเก็บเกี่ยว",
-    "ขายผลผลิต",
-  ];
 }
 
+// คลาสเก็บข้อมูลหัวข้อ
+class TopicItem {
+  final String title;
+  final IconData icon;
+  final String description;
+
+  TopicItem(this.title, this.icon, [this.description = '']);
+}
+
+// แท็บประวัติ
 class HistoryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -419,7 +667,7 @@ class HistoryTab extends StatelessWidget {
         return Center(
           child: Text(
             "ยังไม่มีประวัติการบันทึกข้อมูล",
-            style: TextStyle(color: Colors.white, fontSize: 18),
+            style: TextStyle(color: Color(0xFF25634B), fontSize: 18),
           ),
         );
       }
@@ -434,6 +682,7 @@ class HistoryTab extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 16.0),
             child: Card(
               elevation: 4,
+              color: Color(0xFF25634B),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               child: Padding(
@@ -443,12 +692,12 @@ class HistoryTab extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.calendar_today, color: Color(0xFF25634B)),
+                        Icon(Icons.calendar_today, color: Colors.white),
                         SizedBox(width: 8),
                         Text(
                           date,
                           style: TextStyle(
-                            color: Color(0xFF25634B),
+                            color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -472,16 +721,41 @@ class HistoryTab extends StatelessWidget {
   }
 
   Widget _buildAnalysisTile(SoilAnalysis analysis, BuildContext context) {
+    // เลือกไอคอนตามหัวข้อ
+    IconData topicIcon = MdiIcons.sprout;
+    if (analysis.topic.contains("วิเคราะห์")) {
+      topicIcon = MdiIcons.microscope;
+    } else if (analysis.topic.contains("ดิน")) {
+      topicIcon = MdiIcons.terrain;
+    } else if (analysis.topic.contains("ปุ๋ย")) {
+      topicIcon = MdiIcons.seedOutline;
+    } else if (analysis.topic.contains("วัชพืช")) {
+      topicIcon = MdiIcons.spray;
+    } else if (analysis.topic.contains("เก็บเกี่ยว")) {
+      topicIcon = MdiIcons.contentCut;
+    } else if (analysis.topic.contains("ขาย")) {
+      topicIcon = MdiIcons.cash;
+    }
+
     return Container(
       margin: EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: Color(0xFF34D396),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
+        leading: Icon(
+          topicIcon,
+          color: Color(0xFF25634B),
+        ),
         title: Text(
           analysis.topic,
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Color(0xFF25634B), fontWeight: FontWeight.bold),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          color: Color(0xFF25634B).withOpacity(0.7),
+          size: 16,
         ),
         onTap: () {
           Navigator.push(
@@ -536,6 +810,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   late TextEditingController _dateController;
   late TextEditingController _messageController;
   File? _image;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -546,155 +821,584 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   }
 
   Future<void> _takePicture() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 1200,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _image = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('เกิดข้อผิดพลาดในการถ่ายรูป'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
       setState(() {
-        _image = File(pickedFile.path);
+        _isLoading = false;
       });
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEditing ? "รายละเอียดข้อมูล" : "บันทึกข้อมูล"),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
+  // เลือกรูปจากแกลเลอรี่
+  Future<void> _pickImage() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1200,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _image = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('เกิดข้อผิดพลาดในการเลือกรูปภาพ'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _saveData() {
+    // ตรวจสอบว่าข้อความไม่ว่างเปล่า
+    if (_messageController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('กรุณากรอกข้อความ'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final analysis = SoilAnalysis(
+      date: _dateController.text,
+      image: _image,
+      topic: widget.topic,
+      message: _messageController.text,
+    );
+
+    if (widget.isEditing && widget.analysis != null) {
+      Provider.of<SoilAnalysisProvider>(context, listen: false)
+          .removeAnalysis(widget.analysis!);
+    }
+
+    Provider.of<SoilAnalysisProvider>(context, listen: false)
+        .addAnalysis(analysis);
+
+    // แสดงข้อความบันทึกสำเร็จ
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
           children: [
-            TextField(
-              controller: _dateController,
-              decoration: InputDecoration(labelText: 'วันที่'),
-              readOnly: true,
-              onTap: () async {
-                DateTime? selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (selectedDate != null) {
-                  setState(() {
-                    _dateController.text =
-                        "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
-                  });
-                }
-              },
-            ),
-            TextField(
-              controller: _messageController,
-              decoration: InputDecoration(labelText: 'ข้อความ'),
-              keyboardType: TextInputType.text,
-              style: TextStyle(fontFamily: 'Sarabun'),
-            ),
-            ElevatedButton(
-              onPressed: _takePicture,
-              child: Text("ถ่ายรูป"),
-            ),
-            SizedBox(height: 16),
-            // แสดงภาพถ่าย
-            if (_image != null)
-              Container(
-                width: 300,
-                height: 400,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                clipBehavior: Clip.hardEdge,
-                child: Image.file(
-                  _image!,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            SizedBox(height: 16),
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 10),
+            Text(widget.isEditing ? 'บันทึกการแก้ไขสำเร็จ' : 'บันทึกข้อมูลสำเร็จ'),
+          ],
+        ),
+        backgroundColor: Color(0xFF25634B),
+        duration: Duration(seconds: 2),
+      ),
+    );
 
-            ElevatedButton(
-              onPressed: () {
-                final analysis = SoilAnalysis(
-                  date: _dateController.text,
-                  image: _image,
-                  topic: widget.topic,
-                  message: _messageController.text,
-                );
+    Navigator.pop(context);
+  }
 
-                if (widget.isEditing) {
-                  Provider.of<SoilAnalysisProvider>(context, listen: false)
-                      .removeAnalysis(widget.analysis!);
-                }
-
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text("ยืนยันการลบ"),
+        content: Text("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // ปิด dialog
+            },
+            child: Text("ยกเลิก", style: TextStyle(color: Color(0xFF25634B))),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // ลบข้อมูลจาก Provider
+              if (widget.analysis != null) {
                 Provider.of<SoilAnalysisProvider>(context, listen: false)
-                    .addAnalysis(analysis);
+                    .removeAnalysis(widget.analysis!);
 
-                // แสดงข้อความบันทึกสำเร็จ
+                // แสดงข้อความลบสำเร็จ
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('บันทึกข้อมูลสำเร็จ'),
-                    backgroundColor: Colors.green,
+                    content: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.white),
+                        SizedBox(width: 10),
+                        Text('ลบข้อมูลสำเร็จ'),
+                      ],
+                    ),
+                    backgroundColor: Colors.redAccent,
                     duration: Duration(seconds: 2),
                   ),
                 );
+              }
 
-                Navigator.pop(context);
-              },
-              child: Text(widget.isEditing ? "บันทึกการแก้ไข" : "บันทึก"),
-            ),
-            if (widget.isEditing)
-              ElevatedButton(
-                onPressed: () {
-                  // แสดง dialog ยืนยันการลบ
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text("ยืนยันการลบ"),
-                      content: Text("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้?"),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context); // ปิด dialog
-                          },
-                          child: Text("ยกเลิก"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            // ลบข้อมูลจาก Provider
-                            Provider.of<SoilAnalysisProvider>(context,
-                                    listen: false)
-                                .removeAnalysis(widget.analysis!);
-
-                            // แสดงข้อความลบสำเร็จ
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('ลบข้อมูลสำเร็จ'),
-                                backgroundColor: Colors.redAccent,
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-
-                            Navigator.pop(context); // ปิด dialog
-                            Navigator.pop(context); // กลับไปที่หน้าก่อนหน้า
-                          },
-                          child: Text("ลบ"),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: Text("ลบ", style: TextStyle(color: Colors.white)),
+              Navigator.pop(context); // ปิด dialog
+              Navigator.pop(context); // กลับไปที่หน้าก่อนหน้า
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
-          ],
-        ),
+            ),
+            child: Text("ลบ", style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // เลือกไอคอนที่เหมาะสมกับหัวข้อ
+    final Map<String, IconData> topicIcons = {
+      "ดิน": Icons.terrain,
+      "ปุ๋ย": Icons.eco,
+      "วัชพืช": Icons.nature,
+      "เก็บเกี่ยว": Icons.content_cut,
+      "ขาย": Icons.monetization_on,
+      "น้ำ": Icons.water_drop,
+      "ตรวจวัด": Icons.analytics,
+      "ผลผลิต": Icons.agriculture,
+      "โรค": Icons.sick,
+    };
+
+    IconData topicIcon = Icons.spa; // Default icon
+    topicIcons.forEach((key, icon) {
+      if (widget.topic.contains(key)) {
+        topicIcon = icon;
+      }
+    });
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color(0xFF34D396),
+        elevation: 0,
+        title: Text(
+          widget.isEditing ? "รายละเอียด" : "บันทึกข้อมูล",
+          style: TextStyle(color: Color(0xFF25634B)),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Stack(
+        children: [
+          // พื้นหลังส่วนบน
+          Container(
+            height: 120,
+            width: double.infinity,
+            color: Color(0xFF34D396),
+          ),
+
+          // เนื้อหาหลัก
+          SingleChildScrollView(
+            physics: BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                // การ์ดหลัก
+                Container(
+                  margin: EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ส่วนหัวการ์ด
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF25634B),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                topicIcon,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.topic,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    widget.isEditing ? "แก้ไขข้อมูล" : "กรอกข้อมูลรายละเอียด",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // เนื้อหาการ์ด
+                      Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // วันที่
+                            Text(
+                              "วันที่",
+                              style: TextStyle(
+                                color: Color(0xFF25634B),
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            InkWell(
+                              onTap: () async {
+                                DateTime? selectedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2030),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: ThemeData.light().copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary: Color(0xFF25634B),
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (selectedDate != null) {
+                                  setState(() {
+                                    _dateController.text =
+                                    "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _dateController.text,
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.calendar_today,
+                                      color: Color(0xFF34D396),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 20),
+
+                            // ข้อความ
+                            Text(
+                              "ข้อความ",
+                              style: TextStyle(
+                                color: Color(0xFF25634B),
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            TextField(
+                              controller: _messageController,
+                              decoration: InputDecoration(
+                                hintText: "กรอกรายละเอียด...",
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: Color(0xFF34D396), width: 2),
+                                ),
+                              ),
+                              maxLines: 3,
+                              style: TextStyle(fontSize: 16, fontFamily: 'Kanit'), // เพิ่ม fontFamily: 'Kanit' เพื่อให้แน่ใจว่ารองรับภาษาไทย
+                              textCapitalization: TextCapitalization.sentences, // ช่วยในการพิมพ์เริ่มต้นประโยค
+                              textInputAction: TextInputAction.newline, // รองรับการขึ้นบรรทัดใหม่
+                              keyboardType: TextInputType.multiline, // รองรับการพิมพ์หลายบรรทัด
+                            ),
+                            SizedBox(height: 20),
+
+                            // ส่วนอัพโหลดรูปภาพ
+                            Text(
+                              "รูปภาพ",
+                              style: TextStyle(
+                                color: Color(0xFF25634B),
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                              ),
+                            ),
+                            SizedBox(height: 12),
+
+                            // ปุ่มกล้องและแกลเลอรี่
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: _takePicture,
+                                    icon: Icon(Icons.camera_alt),
+                                    label: Text("ถ่ายรูป"),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFF34D396),
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: _pickImage,
+                                    icon: Icon(Icons.photo_library),
+                                    label: Text("แกลเลอรี่"),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFF25634B),
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 20),
+
+                            // แสดงภาพถ่าย
+                            if (_image != null)
+                              Container(
+                                width: double.infinity,
+                                height: 250,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 5,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                clipBehavior: Clip.hardEdge,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Image.file(
+                                      _image!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    // ปุ่มลบรูปภาพ
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            _image = null;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(0.6),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Container(
+                                width: double.infinity,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_photo_alternate,
+                                      size: 40,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      "ยังไม่มีรูปภาพ",
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ปุ่มบันทึก
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: ElevatedButton(
+                    onPressed: _saveData,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF34D396),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      minimumSize: Size(double.infinity, 55),
+                    ),
+                    child: Text(
+                      widget.isEditing ? "บันทึกการแก้ไข" : "บันทึก",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+
+                // ปุ่มลบ (แสดงเฉพาะเมื่ออยู่ในโหมดแก้ไข)
+                if (widget.isEditing)
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ElevatedButton(
+                      onPressed: _confirmDelete,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.redAccent,
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.redAccent),
+                        ),
+                        minimumSize: Size(double.infinity, 55),
+                      ),
+                      child: Text(
+                        "ลบ",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+
+                SizedBox(height: 24),
+              ],
+            ),
+          ),
+
+          // แสดงตัวโหลดเมื่อกำลังประมวลผล
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              width: double.infinity,
+              height: double.infinity,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF34D396),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    _messageController.dispose();
+    super.dispose();
   }
 }
 
