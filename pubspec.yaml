@@ -39,6 +39,13 @@ flutter:
     - assets/พืชไร่.jpg
     - assets/ผลไม้.jpg
     - assets/พืชสวน.jpg
+    - assets/น้ำบาดาล.png
+    - assets/ขุดสระ.png
+    - assets/น้ำชลประทาน.png
+    - assets/ธรรมชาติ.png
+    - assets/ดินทราย.png
+    - assets/ดินเหนียว.png
+    - assets/ดินร่วน.png
 
 dependencies:
   flutter:

@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'plot1.dart';
 
 void main() {
-  runApp(Menu1Screen());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
+  runApp(Menu1Screen(userId: '',));  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
 }
 
 class Menu1Screen extends StatelessWidget {
+  final String userId; // เพิ่มตรงนี้
+
+  Menu1Screen({required this.userId}); // รับ userId ผ่าน constructor
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -90,7 +94,7 @@ class Menu1Screen extends StatelessWidget {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
@@ -245,7 +249,7 @@ class Menu1Screen extends StatelessWidget {
 
 
 
-//อุปกรณ์
+              //อุปกรณ์
               Positioned(
                 top: height * 0.57,
                 right: width * 0.06,

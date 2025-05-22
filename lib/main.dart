@@ -22,9 +22,9 @@ class MyApp extends StatelessWidget {
       ),
       home: LoginScreen(),
       routes: {
-        '/menu1': (context) => Menu1Screen(), // เส้นทางหน้า Menu 1
-        '/menu2': (context) => Menu2Screen(), // เส้นทางหน้า Menu 2
-        '/menu3': (context) => Menu3Screen(), // เส้นทางหน้า Menu 3
+        '/menu1': (context) => Menu1Screen(userId: '',), // เส้นทางหน้า Menu 1
+        '/menu2': (context) => Menu2Screen(userId: '',), // เส้นทางหน้า Menu 2
+        '/menu3': (context) => Menu3Screen(userId: '',), // เส้นทางหน้า Menu 3
       },
     );
   }
@@ -82,19 +82,36 @@ class _LoginScreenState extends State<LoginScreen> {
       print('Response body: ${response.body}');
 
 
+
+
+
+
+
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final userMenu = data['user']['menu']; // ดึงค่า menu จาก user
+        final userMenu = data['user']['menu'];
+        final userId = data['user']['_id']; // ✅ เพิ่มตรงนี้ เพื่อดึง ObjectId จาก MongoDB
 
-        // Debug: พิมพ์ค่า userMenu
+        // Debug
         print('Received menu: $userMenu');
+        print('Received userId: $userId');
 
         if (userMenu == 1) {
-          Navigator.pushNamed(context, '/menu1');
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Menu1Screen(userId: userId)), // ✅ ส่ง userId ไป
+          );
         } else if (userMenu == 2) {
-          Navigator.pushNamed(context, '/menu2');
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Menu2Screen(userId: userId)),
+          );
         } else if (userMenu == 3) {
-          Navigator.pushNamed(context, '/menu3');
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Menu3Screen(userId: userId)),
+          );
         } else {
           print('Invalid menu value received: $userMenu');
         }

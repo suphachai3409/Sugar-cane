@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'plot1.dart';
 
 void main() {
-  runApp(Menu2Screen());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
+  runApp(Menu2Screen(userId: '',));  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
 }
 
 class Menu2Screen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
+final String userId;
+
+Menu2Screen({required this.userId}); // ✅ ต้องมี userId ตรงนี้
+
+@override
+Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final width = size.width;
     final height = size.height;
@@ -114,7 +118,7 @@ class Menu2Screen extends StatelessWidget {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
@@ -176,7 +180,7 @@ class Menu2Screen extends StatelessWidget {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
@@ -238,7 +242,7 @@ class Menu2Screen extends StatelessWidget {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
@@ -302,7 +306,7 @@ class Menu2Screen extends StatelessWidget {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen()), // ไปหน้า Plot1
+                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
