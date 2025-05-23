@@ -306,7 +306,7 @@ Widget build(BuildContext context) {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
+                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: userId)), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
