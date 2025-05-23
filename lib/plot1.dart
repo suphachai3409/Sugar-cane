@@ -592,6 +592,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
 
   // บันทึกข้อมูลและ refresh หน้าจอ
   void _savePlotData() async {
+    print("📤 userId sent: ${widget.userId}");
     final response = await http.post(
       Uri.parse('http://10.0.2.2:3000/api/plots'),
       headers: {"Content-Type": "application/json"},

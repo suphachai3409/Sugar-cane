@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'plot1.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'weather_widget.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('th_TH', null);
   runApp(Menu1Screen(userId: '',));  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
 }
 
@@ -12,10 +17,26 @@ class Menu1Screen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     final size = MediaQuery.of(context).size;
     final width = size.width;
     final height = size.height;
     return MaterialApp(
+      title: 'Farm Management App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        fontFamily: 'Kanit', // ฟอนต์ภาษาไทย
+      ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('th', 'TH'), // Thai
+        Locale('en', 'US'), // English
+      ],
       home: Scaffold(
         appBar: AppBar(
           title: Text('เจ้าของ'),
@@ -43,26 +64,10 @@ class Menu1Screen extends StatelessWidget {
 
               // Container ฟ้า
               Positioned(
-                top: height * 0.02, // 2% ของความสูงหน้าจอ
-                left: width * 0.01, // 5% ของความกว้างหน้าจอ
-                child: Container(
-                  width: width * 0.9, // 90% ของความกว้างหน้าจอ
-                  height: height * 0.25,
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 19),
-                  decoration: ShapeDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment(0.98, -0.20),
-                      end: Alignment(-0.98, 0.2),
-                      colors: [Color(0xFF325FD1), Color(0xFF4F7EF9)],
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
+                top: height * 0.02,
+                left: width * 0.05,
+                child: const WeatherWidget(),
               ),
-
-
 
               // Text 'Main menu'
               Positioned(
@@ -94,7 +99,7 @@ class Menu1Screen extends StatelessWidget {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
+                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: userId)), // ไปหน้า Plot1
                     );
                   },
                   child: Container(
