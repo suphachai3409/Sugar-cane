@@ -1,25 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'google_maps_search.dart';
+import 'map_drawing_screen.dart';
+import 'package:flutter/material.dart';
+import 'dart:math' as math;
+import 'package:geolocator/geolocator.dart';
 
 class Plot1Screen extends StatefulWidget {
   final String userId;
   Plot1Screen({required this.userId});
-
+  final TextEditingController _plotNameController = TextEditingController();
   @override
   _Plot1ScreenState createState() => _Plot1ScreenState();
 }
 
 class _Plot1ScreenState extends State<Plot1Screen> {
+
   List<Map<String, dynamic>> plotList = [];
   bool isLoading = true;
 
+  LatLng? locationLatLng;
+  String? locationAddress;
   String selectedPlant = '';
   String selectedWater = '';
   String selectedSoil = '';
   String plotName = '';
-  TextEditingController plotNameController = TextEditingController();
-
+  final TextEditingController _plotNameController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -59,41 +67,52 @@ class _Plot1ScreenState extends State<Plot1Screen> {
 
 
   Future<void> _updatePlotData(String plotId) async {
+    if (plotId.isEmpty) {
+      _showErrorDialog(context, 'ไม่พบ ID แปลงปลูก');
+      return;
+    }
+
+    final url = Uri.parse('http://10.0.2.2:3000/api/plots/$plotId');
+
+    final bodyData = {
+      "plotName": plotName,
+      "plantType": selectedPlant,
+      "waterSource": selectedWater,
+      "soilType": selectedSoil,
+    };
+
     try {
       final response = await http.put(
-        Uri.parse('http://10.0.2.2:3000/api/plots/$plotId'),
+        url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "plotName": plotName,
-          "plantType": selectedPlant,
-          "waterSource": selectedWater,
-          "soilType": selectedSoil,
-        }),
+        body: jsonEncode(bodyData),
       );
 
       if (response.statusCode == 200) {
-        print('✅ อัพเดทข้อมูลแปลงปลูกสำเร็จ');
-        // รีเฟรชข้อมูลใหม่
-        await _loadPlotData();
-        _showUpdateSuccessDialog(context);
+        print('✅ อัปเดตข้อมูลแปลงปลูกสำเร็จ');
 
-        // Clear form
+        await _loadPlotData(); // โหลดข้อมูลใหม่
+        _showUpdateSuccessDialog(context); // แสดง dialog แจ้งผลสำเร็จ
+
+        // เคลียร์ค่าฟอร์ม
         setState(() {
           plotName = '';
           selectedPlant = '';
           selectedWater = '';
           selectedSoil = '';
-          plotNameController.clear();
+          _plotNameController.clear();
         });
+
       } else {
-        print('❌ เกิดข้อผิดพลาดในการอัพเดท: ${response.body}');
-        _showErrorDialog(context, 'เกิดข้อผิดพลาดในการอัพเดทข้อมูล');
+        print('❌ เกิดข้อผิดพลาดในการอัปเดต: ${response.body}');
+        _showErrorDialog(context, 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
       }
     } catch (e) {
-      print('❌ Error updating plot data: $e');
+      print('❌ Exception ขณะอัปเดตข้อมูล: $e');
       _showErrorDialog(context, 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +125,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
         title: Text('แปลงปลูก'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
+
+
           onPressed: () {
             Navigator.pop(context);
           },
@@ -115,10 +136,40 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           Padding(
             padding: EdgeInsets.only(right: 16.0),
             child: ElevatedButton(
-              onPressed: () {
-                _showPlotNamePopup(context);
-              },
-              style: ElevatedButton.styleFrom(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MapSearchScreen(), // ไม่ต้องส่ง callback แล้ว
+                    ),
+                  );
+
+                  // หลังจากกลับมาจากหน้า map
+                  if (result != null && result['latLng'] != null && result['address'] != null) {
+                    final LatLng selectedLatLng = result['latLng'];
+                    final String selectedAddress = result['address'];
+
+                    print("📍 ได้ตำแหน่งจาก map: $selectedLatLng, $selectedAddress");
+
+                    // 👉 เริ่มขั้นตอน a ได้เลย
+                    PlotDialogs.showPlotNamePopup(
+                      context: context,
+                      plotNameController: _plotNameController,
+                      onNext: (plotName) {
+                        setState(() {
+                          this.plotName = plotName;
+                          locationLatLng = selectedLatLng;
+                          locationAddress = selectedAddress;
+                        });
+
+                        // → ต่อ b > c > d ได้เลย
+                        _showFirstPopup(context, plotName);
+                      },
+                    );
+                  }
+                },
+
+                style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFF34D396),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -159,13 +210,55 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       padding: const EdgeInsets.all(16.0),
       child: Stack(
         children: [
-          // ปุ่มกลาง
+          // ✅ ปุ่มกึ่งกลางจอ
           Positioned(
             top: height * 0.35,
             left: width * 0.35,
             child: GestureDetector(
-              onTap: () {
-                _showPlotNamePopup(context);
+              onTap: () async {
+                print("📌 เริ่มไปหน้า MapSearchScreen");
+
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MapSearchScreen(),
+                  ),
+                );
+
+                if (result != null &&
+                    result['latLng'] != null &&
+                    result['address'] != null) {
+                  final LatLng selectedLatLng = result['latLng'];
+                  final String selectedAddress = result['address'];
+
+                  print("📍 ได้ตำแหน่งจาก map: $selectedLatLng, $selectedAddress");
+
+                  // 👉 เปิด popup ตั้งชื่อแปลง
+                  PlotDialogs.showPlotNamePopup(
+                    context: context,
+                    plotNameController: _plotNameController,
+                    onNext: (name) {
+                      print("✅ onNext ของชื่อแปลงถูกเรียกแล้ว ด้วยค่า: $name");
+
+                      if (name.trim().isEmpty) {
+                        _showErrorDialog(context, 'กรุณากรอกชื่อแปลง');
+                        return;
+                      }
+
+                      setState(() {
+                        plotName = name;
+                        locationLatLng = selectedLatLng;
+                        locationAddress = selectedAddress;
+                      });
+
+                      print("🔍 plotName ถูกตั้งแล้ว: $name");
+
+                      _showFirstPopup(context, name);
+                    },
+                  );
+                } else {
+                  print("⚠️ ยกเลิกการเลือกตำแหน่ง หรือค่าที่ได้ไม่ครบ");
+                }
               },
               child: Column(
                 children: [
@@ -199,12 +292,13 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               ),
             ),
           ),
-          // ปุ่มล่างสุด
           _buildBottomButtons(width, height),
         ],
       ),
     );
   }
+
+
 
   // หน้าจอเมื่อมีข้อมูล (รูปที่ 1)
   Widget _buildPlotList(double width, double height) {
@@ -299,7 +393,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                               selectedPlant = plot['plantType'] ?? '';
                               selectedWater = plot['waterSource'] ?? '';
                               selectedSoil = plot['soilType'] ?? '';
-                              plotNameController.text = plotName;
+                              _plotNameController.text = plotName;
                             });
                             _showEditPlotNamePopup(context, plot);
                           },
@@ -617,190 +711,17 @@ class _Plot1ScreenState extends State<Plot1Screen> {
         selectedPlant = '';
         selectedWater = '';
         selectedSoil = '';
-        plotNameController.clear();
+        _plotNameController.clear();
       });
     } else {
       print('เกิดข้อผิดพลาด: ${response.body}');
     }
   }
 
-  // Popup สำหรับใส่ชื่อแปลงปลูก
-  void _showPlotNamePopup(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        final size = MediaQuery.of(context).size;
-        final width = size.width;
-        final height = size.height;
 
-        return Center(
-          child: Material(
-            type: MaterialType.transparency,
-            child: Container(
-              width: width * 0.9,
-              height: height * 0.5,
-              decoration: ShapeDecoration(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(45),
-                ),
-                shadows: [
-                  BoxShadow(
-                    color: Color(0x7F646464),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  SizedBox(height: height * 0.015),
-                  Text(
-                    'ตั้งชื่อแปลงปลูก',
-                    style: TextStyle(
-                      fontSize: width * 0.05,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF25624B),
-                    ),
-                  ),
-                  SizedBox(height: height * 0.02),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: width * 0.06),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(height: height * 0.03),
-                            // ไอคอน
-                            Container(
-                              width: width * 0.15,
-                              height: width * 0.15,
-                              decoration: ShapeDecoration(
-                                color: Color(0xFF34D396).withOpacity(0.1),
-                                shape: CircleBorder(),
-                              ),
-                              child: Icon(
-                                Icons.agriculture,
-                                color: Color(0xFF34D396),
-                                size: width * 0.08,
-                              ),
-                            ),
-                            SizedBox(height: height * 0.02),
-                            Text(
-                              'กรุณาใส่ชื่อแปลงปลูกของคุณ',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: width * 0.035,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            SizedBox(height: height * 0.025),
-                            // TextField
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.grey[300]!,
-                                  width: 1,
-                                ),
-                              ),
-                              child: TextField(
-                                controller: plotNameController,
-                                decoration: InputDecoration(
-                                  hintText: 'เช่น แปลงข้าวโพดหลังบ้าน',
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: width * 0.035,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: width * 0.04,
-                                    vertical: height * 0.015,
-                                  ),
-                                  prefixIcon: Icon(
-                                    Icons.edit,
-                                    color: Color(0xFF34D396),
-                                    size: width * 0.05,
-                                  ),
-                                ),
-                                style: TextStyle(
-                                  fontSize: width * 0.035,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: height * 0.03),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: height * 0.015),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text('ยกเลิก'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (plotNameController.text.trim().isNotEmpty) {
-                              setState(() {
-                                plotName = plotNameController.text.trim();
-                              });
-                              Navigator.pop(context);
-                              _showFirstPopup(context);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'กรุณาใส่ชื่อแปลงปลูก',
-                                    style: TextStyle(fontSize: width * 0.035),
-                                  ),
-                                  backgroundColor: Colors.orange,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF34D396),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text('ถัดไป'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   // Popup เลือกพืชไร่
-  void _showFirstPopup(BuildContext context) {
+  void _showFirstPopup(BuildContext context ,String plotName) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -869,17 +790,19 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                         children: [
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.pop(context);
-                              _showPlotNamePopup(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text('ย้อนกลับ'),
+                            Navigator.pop(context); // ปิด popup ก่อน
+                            PlotDialogs.showPlotNamePopup(
+                              context: context,
+                              plotNameController: _plotNameController,
+                              onNext: (plotName) {
+                                // ทำสิ่งที่คุณต้องการหลังกรอกชื่อแปลงแล้ว
+                                print("ชื่อแปลง: $plotName");
+                              },
+                            );
+                          },
+                            child: Text("ย้อนกลับ"),
                           ),
+
                           ElevatedButton(
                             onPressed: () {
                               Navigator.pop(context);
@@ -977,7 +900,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                           ElevatedButton(
                             onPressed: () {
                               Navigator.pop(context);
-                              _showFirstPopup(context);
+                              _showFirstPopup(context,plotName);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey,
@@ -1266,7 +1189,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                                 ),
                               ),
                               child: TextField(
-                                controller: plotNameController,
+                                controller: _plotNameController,
                                 decoration: InputDecoration(
                                   hintText: 'เช่น แปลงข้าวโพดหลังบ้าน',
                                   hintStyle: TextStyle(
@@ -1315,9 +1238,9 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            if (plotNameController.text.trim().isNotEmpty) {
+                            if (_plotNameController.text.trim().isNotEmpty) {
                               setState(() {
-                                plotName = plotNameController.text.trim();
+                                plotName = _plotNameController.text.trim();
                               });
                               Navigator.pop(context);
                               _showEditFirstPopup(context, plot);
@@ -1863,3 +1786,181 @@ class _Plot1ScreenState extends State<Plot1Screen> {
     );
   }
 }
+
+class PlotDialogs {
+  static void showPlotNamePopup({
+    required BuildContext context,
+    required TextEditingController plotNameController,
+    required Function(String plotName) onNext,
+    Function(String plotName)? updatePlotData, // ✅ เปลี่ยนชื่อ parameter ให้ไม่มี underscore
+  }) {
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Center(
+          child: Material(
+            type: MaterialType.transparency,
+            child: Container(
+              width: width * 0.9,
+              height: height * 0.5,
+              decoration: ShapeDecoration(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(45),
+                ),
+                shadows: [
+                  BoxShadow(
+                    color: Color(0x7F646464),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  SizedBox(height: height * 0.015),
+                  Text(
+                    'ตั้งชื่อแปลงปลูก',
+                    style: TextStyle(
+                      fontSize: width * 0.05,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF25624B),
+                    ),
+                  ),
+                  SizedBox(height: height * 0.02),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: width * 0.06),
+                        child: Column(
+                          children: [
+                            SizedBox(height: height * 0.03),
+                            Container(
+                              width: width * 0.15,
+                              height: width * 0.15,
+                              decoration: ShapeDecoration(
+                                color: Color(0xFF34D396).withOpacity(0.1),
+                                shape: CircleBorder(),
+                              ),
+                              child: Icon(
+                                Icons.agriculture,
+                                color: Color(0xFF34D396),
+                                size: width * 0.08,
+                              ),
+                            ),
+                            SizedBox(height: height * 0.02),
+                            Text(
+                              'กรุณาใส่ชื่อแปลงปลูกของคุณ',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: width * 0.035,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            SizedBox(height: height * 0.025),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey[300]!,
+                                  width: 1,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: plotNameController,
+                                decoration: InputDecoration(
+                                  hintText: 'เช่น แปลงข้าวโพดหลังบ้าน',
+                                  hintStyle: TextStyle(
+                                    color: Colors.grey[400],
+                                    fontSize: width * 0.035,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: width * 0.04,
+                                    vertical: height * 0.015,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.edit,
+                                    color: Color(0xFF34D396),
+                                    size: width * 0.05,
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  fontSize: width * 0.035,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: height * 0.015),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text('ยกเลิก'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            final name = plotNameController.text.trim();
+                            if (name.isNotEmpty) {
+                              Navigator.pop(context);
+                              onNext(name);              // ไป popup ถัดไป
+                              updatePlotData?.call(name);      // บันทึกลง MongoDB
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'กรุณาใส่ชื่อแปลงปลูก',
+                                    style: TextStyle(fontSize: width * 0.035),
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF34D396),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text('ถัดไป'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+

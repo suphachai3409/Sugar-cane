@@ -1,0 +1,682 @@
+// google_maps_search.dart
+import 'plot1.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'dart:math' as math;
+import 'package:geolocator/geolocator.dart';
+
+
+
+// Google Places API Service
+class GooglePlacesService {
+
+  static const String _apiKey = 'AIzaSyAOqwGzcv9K8GTRX8brAWno85_fwP6G8tI'; // ใส่ API Key ของคุณที่นี่
+  static const String _baseUrl = 'https://maps.googleapis.com/maps/api/place';
+
+  // ค้นหาสถานที่แบบ autocomplete รองรับภาษาไทย
+  static Future<List<PlaceSearchResult>> searchPlaces(String query) async {
+    if (query.isEmpty) return [];
+
+    try {
+      // ใช้ Place Autocomplete API
+      final String url = '$_baseUrl/autocomplete/json'
+          '?input=${Uri.encodeComponent(query)}'
+          '&language=th'
+          '&components=country:th'
+          '&key=$_apiKey';
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'OK') {
+          final List predictions = data['predictions'];
+          return predictions.map((prediction) => PlaceSearchResult(
+            name: prediction['structured_formatting']['main_text'] ?? prediction['description'],
+            address: prediction['description'],
+            placeId: prediction['place_id'],
+          )).toList();
+        }
+      }
+    } catch (e) {
+      print('Error searching places: $e');
+    }
+
+    return [];
+  }
+
+  // ดึงรายละเอียดสถานที่จาก Place ID
+  static Future<PlaceDetail?> getPlaceDetails(String placeId) async {
+    try {
+      final String url = '$_baseUrl/details/json'
+          '?place_id=$placeId'
+          '&fields=geometry,name,formatted_address'
+          '&language=th'
+          '&key=$_apiKey';
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'OK') {
+          final result = data['result'];
+          final location = result['geometry']['location'];
+
+          return PlaceDetail(
+            name: result['name'],
+            formattedAddress: result['formatted_address'],
+            location: LatLng(location['lat'], location['lng']),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error getting place details: $e');
+    }
+
+    return null;
+  }
+
+  // Reverse Geocoding - ดึงชื่อสถานที่จากพิกัด
+  static Future<String> getAddressFromLatLng(LatLng position) async {
+    try {
+      final String url = 'https://maps.googleapis.com/maps/api/geocode/json'
+          '?latlng=${position.latitude},${position.longitude}'
+          '&language=th'
+          '&key=$_apiKey';
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'OK' && data['results'].isNotEmpty) {
+          return data['results'][0]['formatted_address'];
+        }
+      }
+    } catch (e) {
+      print('Error in reverse geocoding: $e');
+    }
+
+    return 'ไม่สามารถระบุตำแหน่งได้';
+  }
+}
+
+class PlaceSearchResult {
+  final String name;
+  final String address;
+  final String placeId;
+
+  PlaceSearchResult({
+    required this.name,
+    required this.address,
+    required this.placeId,
+  });
+}
+
+class PlaceDetail {
+  final String name;
+  final String formattedAddress;
+  final LatLng location;
+
+  PlaceDetail({
+    required this.name,
+    required this.formattedAddress,
+    required this.location,
+  });
+}
+
+// Widget หน้าแผนที่พร้อมการค้นหา
+class MapSearchScreen extends StatefulWidget {
+  const MapSearchScreen({Key? key}) : super(key: key);
+
+  @override
+  _MapSearchScreenState createState() => _MapSearchScreenState();
+}
+
+class _MapSearchScreenState extends State<MapSearchScreen> {
+  late TextEditingController _plotNameController;
+
+  GoogleMapController? _mapController;
+  final TextEditingController _searchController = TextEditingController();
+  List<PlaceSearchResult> _searchResults = [];
+  bool _isLoading = false;
+
+  // ตำแหน่งเริ่มต้น (ขอนแก่น)
+  final LatLng _initialPosition = LatLng(16.4322, 102.8236);
+  LatLng? _selectedPosition;
+  Set<Marker> _markers = {};
+  String _selectedAddress = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _plotNameController = TextEditingController();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        Position position = await Geolocator.getCurrentPosition();
+        _moveToLocation(LatLng(position.latitude, position.longitude));
+      }
+    } catch (e) {
+      print('Error getting location: $e');
+    }
+  }
+
+  void _moveToLocation(LatLng location) {
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: location,
+          zoom: 15,
+        ),
+      ),
+    );
+    _updateSelectedLocation(location);
+  }
+
+  void _updateSelectedLocation(LatLng location) async {
+    setState(() {
+      _selectedPosition = location;
+      _markers = {
+        Marker(
+          markerId: MarkerId('selected'),
+          position: location,
+          infoWindow: InfoWindow(title: 'ตำแหน่งที่เลือก'),
+        ),
+      };
+    });
+
+    final address = await GooglePlacesService.getAddressFromLatLng(location);
+
+    print('📌 ตำแหน่งที่เลือก: $location');
+    print('🗺️ ที่อยู่: $address');
+
+    setState(() {
+      _selectedAddress = address;
+    });
+  }
+
+
+  void _performSearch(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final results = await GooglePlacesService.searchPlaces(query);
+      setState(() {
+        _searchResults = results;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Search error: $e');
+    }
+  }
+
+  void _selectPlace(PlaceSearchResult place) async {
+    setState(() {
+      _isLoading = true;
+      _searchResults = [];
+      _searchController.clear();
+    });
+
+    try {
+      final placeDetail = await GooglePlacesService.getPlaceDetails(place.placeId);
+      if (placeDetail != null) {
+        _moveToLocation(placeDetail.location);
+        _updateSelectedLocation(placeDetail.location); // ใช้งานร่วมกับฟังก์ชันด้านล่าง
+
+        final address = await GooglePlacesService.getAddressFromLatLng(placeDetail.location);
+
+        print('📌 ตำแหน่งที่เลือก: ${placeDetail.location}');
+        print('🗺️ ที่อยู่: $address');
+
+        setState(() {
+          _selectedAddress = address;
+        });
+      }
+    } catch (e) {
+      print('Error selecting place: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('เกิดข้อผิดพลาดในการค้นหาสถานที่')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+
+  @override
+  void dispose() {
+    _plotNameController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // แผนที่
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: _initialPosition,
+              zoom: 13,
+            ),
+            onMapCreated: (controller) {
+              _mapController = controller;
+            },
+            markers: _markers,
+            onTap: _updateSelectedLocation,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+          ),
+
+          // ส่วนค้นหาและปุ่มต่างๆ
+          SafeArea(
+            child: Column(
+              children: [
+                // กล่องค้นหา
+                Container(
+                  margin: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'ค้นหาสถานที่...',
+                          hintStyle: TextStyle(color: Colors.grey[600]),
+                          prefixIcon: Icon(Icons.search, color: Color(0xFF34D396)),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                            icon: Icon(Icons.clear, color: Colors.grey),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchResults = [];
+                              });
+                            },
+                          )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
+                        onChanged: _performSearch,
+                      ),
+
+                      // ผลการค้นหา
+                      if (_searchResults.isNotEmpty)
+                        Container(
+                          constraints: BoxConstraints(maxHeight: 200),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: math.min(_searchResults.length, 5),
+                            separatorBuilder: (context, index) => Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final place = _searchResults[index];
+                              return ListTile(
+                                leading: Icon(Icons.location_on, color: Color(0xFF34D396)),
+                                title: Text(
+                                  place.name,
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                subtitle: Text(
+                                  place.address,
+                                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                onTap: () => _selectPlace(place),
+                                dense: true,
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                Spacer(),
+
+                // แสดงที่อยู่ที่เลือก
+                if (_selectedAddress.isNotEmpty)
+                  Container(
+                    margin: EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: Offset(0, -2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ตำแหน่งที่เลือก:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          _selectedAddress,
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                        SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+
+                            onPressed: _selectedPosition != null
+                                ? () async {
+                              final address = await GooglePlacesService.getAddressFromLatLng(_selectedPosition!);
+
+                              print('📌 ตำแหน่งที่เลือก: $_selectedPosition');
+                              print('🗺️ ที่อยู่: $address');
+
+                              Navigator.pop(context, {
+                                'latLng': _selectedPosition,
+                                'address': address,
+                              });
+                            }
+                                : null,
+
+
+
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF34D396),
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              'เลือกตำแหน่งนี้',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // ปุ่ม My Location
+          Positioned(
+            right: 16,
+            bottom: _selectedAddress.isNotEmpty ? 180 : 100,
+            child: FloatingActionButton(
+              onPressed: _getCurrentLocation,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.my_location, color: Color(0xFF34D396)),
+              mini: true,
+            ),
+          ),
+
+          // Loading
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFF34D396)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+
+
+
+
+}
+
+// Widget สำหรับค้นหาสถานที่ (แบบเดิม - ไม่มีแผนที่)
+class SearchLocationWidget extends StatefulWidget {
+  final Function(LatLng) onLocationSelected;
+
+  const SearchLocationWidget({
+    Key? key,
+    required this.onLocationSelected,
+  }) : super(key: key);
+
+  @override
+  _SearchLocationWidgetState createState() => _SearchLocationWidgetState();
+}
+
+class _SearchLocationWidgetState extends State<SearchLocationWidget> {
+  final TextEditingController _searchController = TextEditingController();
+  List<PlaceSearchResult> _searchResults = [];
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _performSearch(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final results = await GooglePlacesService.searchPlaces(query);
+      setState(() {
+        _searchResults = results;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Search error: $e');
+    }
+  }
+
+  void _selectPlace(PlaceSearchResult place) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final placeDetail = await GooglePlacesService.getPlaceDetails(place.placeId);
+      if (placeDetail != null) {
+        Navigator.pop(context, {
+          'latLng': placeDetail.location,
+          'address': place.name,  // ใช้ name แทน description
+        });
+      }
+    } catch (e) {
+      print('Error selecting place: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('เกิดข้อผิดพลาดในการค้นหาสถานที่')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'ค้นหาสถานที่...',
+                hintStyle: TextStyle(color: Colors.grey[600]),
+                prefixIcon: Icon(Icons.search, color: Color(0xFF34D396)),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                  icon: Icon(Icons.clear, color: Colors.grey),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchResults = [];
+                    });
+                  },
+                )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              ),
+              onChanged: _performSearch,
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
+
+          if (_isLoading)
+            Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(color: Color(0xFF34D396)),
+            ),
+
+          if (_searchResults.isNotEmpty)
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: math.min(_searchResults.length, 5),
+                  separatorBuilder: (context, index) => Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final place = _searchResults[index];
+                    return ListTile(
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Color(0xFF34D396).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.location_on,
+                          color: Color(0xFF34D396),
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        place.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Text(
+                        place.address,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () => _selectPlace(place),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    );
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
