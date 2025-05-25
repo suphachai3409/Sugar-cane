@@ -47,6 +47,7 @@ flutter:
     - assets/ดินทราย.png
     - assets/ดินเหนียว.png
     - assets/ดินร่วน.png
+    - assets/logo.png
 
 dependencies:
   flutter:

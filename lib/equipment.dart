@@ -24,8 +24,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'อุปกรณ์',
       theme: ThemeData(
-        primaryColor: const Color(0xFF30C39E),
-        scaffoldBackgroundColor: Colors.grey[200],
+        primaryColor: Colors.white,
+        scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Color(0xFF30C39E),
@@ -128,7 +128,6 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     _equipmentNameController = TextEditingController();
     _dateController = TextEditingController();
     _selectedDate = DateTime.now();
-
     _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
   }
 
@@ -142,28 +141,24 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   }
 
   void _addNewRequest() {
-    setState(() {
-      showForm = true;
-      selectedRequestIndex = null;
-      _clearForm();
-      _resetErrors();
-    });
+    _clearForm();
+    _resetErrors();
+    _showEquipmentFormPopup();
   }
 
   void _resetErrors() {
-    setState(() {
-      _nameError = null;
-      _phoneError = null;
-      _equipmentNameError = null;
-      _dateError = null;
-      _imageError = null;
-    });
+    _nameError = null;
+    _phoneError = null;
+    _equipmentNameError = null;
+    _dateError = null;
+    _imageError = null;
   }
 
-  bool _validateInputs() {
+  // ฟังก์ชันตรวจสอบข้อมูลใน popup
+  bool _validateInputsInPopup(StateSetter setStateDialog) {
     bool isValid = true;
 
-    setState(() {
+    setStateDialog(() {
       _resetErrors();
 
       if (_nameController.text.isEmpty) {
@@ -188,10 +183,29 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
         _dateError = "กรุณาเลือกวันที่";
         isValid = false;
       }
-
     });
 
     return isValid;
+  }
+
+  // ฟังก์ชันบันทึกข้อมูลจาก popup
+  void _saveRequestFromPopup() {
+    setState(() {
+      requests.add(CashAdvanceRequest(
+        name: _nameController.text,
+        phone: _phoneController.text,
+        equipmentName: _equipmentNameController.text,
+        date: _selectedDate,
+        imagePath: _selectedImagePath,
+      ));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('บันทึกข้อมูลสำเร็จ'),
+          backgroundColor: Color(0xFF30C39E),
+        ),
+      );
+    });
   }
 
   // เพิ่มฟังก์ชันสำหรับแสดงรูปภาพแบบเต็มหน้าจอ
@@ -247,8 +261,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     );
   }
 
-  void _showImageSourceOptions() {
-    showModalBottomSheet(
+  Future<void> _showImageSourceOptions() async {
+    await showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -290,6 +304,39 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
         );
       },
     );
+  }
+
+  bool _validateInputs() {
+    bool isValid = true;
+
+    setState(() {
+      _resetErrors();
+
+      if (_nameController.text.isEmpty) {
+        _nameError = "กรุณาระบุชื่อ-นามสกุล";
+        isValid = false;
+      }
+
+      if (_phoneController.text.isEmpty) {
+        _phoneError = "กรุณาระบุเบอร์โทรศัพท์";
+        isValid = false;
+      } else if (!RegExp(r'^[0-9]{9,10}$').hasMatch(_phoneController.text)) {
+        _phoneError = "กรุณาระบุเบอร์โทรศัพท์ที่ถูกต้อง";
+        isValid = false;
+      }
+
+      if (_equipmentNameController.text.isEmpty) {
+        _equipmentNameError = "กรุณาระบุชื่ออุปกรณ์";
+        isValid = false;
+      }
+
+      if (_dateController.text.isEmpty) {
+        _dateError = "กรุณาเลือกวันที่";
+        isValid = false;
+      }
+    });
+
+    return isValid;
   }
 
   void _saveRequest() {
@@ -487,11 +534,29 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     });
   }
 
+  // ฟังก์ชันสำหรับแก้ไขข้อมูล
+  void _editRequest(int index) {
+    setState(() {
+      selectedRequestIndex = index;
+      _nameController.text = requests[index].name;
+      _phoneController.text = requests[index].phone;
+      _equipmentNameController.text = requests[index].equipmentName;
+      _selectedDate = requests[index].date;
+      _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
+      _selectedImagePath = requests[index].imagePath;
+      showForm = false; // ปิดฟอร์มปัจจุบัน
+    });
+    _showEquipmentFormPopup(); // เรียกใช้ Popup สำหรับแก้ไข
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('อุปกรณ์', style: TextStyle(color: Colors.green, fontSize: 18)),
+        title: const Text('อุปกรณ์', style: TextStyle(
+          fontSize: 20,
+          color: Color(0xFF25634B),
+          fontWeight: FontWeight.w800,)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: requests.isEmpty && !showForm ? null : _goBack,
@@ -505,6 +570,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   }
 
   Widget _buildCurrentScreen() {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
     if (showForm) {
       return _buildRequestForm();
     } else if (selectedRequestIndex != null) {
@@ -512,37 +579,50 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     } else if (requests.isNotEmpty) {
       return _buildRequestsList();
     } else {
-      return _buildEmptyInitialScreen();
+      return _buildEmptyInitialScreen(width, height);
     }
   }
 
-  Widget _buildEmptyInitialScreen() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: const BoxDecoration(
-              color: Color(0xFF30C39E),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.add, color: Colors.white, size: 40),
-              onPressed: _addNewRequest,
-            ),
+  Widget _buildEmptyInitialScreen(double width, double height) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.white,
+      child: Center(
+        child: GestureDetector(
+          onTap: _addNewRequest,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: width * 0.2,
+                height: height * 0.1,
+                decoration: ShapeDecoration(
+                  color: const Color(0xFF34D396),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(38),
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'กดเพื่อเพิ่มอุปกรณ์',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Color(0xFF25634B),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'กดเพื่อเพิ่มอุปกรณ์',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -571,7 +651,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: Card(
-                  elevation: 2,
+                  color: Colors.white,
+                  elevation: 4,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -613,16 +694,18 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                     Text(
                                       "ชื่อ ${request.name}",
                                       style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.green,
+                                        fontSize: 16,
+                                        color: Color(0xFF25634B),
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       "เบอร์โทร: ${request.phone}",
                                       style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                        color: Color(0xFF25634B),
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -633,6 +716,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                           child: Text(
                                             "อุปกรณ์: ${request.equipmentName}",
                                             style: const TextStyle(
+                                              color: Color(0xFF25634B),
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -663,21 +747,314 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(16),
-          child: ElevatedButton.icon(
-            onPressed: _addNewRequest,
-            icon: const Icon(Icons.add),
-            label: const Text('เพิ่มอุปกรณ์'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF30C39E),
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+          padding: const EdgeInsets.all(10),
+          child: SizedBox(
+            width: 250,
+            height: 55,
+            child: ElevatedButton.icon(
+              onPressed: _addNewRequest,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text(
+                'เพิ่มอุปกรณ์',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF34D396),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  // ฟังก์ชันสำหรับแสดง popup ฟอร์มเพิ่มอุปกรณ์
+  void _showEquipmentFormPopup() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              insetPadding: EdgeInsets.all(16),
+              child: Container(
+                width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.85,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Center(
+                                child: Text(
+                                  selectedRequestIndex != null ? 'แก้ไขอุปกรณ์ที่ใช้ในการเกษตร' : 'เพิ่มอุปกรณ์ที่ใช้ในการเกษตร',
+                                  style: TextStyle(
+                                    color: Color(0xFF25634B),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: Icon(Icons.close, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+
+                        // ชื่อ-นามสกุล
+                        Text(
+                          'ชื่อ-นามสกุล',
+                          style: TextStyle(
+                            color: Color(0xFF30C39E),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        TextField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            hintText: 'ระบุชื่อ-นามสกุล',
+                            hintStyle: TextStyle(color: Colors.grey), // เปลี่ยนสีของ hint text เป็นสีเทา
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            errorText: _nameError,
+                          ),
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              if (_nameError != null) _nameError = null;
+                            });
+                          },
+                        ),
+                        SizedBox(height: 15),
+
+                        // เบอร์โทรศัพท์
+                        Text(
+                          'เบอร์โทรศัพท์',
+                          style: TextStyle(
+                            color: Color(0xFF30C39E),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        TextField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          maxLength: 10,
+                          decoration: InputDecoration(
+                            hintText: 'ระบุเบอร์โทรศัพท์',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            errorText: _phoneError,
+                            counterText: "",
+                          ),
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              if (_phoneError != null) _phoneError = null;
+                            });
+                          },
+                        ),
+                        SizedBox(height: 15),
+
+                        // ชื่ออุปกรณ์
+                        Text(
+                          'ชื่ออุปกรณ์',
+                          style: TextStyle(
+                            color: Color(0xFF30C39E),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        TextField(
+                          controller: _equipmentNameController,
+                          decoration: InputDecoration(
+                            hintText: 'ระบุชื่ออุปกรณ์',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            errorText: _equipmentNameError,
+                          ),
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              if (_equipmentNameError != null) _equipmentNameError = null;
+                            });
+                          },
+                        ),
+                        SizedBox(height: 15),
+
+                        // วันที่
+                        Text(
+                          'วันที่',
+                          style: TextStyle(
+                            color: Color(0xFF30C39E),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        TextField(
+                          controller: _dateController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            hintText: 'เลือกวันที่',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            suffixIcon: Icon(Icons.calendar_today, size: 20),
+                            errorText: _dateError,
+                          ),
+                          onTap: () async {
+                            await _selectDate(context);
+                            setStateDialog(() {});
+                          },
+                        ),
+                        SizedBox(height: 15),
+
+                        // รูปภาพอุปกรณ์
+                        Text(
+                          'รูปภาพอุปกรณ์',
+                          style: TextStyle(
+                            color: Color(0xFF30C39E),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        GestureDetector(
+                          onTap: () async {
+                            await _showImageSourceOptions();
+                            setStateDialog(() {});
+                          },
+                          child: Container(
+                            height: 120,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: _selectedImagePath != null
+                                ? GestureDetector(
+                              onTap: () => _showFullScreenImage(_selectedImagePath!),
+                              child: Hero(
+                                tag: 'image_form_${_selectedImagePath}',
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.file(
+                                    File(_selectedImagePath!),
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                  ),
+                                ),
+                              ),
+                            )
+                                : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo, size: 40, color: Colors.grey[400]),
+                                SizedBox(height: 5),
+                                Text(
+                                  'เพิ่มรูปภาพ',
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (_imageError != null)
+                          Padding(
+                            padding: EdgeInsets.only(top: 5),
+                            child: Text(
+                              _imageError!,
+                              style: TextStyle(color: Colors.red, fontSize: 12),
+                            ),
+                          ),
+                        SizedBox(height: 30),
+
+                        // ปุ่มบันทึกและยกเลิก
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: Text('ยกเลิก', style: TextStyle(color: Color(0xFF30C39E),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,)),
+                                style: OutlinedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  side: BorderSide(color: Color(0xFF30C39E)),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (_validateInputsInPopup(setStateDialog)) {
+                                    _saveRequestFromPopup();
+                                    Navigator.of(context).pop();
+                                  }
+                                },
+                                child: Text('บันทึก',style: TextStyle(
+                                        color: Color(0xFFFFFFFF),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF30C39E),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -699,9 +1076,9 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   child: Text(
                     'เพิ่มอุปกรณ์ที่ใช้ในการเกษตร',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Color(0xFF25634B),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -893,6 +1270,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Card(
+          color: Colors.white,
+          elevation: 4,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -908,17 +1287,17 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Color(0xFF25634B),
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 Center(
                   child: Text(
-                    "ชื่อ ${request.name} ${request.phone}",
+                    "ชื่อ ${request.name} tel.${request.phone}",
                     style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.green,
+                      fontSize: 16,
+                      color: Color(0xFF25634B),
                     ),
                   ),
                 ),
@@ -947,7 +1326,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   'ชื่ออุปกรณ์',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.black87,
+                    color: Color(0xFF25634B),
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -956,7 +1335,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Color(0xFF25634B),
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -964,7 +1343,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   'วันที่',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.black87,
+                    color: Color(0xFF25634B),
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -973,7 +1352,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Color(0xFF25634B),
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -982,11 +1361,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   children: [
                     ElevatedButton(
                       onPressed: () {
-                        setState(() {
-                          showForm = true;
-                        });
+                        _editRequest(selectedRequestIndex!);
                       },
-                      child: const Text('แก้ไข'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.amber,
                         minimumSize: const Size(100, 40),
@@ -994,11 +1370,18 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
+                      child: const Text('แก้ไข', style: TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,)),
                     ),
                     const SizedBox(width: 20),
                     ElevatedButton(
                       onPressed: _showDeleteConfirmation,
-                      child: const Text('ลบ'),
+                      child: const Text('ลบ',style: TextStyle(
+                            color: Color(0xFFFFFFFF),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         minimumSize: const Size(100, 40),
@@ -1016,7 +1399,10 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _goBack,
-                        child: const Text('กลับ', style: TextStyle(color: Color(0xFF30C39E))),
+                        child: const Text('กลับ',style: TextStyle(
+                          color: Color(0xFF30C39E),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,)),
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
@@ -1031,7 +1417,10 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         onPressed: () {
                           _goBack();
                         },
-                        child: const Text('ยืนยัน'),
+                        child: const Text('ยืนยัน',style: TextStyle(
+                              color: Color(0xFFFFFFFF),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF30C39E),
                           shape: RoundedRectangleBorder(
@@ -1051,45 +1440,103 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   }
 
   Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 70,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 5,
-            spreadRadius: 1,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = MediaQuery
+            .of(context)
+            .size
+            .width;
+        final height = MediaQuery
+            .of(context)
+            .size
+            .height;
+
+        return Container(
+          height: 80,
+          child: Stack(
+            children: [
+              // Container ปุ่มหลัก (พื้นหลัง)
+              Positioned(
+                bottom: height * 0.02, // 1% จากด้านล่าง
+                left: width * 0.03, // 3% จากด้านซ้าย
+                right: width * 0.03, // 3% จากด้านขวา
+                child: Container(
+                  height: height * 0.07,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(83.50),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x7F646464),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                        spreadRadius: 0,
+                      )
+                    ],
+                  ),
+                ),
+              ),
+
+              // ปุ่มซ้าย (Home)
+              Positioned(
+                bottom: height * 0.03, // 2% จากด้านล่าง
+                left: width * 0.07,
+                child: GestureDetector(
+                  onTap: () {
+                    // Handle home button tap
+                    print("Home button tapped");
+                  },
+                  child: Container(
+                    width: width * 0.12,
+                    height: height * 0.05,
+                    decoration: ShapeDecoration(
+                      color: Color(0xFF34D396),
+
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(38),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.home,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+
+              // ปุ่มขวา (Profile)
+              Positioned(
+                bottom: height * 0.03,
+                right: width * 0.07,
+                child: GestureDetector(
+                  onTap: () {
+                    // Handle profile button tap
+                    print("Profile button tapped");
+                  },
+                  child: Container(
+                    width: width * 0.12,
+                    height: height * 0.05,
+                    decoration: ShapeDecoration(
+                      color: Color(0xFF34D396),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(38),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF30C39E),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.home, color: Colors.white, size: 20),
-                SizedBox(width: 5),
-                Text('Home', style: TextStyle(color: Colors.white, fontSize: 14)),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: const Icon(Icons.person, color: Colors.grey, size: 20),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

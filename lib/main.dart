@@ -15,12 +15,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'ระบบบริหารจัดการไร่อ้อย',
       theme: ThemeData(
         primarySwatch: Colors.green,
         primaryColor: Color(0xFF2D8C8A),
         colorScheme: ColorScheme.light(
-          primary: Color(0xFF2D8C8A),
+          primary: Color(0xFF25634B),
           secondary: Color(0xFF4CAF50),
         ),
         textTheme: TextTheme(
@@ -30,13 +31,13 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: LoginScreen(),
+      home: SplashScreen(),
       routes: {
-        '/menu1': (context) => Menu1Screen(userId: '',), // เส้นทางหน้า Menu 1
-        '/menu2': (context) => Menu2Screen(userId: '',), // เส้นทางหน้า Menu 2
-        '/menu3': (context) => Menu3Screen(userId: '',), // เส้นทางหน้า Menu 3
-        '/register': (context) => RegisterScreen(), // ✅ เพิ่มเส้นทางหน้า Register
-        '/datahuman': (context) => DataHumanScreen(), // ✅ เพิ่มเส้นทางหน้า DataHuman
+        '/menu1': (context) => Menu1Screen(userId: '',),
+        '/menu2': (context) => Menu2Screen(userId: '',),
+        '/menu3': (context) => Menu3Screen(userId: '',),
+        '/register': (context) => RegisterScreen(), //
+        '/datahuman': (context) => DataHumanScreen(), //
       },
     );
   }
