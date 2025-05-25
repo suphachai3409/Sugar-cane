@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const moneytransferScreen());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class moneytransferScreen extends StatelessWidget {
+  const moneytransferScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,20 +18,8 @@ class MyApp extends StatelessWidget {
       ),
     );
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'เบิกล่วงหน้า',
-      theme: ThemeData(
-        primaryColor:Colors.white,
-        scaffoldBackgroundColor:Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF30C39E),
-          elevation: 0,
-          iconTheme: IconThemeData(color: Color(0xFF30C39E)),
-        ),
-      ),
-      home: const CashAdvanceApp(),
+    return Scaffold(
+      body: const CashAdvanceApp(), // หรือเนื้อหาของหน้า Equipment
     );
   }
 }
@@ -481,17 +469,15 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-            'เบิกล่วงหน้า',
-            style: TextStyle(
-              color: Color(0xFF25634B),
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            )
-        ),
+        title: const Text('เบิกล่วงหน้า', style: TextStyle(
+          fontSize: 20,
+          color: Color(0xFF25634B),
+          fontWeight: FontWeight.w800,)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: selectedRequestIndex != null ? _goBack : null,
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
       body: SafeArea(

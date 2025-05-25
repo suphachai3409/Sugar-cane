@@ -5,11 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const EquipmentScreen());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class EquipmentScreen extends StatelessWidget {
+  const EquipmentScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -20,20 +20,8 @@ class MyApp extends StatelessWidget {
       ),
     );
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'อุปกรณ์',
-      theme: ThemeData(
-        primaryColor: Colors.white,
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF30C39E),
-          elevation: 0,
-          iconTheme: IconThemeData(color: Color(0xFF30C39E)),
-        ),
-      ),
-      home: const CashAdvanceApp(),
+    return Scaffold(
+      body: const CashAdvanceApp(), // หรือเนื้อหาของหน้า Equipment
     );
   }
 }
@@ -61,15 +49,6 @@ class FullScreenImageViewer extends StatelessWidget {
                   fit: BoxFit.contain,
                 ),
               ),
-            ),
-          ),
-          // ปุ่มปิด
-          Positioned(
-            top: 40,
-            right: 20,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 30),
-              onPressed: () => Navigator.of(context).pop(),
             ),
           ),
         ],
@@ -558,8 +537,10 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
           color: Color(0xFF25634B),
           fontWeight: FontWeight.w800,)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: requests.isEmpty && !showForm ? null : _goBack,
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
       body: SafeArea(

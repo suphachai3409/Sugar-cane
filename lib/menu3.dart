@@ -3,6 +3,8 @@ import 'plot1.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'weather_widget.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'equipment.dart';
+import 'moneytransfer.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -169,7 +171,7 @@ Widget build(BuildContext context) {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
+                      MaterialPageRoute(builder: (context) => EquipmentScreen()),
                     );
                   },
                   child: Container(
@@ -233,7 +235,7 @@ Widget build(BuildContext context) {
                     // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
+                      MaterialPageRoute(builder: (context) => moneytransferScreen()),
                     );
                   },
                   child: Container(
