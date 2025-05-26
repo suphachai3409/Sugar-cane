@@ -79,6 +79,9 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       "plantType": selectedPlant,
       "waterSource": selectedWater,
       "soilType": selectedSoil,
+      "latitude": locationLatLng?.latitude,
+      "longitude": locationLatLng?.longitude,
+      "address": locationAddress,
     };
 
     try {
@@ -100,6 +103,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           selectedPlant = '';
           selectedWater = '';
           selectedSoil = '';
+          locationLatLng = null;
+          locationAddress = null;
           _plotNameController.clear();
         });
 
@@ -112,6 +117,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       _showErrorDialog(context, 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
     }
   }
+
 
 
   @override
@@ -696,27 +702,31 @@ class _Plot1ScreenState extends State<Plot1Screen> {
         "plantType": selectedPlant,
         "waterSource": selectedWater,
         "soilType": selectedSoil,
+        "latitude": locationLatLng?.latitude,
+        "longitude": locationLatLng?.longitude,
+        "address": locationAddress,
       }),
     );
 
     if (response.statusCode == 200) {
-      print('บันทึกข้อมูลแปลงปลูกสำเร็จ');
-      // รีเฟรชข้อมูลใหม่
+      print('✅ บันทึกข้อมูลแปลงปลูกสำเร็จ');
       await _loadPlotData();
       _showSuccessDialog(context);
 
-      // Clear form
       setState(() {
         plotName = '';
         selectedPlant = '';
         selectedWater = '';
         selectedSoil = '';
+        locationLatLng = LatLng(0, 0);         // 🔁 reset ตำแหน่ง (ตามต้องการ)
+        locationAddress = '';
         _plotNameController.clear();
       });
     } else {
-      print('เกิดข้อผิดพลาด: ${response.body}');
+      print('❌ เกิดข้อผิดพลาด: ${response.body}');
     }
   }
+
 
 
 
