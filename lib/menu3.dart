@@ -68,7 +68,7 @@ Widget build(BuildContext context) {
               // Container ฟ้า
               Positioned(
                 top: height * 0.02,
-                left: width * 0.05,
+                left: width * 0.055,
                 child: const WeatherWidget(),
               ),
 
