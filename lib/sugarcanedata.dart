@@ -21,7 +21,6 @@ void main() async {
   runApp(sugarcanedata());
 }
 
-// เพิ่มคลาส PlotInfo ใหม่เพื่อใช้ข้อมูลแปลงจาก plot1.dart
 class PlotInfo {
   final String name;
   final double area;
@@ -50,7 +49,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.green,
-        fontFamily: 'Kanit', // ฟอนต์ภาษาไทย
+        fontFamily: 'Kanit',
       ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -58,8 +57,8 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('th', 'TH'), // Thai
-        Locale('en', 'US'), // English
+        Locale('th', 'TH'),
+        Locale('en', 'US'),
       ],
       home: const sugarcanedata(),
     );
@@ -107,10 +106,12 @@ class SugarcaneDataScreenWithPlotInfo extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SugarcaneDataScreenWithPlotInfoState createState() => _SugarcaneDataScreenWithPlotInfoState();
+  _SugarcaneDataScreenWithPlotInfoState createState() =>
+      _SugarcaneDataScreenWithPlotInfoState();
 }
 
-class _SugarcaneDataScreenWithPlotInfoState extends State<SugarcaneDataScreenWithPlotInfo> {
+class _SugarcaneDataScreenWithPlotInfoState
+    extends State<SugarcaneDataScreenWithPlotInfo> {
   // ตำแหน่งของ Container สีเขียว ซึ่งสามารถปรับได้ด้วยการลากแถบ
   double _greenContainerTop = 0.3;
   // ความสูงของ Container สีเขียว
@@ -158,12 +159,6 @@ class _SugarcaneDataScreenWithPlotInfoState extends State<SugarcaneDataScreenWit
           padding: const EdgeInsets.all(16.0),
           child: Stack(
             children: [
-              Positioned(
-                top: height * 0.02,
-                left: width * 0.05,
-                child: const WeatherWidget(),
-              ),
-
               // กล่องสีเขียวหลัก
               Positioned(
                 top: height * _greenContainerTop,
@@ -179,16 +174,21 @@ class _SugarcaneDataScreenWithPlotInfoState extends State<SugarcaneDataScreenWit
                         _startDragContainerPosition = _greenContainerTop;
                       },
                       onVerticalDragUpdate: (details) {
-                        if (_startDragYOffset != null && _startDragContainerPosition != null) {
+                        if (_startDragYOffset != null &&
+                            _startDragContainerPosition != null) {
                           // คำนวณระยะที่เปลี่ยนแปลงในแนวดิ่ง
-                          final dragDelta = details.globalPosition.dy - _startDragYOffset!;
+                          final dragDelta =
+                              details.globalPosition.dy - _startDragYOffset!;
 
                           // คำนวณตำแหน่งใหม่ของ Container
-                          double newPosition = _startDragContainerPosition! + (dragDelta / height);
+                          double newPosition = _startDragContainerPosition! +
+                              (dragDelta / height);
 
                           // จำกัดตำแหน่งไม่ให้เลื่อนเกินขอบเขตที่กำหนด
-                          if (newPosition < 0) newPosition = 0; // ไม่เลื่อนขึ้นเกินส่วนบนของหน้าจอ
-                          if (newPosition > 0.3) newPosition = 0.3;   // ไม่เลื่อนลงเกินครึ่งหน้าจอ
+                          if (newPosition < 0)
+                            newPosition = 0; // ไม่เลื่อนขึ้นเกินส่วนบนของหน้าจอ
+                          if (newPosition > 0.3)
+                            newPosition = 0.3; // ไม่เลื่อนลงเกินครึ่งหน้าจอ
 
                           setState(() {
                             _greenContainerTop = newPosition;
@@ -243,7 +243,8 @@ class _SugarcaneDataScreenWithPlotInfoState extends State<SugarcaneDataScreenWit
                           children: [
                             // ส่วนควบคุมแท็บ
                             Container(
-                              margin: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                              margin: EdgeInsets.symmetric(
+                                  horizontal: 0, vertical: 0),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0),
                                 borderRadius: BorderRadius.circular(20),
@@ -255,7 +256,8 @@ class _SugarcaneDataScreenWithPlotInfoState extends State<SugarcaneDataScreenWit
                                 ),
                                 labelColor: Colors.white,
                                 unselectedLabelColor: Color(0xFF25634B),
-                                labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                labelStyle: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
                                 dividerColor: Colors.transparent,
                                 tabs: [
                                   Tab(
@@ -273,16 +275,6 @@ class _SugarcaneDataScreenWithPlotInfoState extends State<SugarcaneDataScreenWit
                                     text: "ข้อมูลแปลง",
                                     iconMargin: EdgeInsets.only(bottom: 4),
                                   ),
-                                ],
-                              ),
-                            ),
-                            // มุมมองแท็บ
-                            Expanded(
-                              child: TabBarView(
-                                children: [
-                                  HistoryTab(),
-                                  SuggestionTab(),
-                                  PlotInfoTab(plotInfo: widget.plotInfo), // ส่งข้อมูลแปลงไปยังแท็บ
                                 ],
                               ),
                             ),
@@ -365,333 +357,6 @@ class _SugarcaneDataScreenWithPlotInfoState extends State<SugarcaneDataScreenWit
   }
 }
 
-// เพิ่มแท็บ PlotInfoTab ใหม่เพื่อแสดงข้อมูลแปลง
-class PlotInfoTab extends StatelessWidget {
-  final PlotInfo plotInfo;
-
-  const PlotInfoTab({Key? key, required this.plotInfo}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      physics: BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // การ์ดหัวข้อ
-          Container(
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.info, color: Color(0xFF25634B)),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'ข้อมูลแปลงปลูกของคุณ',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // การ์ดข้อมูลพื้นฐาน
-          _buildInfoCard(
-            'ข้อมูลทั่วไป',
-            Icons.eco,
-            [
-              _buildInfoRow('ชื่อแปลง', plotInfo.name, Icons.label),
-              _buildInfoRow('พื้นที่', '${plotInfo.area.toStringAsFixed(2)} ไร่', Icons.crop_square),
-              _buildInfoRow('ประเภทพืช', plotInfo.plantType ?? 'ไม่ระบุ', Icons.category),
-              _buildInfoRow('ชนิดพืช', plotInfo.specificPlant ?? 'ไม่ระบุ', _getIconForPlantType(plotInfo.plantType ?? '')),
-              _buildInfoRow('แหล่งน้ำ', plotInfo.waterSource ?? 'ไม่ระบุ', Icons.water_drop),
-            ],
-          ),
-
-          SizedBox(height: 16),
-
-          // การ์ดข้อมูลพิกัด
-          _buildInfoCard(
-            'ข้อมูลพิกัด',
-            Icons.location_on,
-            [
-              _buildInfoRow('จำนวนจุด', '${plotInfo.polygonPoints.length} จุด', Icons.place),
-              if (plotInfo.polygonPoints.isNotEmpty)
-                _buildInfoRow(
-                    'พิกัดกึ่งกลาง',
-                    '${_calculateCenterPoint(plotInfo.polygonPoints).latitude.toStringAsFixed(6)}, ${_calculateCenterPoint(plotInfo.polygonPoints).longitude.toStringAsFixed(6)}',
-                    Icons.gps_fixed
-                ),
-            ],
-          ),
-
-          SizedBox(height: 16),
-
-          // การ์ดสถิติ
-          _buildInfoCard(
-            'สถิติแปลง',
-            Icons.analytics,
-            [
-              _buildInfoRow('เส้นรอบรูป', '${_calculatePerimeter(plotInfo.polygonPoints).toStringAsFixed(2)} เมตร', Icons.straighten),
-              _buildInfoRow('ขนาดในตารางเมตร', '${(plotInfo.area * 1600).toStringAsFixed(2)} ตร.ม.', Icons.square_foot),
-            ],
-          ),
-
-          SizedBox(height: 16),
-
-          // ปุ่มดูแผนที่
-          Container(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                _showMapDialog(context);
-              },
-              icon: Icon(Icons.map, color: Colors.white),
-              label: Text(
-                'ดูแผนที่แปลง',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF25634B),
-                padding: EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(String title, IconData icon, List<Widget> children) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF34D396).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: Color(0xFF25634B), size: 20),
-                ),
-                SizedBox(width: 12),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF25634B),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            ...children,
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value, IconData icon) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey[600], size: 16),
-          SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF25634B),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  LatLng _calculateCenterPoint(List<LatLng> points) {
-    if (points.isEmpty) return LatLng(0, 0);
-
-    double totalLat = 0;
-    double totalLng = 0;
-
-    for (LatLng point in points) {
-      totalLat += point.latitude;
-      totalLng += point.longitude;
-    }
-
-    return LatLng(totalLat / points.length, totalLng / points.length);
-  }
-
-  double _calculatePerimeter(List<LatLng> points) {
-    if (points.length < 2) return 0;
-
-    double perimeter = 0;
-    for (int i = 0; i < points.length; i++) {
-      LatLng current = points[i];
-      LatLng next = points[(i + 1) % points.length];
-      perimeter += _calculateDistance(current, next);
-    }
-
-    return perimeter;
-  }
-
-  double _calculateDistance(LatLng point1, LatLng point2) {
-    const double earthRadius = 6371000; // เมตร
-
-    double lat1Rad = point1.latitude * (3.14159265359 / 180);
-    double lat2Rad = point2.latitude * (3.14159265359 / 180);
-    double deltaLatRad = (point2.latitude - point1.latitude) * (3.14159265359 / 180);
-    double deltaLngRad = (point2.longitude - point1.longitude) * (3.14159265359 / 180);
-
-    double a = (deltaLatRad / 2) * (deltaLatRad / 2) +
-        (lat1Rad) * (lat2Rad) * (deltaLngRad / 2) * (deltaLngRad / 2);
-    double c = 2 * (a > 1 ? 1 : a); // atan2(sqrt(a), sqrt(1-a))
-
-    return earthRadius * c;
-  }
-
-  IconData _getIconForPlantType(String type) {
-    switch (type) {
-      case 'พืชไร่':
-        return Icons.grass;
-      case 'พืชสวน':
-        return Icons.spa;
-      case 'ผลไม้':
-        return Icons.emoji_food_beverage;
-      case 'พืชผัก':
-        return Icons.emoji_nature;
-      default:
-        return Icons.eco;
-    }
-  }
-
-  void _showMapDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          insetPadding: EdgeInsets.all(20),
-          child: Container(
-            height: 400,
-            child: Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF34D396),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'แผนที่แปลง ${plotInfo.name}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: GoogleMap(
-                    initialCameraPosition: CameraPosition(
-                      target: _calculateCenterPoint(plotInfo.polygonPoints),
-                      zoom: 16,
-                    ),
-                    polygons: {
-                      Polygon(
-                        polygonId: PolygonId('plot_area'),
-                        points: plotInfo.polygonPoints,
-                        fillColor: Color(0xFF34D396).withOpacity(0.3),
-                        strokeColor: Color(0xFF34D396),
-                        strokeWidth: 3,
-                      ),
-                    },
-                    markers: plotInfo.polygonPoints.map((point) {
-                      int index = plotInfo.polygonPoints.indexOf(point);
-                      return Marker(
-                        markerId: MarkerId('point_$index'),
-                        position: point,
-                        infoWindow: InfoWindow(
-                          title: 'จุดที่ ${index + 1}',
-                        ),
-                      );
-                    }).toSet(),
-                    myLocationButtonEnabled: false,
-                    zoomControlsEnabled: true,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
 class sugarcanedata extends StatelessWidget {
   const sugarcanedata({Key? key}) : super(key: key);
 
@@ -710,7 +375,8 @@ class sugarcanedata extends StatelessWidget {
 class FullScreenImageViewer extends StatelessWidget {
   final String imagePath;
 
-  const FullScreenImageViewer({Key? key, required this.imagePath}) : super(key: key);
+  const FullScreenImageViewer({Key? key, required this.imagePath})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -777,13 +443,13 @@ class TopicIcons {
 
 class SoilAnalysis {
   String date;
-  File? image;
+  List<File> images; // เปลี่ยนจาก File? เป็น List<File>
   String topic;
   String message;
 
   SoilAnalysis({
     required this.date,
-    this.image,
+    required this.images, // เปลี่ยนเป็น required
     required this.topic,
     this.message = "",
   });
@@ -794,12 +460,10 @@ class SoilAnalysisProvider with ChangeNotifier {
 
   List<SoilAnalysis> get analyses => _analyses;
 
-  // เพิ่มเมธอดเพื่อตรวจสอบว่ามีการบันทึกหัวข้อนั้นไว้แล้วหรือไม่
   bool isTopicSaved(String topic) {
     return _analyses.any((analysis) => analysis.topic == topic);
   }
 
-  // เพิ่มเมธอดเพื่อดึงข้อมูลการวิเคราะห์ตามหัวข้อ
   SoilAnalysis? getAnalysisByTopic(String topic) {
     try {
       return _analyses.firstWhere((analysis) => analysis.topic == topic);
@@ -870,7 +534,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Positioned(
               top: height * 0.02,
-              left: width * 0.05,
+              left: width * 0.055,
               child: const WeatherWidget(),
             ),
 
@@ -889,16 +553,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       _startDragContainerPosition = _greenContainerTop;
                     },
                     onVerticalDragUpdate: (details) {
-                      if (_startDragYOffset != null && _startDragContainerPosition != null) {
+                      if (_startDragYOffset != null &&
+                          _startDragContainerPosition != null) {
                         // คำนวณระยะที่เปลี่ยนแปลงในแนวดิ่ง
-                        final dragDelta = details.globalPosition.dy - _startDragYOffset!;
+                        final dragDelta =
+                            details.globalPosition.dy - _startDragYOffset!;
 
                         // คำนวณตำแหน่งใหม่ของ Container
-                        double newPosition = _startDragContainerPosition! + (dragDelta / height);
+                        double newPosition =
+                            _startDragContainerPosition! + (dragDelta / height);
 
                         // จำกัดตำแหน่งไม่ให้เลื่อนเกินขอบเขตที่กำหนด
-                        if (newPosition < 0) newPosition = 0; // ไม่เลื่อนขึ้นเกินส่วนบนของหน้าจอ
-                        if (newPosition > 0.3) newPosition = 0.3;   // ไม่เลื่อนลงเกินครึ่งหน้าจอ
+                        if (newPosition < 0)
+                          newPosition = 0; // ไม่เลื่อนขึ้นเกินส่วนบนของหน้าจอ
+                        if (newPosition > 0.3)
+                          newPosition = 0.3; // ไม่เลื่อนลงเกินครึ่งหน้าจอ
 
                         setState(() {
                           _greenContainerTop = newPosition;
@@ -953,7 +622,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           // ส่วนควบคุมแท็บ
                           Container(
-                            margin: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 0, vertical: 0),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0),
                               borderRadius: BorderRadius.circular(20),
@@ -965,21 +635,37 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               labelColor: Colors.white,
                               unselectedLabelColor: Color(0xFF25634B),
-                              labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              labelStyle: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                               dividerColor: Colors.transparent,
                               tabs: [
                                 Tab(
-                                  icon: Icon(Icons.history),
+                                  icon: Image.asset(
+                                    'assets/ประวัติ.png',
+                                    width: 24,
+                                    height: 24,
+                                    fit: BoxFit.contain,
+                                  ),
                                   text: "ประวัติ",
                                   iconMargin: EdgeInsets.only(bottom: 4),
                                 ),
                                 Tab(
-                                  icon: Icon(Icons.lightbulb),
+                                  icon: Image.asset(
+                                    'assets/แนะนำ.png',
+                                    width: 24,
+                                    height: 24,
+                                    fit: BoxFit.contain,
+                                  ),
                                   text: "แนะนำ",
                                   iconMargin: EdgeInsets.only(bottom: 4),
                                 ),
                                 Tab(
-                                  icon: Icon(Icons.info),
+                                  icon: Image.asset(
+                                    'assets/ข้อมูลแปลง.png',
+                                    width: 24,
+                                    height: 24,
+                                    fit: BoxFit.contain,
+                                  ),
                                   text: "ข้อมูลแปลง",
                                   iconMargin: EdgeInsets.only(bottom: 4),
                                 ),
@@ -999,13 +685,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Text(
                                         "ข้อมูลแปลง",
                                         style: TextStyle(
-                                            fontSize: 18, color: Color(0xFF25634B)),
+                                            fontSize: 18,
+                                            color: Color(0xFF25634B)),
                                       ),
                                       SizedBox(height: 8),
                                       Text(
                                         "ยังไม่มีข้อมูลแปลง",
                                         style: TextStyle(
-                                            fontSize: 16, color: Color(0xFF25634B)),
+                                            fontSize: 16,
+                                            color: Color(0xFF25634B)),
                                       ),
                                     ],
                                   ),
@@ -1021,9 +709,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Custom bottom navigation bar container (white background)
             Positioned(
-              bottom: height * 0.01,
+              bottom: 0,
               left: width * 0.03,
               right: width * 0.03,
               child: Container(
@@ -1033,7 +720,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(83.50),
                   ),
-                  shadows: const [
+                  shadows: [
                     BoxShadow(
                       color: Color(0x7F646464),
                       blurRadius: 4,
@@ -1044,43 +731,33 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
-            // ปุ่ม Home
+            // ปุ่มซ้าย
             Positioned(
-              bottom: height * 0.018,
-              left: width * 0.07,
+              bottom: height * 0.01, // ✅ ควบคุม position เอง
+              left: width * 0.07, // ✅ ควบคุม position เอง
               child: Container(
                 width: width * 0.12,
-                height: height * 0.055,
+                height: height * 0.05,
                 decoration: ShapeDecoration(
-                  color: const Color(0xFF34D396),
+                  color: Color(0xFF34D396),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(38),
                   ),
-                ),
-                child: const Icon(
-                  Icons.home,
-                  color: Colors.white,
                 ),
               ),
             ),
-
-            // ปุ่ม Settings
+            // ปุ่มขวา
             Positioned(
-              bottom: height * 0.018,
-              right: width * 0.07,
+              bottom: height * 0.01, // ✅ ควบคุม position เอง
+              right: width * 0.07, // ✅ ควบคุม position เอง
               child: Container(
                 width: width * 0.12,
-                height: height * 0.055,
+                height: height * 0.05,
                 decoration: ShapeDecoration(
-                  color: const Color(0xFF34D396),
+                  color: Color(0xFF34D396),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(38),
                   ),
-                ),
-                child: const Icon(
-                  Icons.settings,
-                  color: Colors.white,
                 ),
               ),
             ),
@@ -1095,237 +772,471 @@ class _HomeScreenState extends State<HomeScreen> {
 class SuggestionTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<SoilAnalysisProvider>(builder: (context, provider, child) {
-      // จัดกลุ่มหัวข้อตามประเภทกิจกรรม
-      final Map<String, List<TopicItem>> groupedTopics = {
-        'การเตรียมดิน': [
-          TopicItem('วิเคราะห์ดิน', MdiIcons.microscope, 'เพื่อตรวจสอบคุณภาพและความอุดมสมบูรณ์ของดิน'),
-          TopicItem('บำรุงดิน', MdiIcons.sprout, 'เพิ่มธาตุอาหารและปรับปรุงโครงสร้างดิน'),
-          TopicItem('ไถดินดาน', MdiIcons.terrain, 'แก้ไขปัญหาดินแน่นและระบายน้ำไม่ดี'),
-          TopicItem('ไถดะ', MdiIcons.landPlots, 'ไถครั้งแรกเพื่อพลิกหน้าดิน'),
-          TopicItem('ไถแปร', MdiIcons.tractor, 'ไถครั้งที่สองตัดแนวไถดะ'),
-          TopicItem('ไถดิน', MdiIcons.tractor, 'การไถเตรียมดินก่อนปลูก'),
-        ],
-        'การใส่ปุ๋ย': [
-          TopicItem('ใส่ปุ๋ยรองพื้น', MdiIcons.seedOutline, 'ใส่ปุ๋ยก่อนการปลูกเพื่อเตรียมธาตุอาหาร'),
-          TopicItem('ใส่ปุ๋ยทำรุ่น', MdiIcons.flowerOutline, 'ใส่ปุ๋ยช่วงอ้อยเริ่มเจริญเติบโต'),
-          TopicItem('ใส่ปุ๋ยแต่งหน้า', MdiIcons.nature, 'ใส่ปุ๋ยช่วงอ้อยเจริญเติบโตเต็มที่'),
-        ],
-        'การจัดการวัชพืช': [
-          TopicItem('ฉีดยาคุมวัชพืช', MdiIcons.spray, 'ฉีดพ่นสารเคมีกำจัดวัชพืช'),
-          TopicItem('ฉีดยาหลังวัชพืชงอก', MdiIcons.bottleTonicPlus, 'ฉีดพ่นสารเคมีหลังวัชพืชงอก'),
-          TopicItem('กำจัดวัชพืช', MdiIcons.naturePeople, 'กำจัดวัชพืชโดยวิธีต่างๆ'),
-        ],
-        'การเก็บเกี่ยว': [
-          TopicItem('เริ่มเก็บเกี่ยว', MdiIcons.contentCut, 'เก็บเกี่ยวผลผลิตอ้อย'),
-          TopicItem('ขายผลผลิต', MdiIcons.cash, 'การจำหน่ายผลผลิตอ้อย'),
-        ],
-      };
+    return Consumer<SoilAnalysisProvider>(
+      builder: (context, provider, child) {
+        // จัดกลุ่มหัวข้อตามประเภทกิจกรรม
+        final Map<String, List<TopicItem>> groupedTopics = {
+          'การเตรียมดิน': [
+            TopicItem('วิเคราะห์ดิน', MdiIcons.microscope,
+                'เพื่อตรวจสอบคุณภาพและความอุดมสมบูรณ์ของดิน'),
+            TopicItem('บำรุงดิน', MdiIcons.sprout,
+                'เพิ่มธาตุอาหารและปรับปรุงโครงสร้างดิน'),
+            TopicItem('ไถดินดาน', MdiIcons.terrain,
+                'แก้ไขปัญหาดินแน่นและระบายน้ำไม่ดี'),
+            TopicItem('ไถดะ', MdiIcons.landPlots, 'ไถครั้งแรกเพื่อพลิกหน้าดิน'),
+            TopicItem('ไถแปร', MdiIcons.tractor, 'ไถครั้งที่สองตัดแนวไถดะ'),
+            TopicItem('ไถดิน', MdiIcons.tractor, 'การไถเตรียมดินก่อนปลูก'),
+          ],
+          'การใส่ปุ๋ย': [
+            TopicItem('ใส่ปุ๋ยรองพื้น', MdiIcons.seedOutline,
+                'ใส่ปุ๋ยก่อนการปลูกเพื่อเตรียมธาตุอาหาร'),
+            TopicItem('ใส่ปุ๋ยทำรุ่น', MdiIcons.flowerOutline,
+                'ใส่ปุ๋ยช่วงอ้อยเริ่มเจริญเติบโต'),
+            TopicItem('ใส่ปุ๋ยแต่งหน้า', MdiIcons.nature,
+                'ใส่ปุ๋ยช่วงอ้อยเจริญเติบโตเต็มที่'),
+          ],
+          'การจัดการวัชพืช': [
+            TopicItem(
+                'ฉีดยาคุมวัชพืช', MdiIcons.spray, 'ฉีดพ่นสารเคมีกำจัดวัชพืช'),
+            TopicItem('ฉีดยาหลังวัชพืชงอก', MdiIcons.bottleTonicPlus,
+                'ฉีดพ่นสารเคมีหลังวัชพืชงอก'),
+            TopicItem('กำจัดวัชพืช', MdiIcons.naturePeople,
+                'กำจัดวัชพืชโดยวิธีต่างๆ'),
+          ],
+          'การเก็บเกี่ยว': [
+            TopicItem(
+                'เริ่มเก็บเกี่ยว', MdiIcons.contentCut, 'เก็บเกี่ยวผลผลิตอ้อย'),
+            TopicItem('ขายผลผลิต', MdiIcons.cash, 'การจำหน่ายผลผลิตอ้อย'),
+          ],
+        };
 
-      return SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        physics: BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // คำแนะนำการใช้งาน
-            Container(
-              padding: EdgeInsets.all(12),
-              margin: EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.3)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
+        // ไอคอนสำหรับแต่ละกลุ่ม
+        final Map<String, IconData> groupIcons = {
+          'การเตรียมดิน': MdiIcons.shovel,
+          'การใส่ปุ๋ย': Icons.spa,
+          'การจัดการวัชพืช': MdiIcons.spray,
+          'การเก็บเกี่ยว': MdiIcons.grain,
+        };
+
+        // สีสำหรับแต่ละกลุ่ม
+        final Map<String, List<Color>> groupGradients = {
+          'การเตรียมดิน': [Color(0xFF8B4513), Color(0xFFD2691E)],
+          'การใส่ปุ๋ย': [Color(0xFF228B22), Color(0xFF90EE90)],
+          'การจัดการวัชพืช': [Color(0xFFFF8C00), Color(0xFFFFA500)],
+          'การเก็บเกี่ยว': [Color(0xFF9932CC), Color(0xFFDA70D6)],
+        };
+
+        return SafeArea(
+          // เอา Scaffold ออกและเหลือแค่ SafeArea
+          child: Padding(
+            padding: const EdgeInsets.all(16.0), // Padding เท่ากันทุกด้าน
+            child: GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.15,
+              // เพิ่ม physics เพื่อให้ scroll ได้ดีขึ้น
+              physics: const BouncingScrollPhysics(),
+              children: groupedTopics.entries.map((entry) {
+                final groupTitle = entry.key;
+                final topics = entry.value;
+                final icon = groupIcons[groupTitle] ?? Icons.category;
+                final gradientColors = groupGradients[groupTitle] ??
+                    [Color(0xFF25634B), Color(0xFF34D396)];
+
+                final savedCount = topics
+                    .where((topic) => provider.isTopicSaved(topic.title))
+                    .length;
+                final totalCount = topics.length;
+
+                return Card(
+                  elevation: 8,
+                  shadowColor: Colors.black.withOpacity(0.3),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () {
+                      _showTopicPopup(context, groupTitle, topics, provider,
+                          gradientColors[0]);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white,
+                            gradientColors[1].withOpacity(0.1),
+                          ],
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 56,
+                                  height: 56,
+                                  decoration: BoxDecoration(
+                                    gradient:
+                                        LinearGradient(colors: gradientColors),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            gradientColors[0].withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    icon,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  groupTitle,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF25634B),
+                                    height: 1.2,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (savedCount > 0)
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.green.withOpacity(0.3),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  '$savedCount/$totalCount',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          Positioned(
+                            bottom: 4,
+                            left: 8,
+                            right: 8,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: savedCount > 0
+                                    ? Colors.green.withOpacity(0.1)
+                                    : Colors.grey.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                savedCount > 0
+                                    ? 'มีข้อมูล $savedCount รายการ'
+                                    : 'ยังไม่มีข้อมูล',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: savedCount > 0
+                                      ? Colors.green.shade700
+                                      : Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Icon(Icons.lightbulb, color: Color(0xFF25634B)),
                   ),
-                  SizedBox(width: 12),
-                  Expanded(
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // แสดง popup สำหรับแต่ละกลุ่ม
+  void _showTopicPopup(BuildContext context, String groupTitle,
+      List<TopicItem> topics, SoilAnalysisProvider provider, Color color) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          elevation: 16,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.75,
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // หัวข้อ popup
+                Container(
+                  padding: EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [color, color.withOpacity(0.8)],
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.category_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              groupTitle,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              'เลือกกิจกรรมที่ต้องการบันทึก',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: Icon(Icons.close, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // รายการหัวข้อ
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      children: topics.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final topic = entry.value;
+                        final isSaved = provider.isTopicSaved(topic.title);
+                        return _buildPopupOptionCard(
+                            topic, context, isSaved, provider, index);
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // การ์ดสำหรับแต่ละหัวข้อใน popup
+  Widget _buildPopupOptionCard(TopicItem topic, BuildContext context,
+      bool isSaved, SoilAnalysisProvider provider, int index) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      child: Card(
+        elevation: isSaved ? 6 : 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.of(context).pop(); // ปิด popup ก่อน
+
+            // Get current date for new entries
+            final now = DateTime.now();
+            final formatter = DateFormat('dd/MM/yyyy');
+            final currentDate = formatter.format(now);
+
+            // ตรวจสอบว่ามีข้อมูลเดิมหรือไม่
+            final existingAnalysis = provider.getAnalysisByTopic(topic.title);
+
+            if (existingAnalysis != null) {
+              // ถ้ามีข้อมูลอยู่แล้ว ให้เปิดหน้าแก้ไข
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AnalyzeSoilScreen(
+                    topic: topic.title,
+                    date: existingAnalysis.date,
+                    images: existingAnalysis.images,
+                    message: existingAnalysis.message,
+                    isEditing: true,
+                    analysis: existingAnalysis,
+                  ),
+                ),
+              );
+            } else {
+              // ถ้ายังไม่มีข้อมูล ให้เปิดหน้าเพิ่มใหม่
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AnalyzeSoilScreen(
+                    topic: topic.title,
+                    date: currentDate,
+                  ),
+                ),
+              );
+            }
+          },
+          child: Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: isSaved
+                  ? LinearGradient(
+                      colors: [
+                        Colors.green.withOpacity(0.1),
+                        Colors.green.withOpacity(0.05)
+                      ],
+                    )
+                  : null,
+            ),
+            child: Row(
+              children: [
+                // หมายเลขลำดับ
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: isSaved
+                        ? Colors.green
+                        : Color(0xFF34D396).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
                     child: Text(
-                      'เลือกกิจกรรมที่คุณต้องการบันทึกข้อมูล',
+                      '${index + 1}',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: isSaved ? Colors.white : Color(0xFF25634B),
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            // แสดงหัวข้อตามกลุ่ม
-            ...groupedTopics.entries.map((entry) {
-              return _buildTopicGroup(entry.key, entry.value, provider, context);
-            }).toList(),
-          ],
-        ),
-      );
-    });
-  }
-
-  // สร้างกลุ่มหัวข้อ
-  Widget _buildTopicGroup(String groupTitle, List<TopicItem> topics, SoilAnalysisProvider provider, BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // หัวข้อกลุ่ม
-        Container(
-          margin: EdgeInsets.only(bottom: 12, top: 8),
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: Color(0xFF25634B),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            groupTitle,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ),
-
-        // รายการในกลุ่ม
-        ...topics.map((topic) {
-          final isSaved = provider.isTopicSaved(topic.title);
-          return _buildOptionCard(topic, context, isSaved);
-        }).toList(),
-
-        SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildOptionCard(TopicItem topic, BuildContext context, bool isSaved) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: EdgeInsets.only(bottom: 10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // Get current date for new entries
-          final now = DateTime.now();
-          final formatter = DateFormat('dd/MM/yyyy');
-          final currentDate = formatter.format(now);
-
-          // ตรวจสอบว่ามีข้อมูลเดิมหรือไม่
-          final provider = Provider.of<SoilAnalysisProvider>(context, listen: false);
-          final existingAnalysis = provider.getAnalysisByTopic(topic.title);
-
-          if (existingAnalysis != null) {
-            // ถ้ามีข้อมูลอยู่แล้ว ให้เปิดหน้าแก้ไข
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AnalyzeSoilScreen(
-                  topic: topic.title,
-                  date: existingAnalysis.date,
-                  image: existingAnalysis.image,
-                  message: existingAnalysis.message,
-                  isEditing: true,
-                  analysis: existingAnalysis,
                 ),
-              ),
-            );
-          } else {
-            // ถ้ายังไม่มีข้อมูล ให้เปิดหน้าเพิ่มใหม่
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AnalyzeSoilScreen(
-                  topic: topic.title,
-                  date: currentDate,
-                ),
-              ),
-            );
-          }
-        },
-        child: Container(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // ไอคอนที่เกี่ยวข้องกับหัวข้อ
-              Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: Color(0xFF34D396).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  topic.icon,
-                  color: Color(0xFF25634B),
-                  size: 24,
-                ),
-              ),
-              SizedBox(width: 16),
+                SizedBox(width: 12),
 
-              // รายละเอียดหัวข้อ
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      topic.title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF25634B),
-                      ),
-                    ),
-                    if (topic.description.isNotEmpty)
-                      Padding(
-                        padding: EdgeInsets.only(top: 4),
-                        child: Text(
-                          topic.description,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
+                // ไอคอน
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Color(0xFF34D396).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    topic.icon,
+                    color: Color(0xFF25634B),
+                    size: 24,
+                  ),
+                ),
+                SizedBox(width: 16),
+
+                // รายละเอียดหัวข้อ
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        topic.title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2D3748),
                         ),
                       ),
-                  ],
+                      if (topic.description.isNotEmpty)
+                        Padding(
+                          padding: EdgeInsets.only(top: 4),
+                          child: Text(
+                            topic.description,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
 
-              // สถานะการบันทึก
-              if (isSaved)
+                // สถานะการบันทึก
                 Container(
-                  padding: EdgeInsets.all(4),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Color(0xFF25634B),
-                    shape: BoxShape.circle,
+                    color:
+                        isSaved ? Colors.green : Colors.grey.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                )
-              else
-                Container(
-                  padding: EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.add,
-                    color: Color(0xFF25634B),
-                    size: 16,
+                    isSaved ? Icons.check : Icons.add,
+                    color: isSaved ? Colors.white : Color(0xFF25634B),
+                    size: 20,
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1436,7 +1347,8 @@ class HistoryTab extends StatelessWidget {
         ),
         title: Text(
           analysis.topic,
-          style: TextStyle(color: Color(0xFF25634B), fontWeight: FontWeight.bold),
+          style:
+              TextStyle(color: Color(0xFF25634B), fontWeight: FontWeight.bold),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
@@ -1450,7 +1362,7 @@ class HistoryTab extends StatelessWidget {
               builder: (context) => AnalyzeSoilScreen(
                 topic: analysis.topic,
                 date: analysis.date,
-                image: analysis.image,
+                images: analysis.images,
                 message: analysis.message,
                 isEditing: true,
                 analysis: analysis,
@@ -1474,7 +1386,7 @@ class HistoryTab extends StatelessWidget {
 class AnalyzeSoilScreen extends StatefulWidget {
   final String topic;
   final String? date;
-  final File? image;
+  final List<File>? images; // เปลี่ยนจาก File? เป็น List<File>
   final String? message;
   final bool isEditing;
   final SoilAnalysis? analysis;
@@ -1482,7 +1394,7 @@ class AnalyzeSoilScreen extends StatefulWidget {
   AnalyzeSoilScreen({
     required this.topic,
     this.date,
-    this.image,
+    this.images,
     this.message = "",
     this.isEditing = false,
     this.analysis,
@@ -1495,7 +1407,7 @@ class AnalyzeSoilScreen extends StatefulWidget {
 class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   late TextEditingController _dateController;
   late TextEditingController _messageController;
-  File? _image;
+  List<File> _images = []; // เปลี่ยนจาก File? เป็น List<File>
   bool _isLoading = false;
 
   @override
@@ -1503,7 +1415,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
     super.initState();
     _dateController = TextEditingController(text: widget.date ?? "");
     _messageController = TextEditingController(text: widget.message ?? "");
-    _image = widget.image;
+    _images = widget.images ?? []; // เปลี่ยนจาก widget.image เป็น widget.images
   }
 
   Future<void> _takePicture() async {
@@ -1519,7 +1431,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
       );
       if (pickedFile != null) {
         setState(() {
-          _image = File(pickedFile.path);
+          _images.add(File(pickedFile.path)); // เพิ่มรูปใหม่เข้า List
         });
       }
     } catch (e) {
@@ -1536,21 +1448,19 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
     }
   }
 
-  // เลือกรูปจากแกลเลอรี่
   Future<void> _pickImage() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final pickedFile = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
+      final pickedFiles = await ImagePicker().pickMultiImage(
         imageQuality: 85,
         maxWidth: 1200,
       );
-      if (pickedFile != null) {
+      if (pickedFiles.isNotEmpty) {
         setState(() {
-          _image = File(pickedFile.path);
+          _images.addAll(pickedFiles.map((file) => File(file.path)));
         });
       }
     } catch (e) {
@@ -1568,7 +1478,6 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   }
 
   void _saveData() {
-    // ตรวจสอบว่าข้อความไม่ว่างเปล่า
     if (_messageController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1581,7 +1490,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
 
     final analysis = SoilAnalysis(
       date: _dateController.text,
-      image: _image,
+      images: _images, // ใช้ List<File> แทน File?
       topic: widget.topic,
       message: _messageController.text,
     );
@@ -1594,14 +1503,15 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
     Provider.of<SoilAnalysisProvider>(context, listen: false)
         .addAnalysis(analysis);
 
-    // แสดงข้อความบันทึกสำเร็จ
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             Icon(Icons.check_circle, color: Colors.white),
             SizedBox(width: 10),
-            Text(widget.isEditing ? 'บันทึกการแก้ไขสำเร็จ' : 'บันทึกข้อมูลสำเร็จ'),
+            Text(widget.isEditing
+                ? 'บันทึกการแก้ไขสำเร็จ'
+                : 'บันทึกข้อมูลสำเร็จ'),
           ],
         ),
         backgroundColor: Color(0xFF25634B),
@@ -1621,19 +1531,14 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
         content: Text("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้?"),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(context); // ปิด dialog
-            },
+            onPressed: () => Navigator.pop(context),
             child: Text("ยกเลิก", style: TextStyle(color: Color(0xFF25634B))),
           ),
           ElevatedButton(
             onPressed: () {
-              // ลบข้อมูลจาก Provider
               if (widget.analysis != null) {
                 Provider.of<SoilAnalysisProvider>(context, listen: false)
                     .removeAnalysis(widget.analysis!);
-
-                // แสดงข้อความลบสำเร็จ
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Row(
@@ -1648,9 +1553,8 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                   ),
                 );
               }
-
-              Navigator.pop(context); // ปิด dialog
-              Navigator.pop(context); // กลับไปที่หน้าก่อนหน้า
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
@@ -1659,7 +1563,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
               ),
             ),
             child: Text("ลบ", style: TextStyle(color: Colors.white)),
-          ),
+          )
         ],
       ),
     );
@@ -1667,7 +1571,6 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // เลือกไอคอนที่เหมาะสมกับหัวข้อ
     final Map<String, IconData> topicIcons = {
       "ดิน": Icons.terrain,
       "ปุ๋ย": Icons.eco,
@@ -1680,7 +1583,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
       "โรค": Icons.sick,
     };
 
-    IconData topicIcon = Icons.spa; // Default icon
+    IconData topicIcon = Icons.spa;
     topicIcons.forEach((key, icon) {
       if (widget.topic.contains(key)) {
         topicIcon = icon;
@@ -1702,19 +1605,15 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
       ),
       body: Stack(
         children: [
-          // พื้นหลังส่วนบน
           Container(
             height: 120,
             width: double.infinity,
             color: Color(0xFF34D396),
           ),
-
-          // เนื้อหาหลัก
           SingleChildScrollView(
             physics: BouncingScrollPhysics(),
             child: Column(
               children: [
-                // การ์ดหลัก
                 Container(
                   margin: EdgeInsets.fromLTRB(16, 16, 16, 24),
                   decoration: BoxDecoration(
@@ -1731,7 +1630,6 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ส่วนหัวการ์ด
                       Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -1770,7 +1668,9 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    widget.isEditing ? "แก้ไขข้อมูล" : "กรอกข้อมูลรายละเอียด",
+                                    widget.isEditing
+                                        ? "แก้ไขข้อมูล"
+                                        : "กรอกข้อมูลรายละเอียด",
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.8),
                                       fontSize: 14,
@@ -1782,14 +1682,11 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                           ],
                         ),
                       ),
-
-                      // เนื้อหาการ์ด
                       Padding(
                         padding: EdgeInsets.all(20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // วันที่
                             Text(
                               "วันที่",
                               style: TextStyle(
@@ -1820,14 +1717,16 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                                 if (selectedDate != null) {
                                   setState(() {
                                     _dateController.text =
-                                    "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+                                        "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
                                   });
                                 }
                               },
                               child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
@@ -1847,8 +1746,6 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                               ),
                             ),
                             SizedBox(height: 20),
-
-                            // ข้อความ
                             Text(
                               "ข้อความ",
                               style: TextStyle(
@@ -1862,25 +1759,27 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                               controller: _messageController,
                               decoration: InputDecoration(
                                 hintText: "กรอกรายละเอียด...",
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: Color(0xFF34D396), width: 2),
+                                  borderSide: BorderSide(
+                                      color: Color(0xFF34D396), width: 2),
                                 ),
                               ),
                               maxLines: 3,
-                              style: TextStyle(fontSize: 16, fontFamily: 'Kanit'),
+                              style:
+                                  TextStyle(fontSize: 16, fontFamily: 'Kanit'),
                               textCapitalization: TextCapitalization.sentences,
                               textInputAction: TextInputAction.newline,
                               keyboardType: TextInputType.multiline,
                             ),
                             SizedBox(height: 20),
-
-                            // ส่วนอัพโหลดรูปภาพ
                             Text(
                               "รูปภาพ",
                               style: TextStyle(
@@ -1890,8 +1789,6 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                               ),
                             ),
                             SizedBox(height: 12),
-
-                            // ปุ่มกล้องและแกลเลอรี่
                             Row(
                               children: [
                                 Expanded(
@@ -1902,7 +1799,8 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Color(0xFF34D396),
                                       foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(vertical: 12),
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 12),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -1918,7 +1816,8 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Color(0xFF25634B),
                                       foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(vertical: 12),
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 12),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -1928,89 +1827,106 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                               ],
                             ),
                             SizedBox(height: 20),
-
-                            // แสดงภาพถ่าย
-                            if (_image != null)
+                            if (_images.isNotEmpty)
                               Container(
-                                width: double.infinity,
                                 height: 250,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade300),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 5,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                clipBehavior: Clip.hardEdge,
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    // เพิ่ม GestureDetector เพื่อให้คลิกดูรูปแบบเต็มหน้าจอได้
-                                    GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => FullScreenImageViewer(
-                                              imagePath: _image!.path,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Hero(
-                                        tag: 'image_${_image!.path}',
-                                        child: Image.file(
-                                          _image!,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                    // ปุ่มลบรูปภาพ
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            _image = null;
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black.withOpacity(0.6),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.close,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    // เพิ่มไอคอนแสดงว่าสามารถคลิกได้
-                                    Positioned(
-                                      bottom: 8,
-                                      right: 8,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _images.length,
+                                  itemBuilder: (context, index) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: 8),
                                       child: Container(
-                                        padding: EdgeInsets.all(6),
+                                        width: 200,
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.6),
-                                          shape: BoxShape.circle,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                              color: Colors.grey.shade300),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withOpacity(0.05),
+                                              blurRadius: 5,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ],
                                         ),
-                                        child: Icon(
-                                          Icons.fullscreen,
-                                          color: Colors.white,
-                                          size: 20,
+                                        clipBehavior: Clip.hardEdge,
+                                        child: Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ImageGalleryScreen(
+                                                      images: _images,
+                                                      initialIndex: index,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: Hero(
+                                                tag:
+                                                    'image_${_images[index].path}',
+                                                child: Image.file(
+                                                  _images[index],
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: 8,
+                                              right: 8,
+                                              child: InkWell(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _images.removeAt(index);
+                                                  });
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.all(6),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black
+                                                        .withOpacity(0.6),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    color: Colors.white,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Visibility(
+                                              visible: false,
+                                              child: Positioned(
+                                                bottom: 8,
+                                                right: 8,
+                                                child: Container(
+                                                  padding: EdgeInsets.all(6),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black
+                                                        .withOpacity(0.6),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.fullscreen,
+                                                    color: Colors.white,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    );
+                                  },
                                 ),
                               )
                             else
@@ -2019,7 +1935,8 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                                 height: 120,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -2046,8 +1963,6 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                     ],
                   ),
                 ),
-
-                // ปุ่มบันทึก
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ElevatedButton(
@@ -2063,12 +1978,11 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                     ),
                     child: Text(
                       widget.isEditing ? "บันทึกการแก้ไข" : "บันทึก",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-
-                // ปุ่มลบ (แสดงเฉพาะเมื่ออยู่ในโหมดแก้ไข)
                 if (widget.isEditing)
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -2086,17 +2000,15 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                       ),
                       child: Text(
                         "ลบ",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
-
                 SizedBox(height: 24),
               ],
             ),
           ),
-
-          // แสดงตัวโหลดเมื่อกำลังประมวลผล
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.5),
@@ -2121,6 +2033,51 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   }
 }
 
+class ImageGalleryScreen extends StatelessWidget {
+  final List<File> images;
+  final int initialIndex;
+
+  const ImageGalleryScreen({
+    required this.images,
+    this.initialIndex = 0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: PageView.builder(
+        controller: PageController(initialPage: initialIndex),
+        itemCount: images.length,
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            panEnabled: true,
+            minScale: 0.5,
+            maxScale: 4.0,
+            child: Center(
+              child: Hero(
+                tag: 'image_${images[index].path}',
+                child: Image.file(
+                  images[index],
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class ImageDetailScreen extends StatelessWidget {
   final SoilAnalysis analysis;
 
@@ -2139,62 +2096,36 @@ class ImageDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // แสดงรูปภาพที่สามารถคลิกเพื่อดูแบบเต็มหน้าจอได้
-            if (analysis.image != null)
+            if (analysis.images.isNotEmpty)
               Container(
-                width: double.infinity,
                 height: 300,
-                margin: EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                clipBehavior: Clip.hardEdge,
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            FullScreenImageViewer(
-                              imagePath: analysis.image!.path,
+                child: PageView.builder(
+                  itemCount: analysis.images.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ImageGalleryScreen(
+                              images: analysis.images,
+                              initialIndex: index,
                             ),
-                      ),
-                    );
-                  },
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Hero(
-                        tag: 'image_${analysis.image!.path}',
+                          ),
+                        );
+                      },
+                      child: Hero(
+                        tag: 'image_${analysis.images[index].path}',
                         child: Image.file(
-                          analysis.image!,
+                          analysis.images[index],
                           fit: BoxFit.cover,
                         ),
                       ),
-                      // ไอคอนแสดงว่าสามารถคลิกได้
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: Container(
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.fullscreen,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
-
-            // ข้อมูลรายละเอียด
+            SizedBox(height: 16),
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(

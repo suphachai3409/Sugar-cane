@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const moneytransferScreen());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class moneytransferScreen extends StatelessWidget {
+  const moneytransferScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,20 +18,8 @@ class MyApp extends StatelessWidget {
       ),
     );
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'เบิกล่วงหน้า',
-      theme: ThemeData(
-        primaryColor:Colors.white,
-        scaffoldBackgroundColor:Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF30C39E),
-          elevation: 0,
-          iconTheme: IconThemeData(color: Color(0xFF30C39E)),
-        ),
-      ),
-      home: const CashAdvanceApp(),
+    return Scaffold(
+      body: const CashAdvanceApp(), // หรือเนื้อหาของหน้า Equipment
     );
   }
 }
@@ -161,11 +149,14 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           controller: _nameController,
                           decoration: InputDecoration(
                             hintText: 'ระบุชื่อ-นามสกุล',
-                            hintStyle: TextStyle(color: Colors.grey), // เปลี่ยนสีของ hint text เป็นสีเทา
+                            hintStyle: TextStyle(
+                                color: Colors
+                                    .grey), // เปลี่ยนสีของ hint text เป็นสีเทา
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10),
                             errorText: _nameError,
                           ),
                           onChanged: (value) {
@@ -194,7 +185,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10),
                             errorText: _phoneError,
                             counterText: "",
                           ),
@@ -224,7 +216,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10),
                             errorText: _amountError,
                           ),
                           onChanged: (value) {
@@ -252,7 +245,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10),
                             suffixIcon: Icon(Icons.calendar_today, size: 20),
                             errorText: _dateError,
                           ),
@@ -274,7 +268,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
-                                  side: const BorderSide(color: Color(0xFF30C39E)),
+                                  side: const BorderSide(
+                                      color: Color(0xFF30C39E)),
                                 ),
                                 child: const Text(
                                   'กลับ',
@@ -325,7 +320,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     );
   }
 
-  Future<void> _selectDateInDialog(BuildContext context, StateSetter setDialogState) async {
+  Future<void> _selectDateInDialog(
+      BuildContext context, StateSetter setDialogState) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -481,17 +477,17 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-            'เบิกล่วงหน้า',
+        title: const Text('เบิกล่วงหน้า',
             style: TextStyle(
-              color: Color(0xFF25634B),
               fontSize: 20,
+              color: Color(0xFF25634B),
               fontWeight: FontWeight.w800,
-            )
-        ),
+            )),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: selectedRequestIndex != null ? _goBack : null,
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
       body: SafeArea(
@@ -618,7 +614,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     );
   }
 
-  Widget _buildRequestCard(CashAdvanceRequest request, int index, double width, double height) {
+  Widget _buildRequestCard(
+      CashAdvanceRequest request, int index, double width, double height) {
     final formattedDate = DateFormat('dd/MM/yyyy').format(request.date);
 
     return Container(
@@ -764,26 +761,29 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      child: const Text('แก้ไข', style: TextStyle(
-                        color: Color(0xFFFFFFFF),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,)),
+                      child: const Text('แก้ไข',
+                          style: TextStyle(
+                            color: Color(0xFFFFFFFF),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          )),
                     ),
                     const SizedBox(width: 20),
                     ElevatedButton(
-                      onPressed: _showDeleteConfirmation,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        minimumSize: const Size(100, 40),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                        onPressed: _showDeleteConfirmation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          minimumSize: const Size(100, 40),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
                         ),
-                      ),
-                      child: const Text('ลบ', style: TextStyle(
-                        color: Color(0xFFFFFFFF),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,))
-                    ),
+                        child: const Text('ลบ',
+                            style: TextStyle(
+                              color: Color(0xFFFFFFFF),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ))),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -799,13 +799,12 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           ),
                           side: const BorderSide(color: Color(0xFF34D396)),
                         ),
-                        child: const Text(
-                            'กลับ',
+                        child: const Text('กลับ',
                             style: TextStyle(
                               color: Color(0xFF34D396),
                               fontSize: 16,
-                              fontWeight: FontWeight.w800,)
-                        ),
+                              fontWeight: FontWeight.w800,
+                            )),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -820,13 +819,12 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        child: const Text(
-                            'ยืนยัน',
-                          style: TextStyle(
-                            color: Color(0xFFFFFFFF),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,)
-                        ),
+                        child: const Text('ยืนยัน',
+                            style: TextStyle(
+                              color: Color(0xFFFFFFFF),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            )),
                       ),
                     ),
                   ],
@@ -844,12 +842,15 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
       builder: (context, constraints) {
         final width = MediaQuery.of(context).size.width;
         final height = MediaQuery.of(context).size.height;
-        return SizedBox(
-          height: 80,
+
+        return Container(
+          height: 110,
+          padding: const EdgeInsets.all(16.0),
           child: Stack(
             children: [
+              // Custom bottom navigation bar container (white background)
               Positioned(
-                bottom: height * 0.02,
+                bottom: 0,
                 left: width * 0.03,
                 right: width * 0.03,
                 child: Container(
@@ -859,7 +860,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(83.50),
                     ),
-                    shadows: const [
+                    shadows: [
                       BoxShadow(
                         color: Color(0x7F646464),
                         blurRadius: 4,
@@ -870,50 +871,32 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   ),
                 ),
               ),
+              // ปุ่มซ้าย
               Positioned(
-                bottom: height * 0.03,
-                left: width * 0.07,
-                child: GestureDetector(
-                  onTap: () {
-                    print("Home button tapped");
-                  },
-                  child: Container(
-                    width: width * 0.12,
-                    height: height * 0.05,
-                    decoration: ShapeDecoration(
-                      color: const Color(0xFF34D396),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(38),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.home,
-                      color: Colors.white,
-                      size: 20,
+                bottom: height * 0.01, // ✅ ควบคุม position เอง
+                left: width * 0.07, // ✅ ควบคุม position เอง
+                child: Container(
+                  width: width * 0.12,
+                  height: height * 0.05,
+                  decoration: ShapeDecoration(
+                    color: Color(0xFF34D396),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
                     ),
                   ),
                 ),
               ),
+              // ปุ่มขวา
               Positioned(
-                bottom: height * 0.03,
-                right: width * 0.07,
-                child: GestureDetector(
-                  onTap: () {
-                    print("Profile button tapped");
-                  },
-                  child: Container(
-                    width: width * 0.12,
-                    height: height * 0.05,
-                    decoration: ShapeDecoration(
-                      color: const Color(0xFF34D396),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(38),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 20,
+                bottom: height * 0.01, // ✅ ควบคุม position เอง
+                right: width * 0.07, // ✅ ควบคุม position เอง
+                child: Container(
+                  width: width * 0.12,
+                  height: height * 0.05,
+                  decoration: ShapeDecoration(
+                    color: Color(0xFF34D396),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
                     ),
                   ),
                 ),
