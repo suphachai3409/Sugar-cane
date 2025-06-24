@@ -3,7 +3,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'google_maps_search.dart';
-import 'map_drawing_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
@@ -79,9 +78,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       "plantType": selectedPlant,
       "waterSource": selectedWater,
       "soilType": selectedSoil,
-      "latitude": locationLatLng?.latitude,
-      "longitude": locationLatLng?.longitude,
-      "address": locationAddress,
+      "latitude": locationLatLng!.latitude,
+      "longitude": locationLatLng!.longitude,
     };
 
     try {
@@ -104,7 +102,6 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           selectedWater = '';
           selectedSoil = '';
           locationLatLng = null;
-          locationAddress = null;
           _plotNameController.clear();
         });
 
@@ -151,8 +148,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                   );
 
                   // หลังจากกลับมาจากหน้า map
-                  if (result != null && result['latLng'] != null && result['address'] != null) {
-                    final LatLng selectedLatLng = result['latLng'];
+                  if (result != null && result['lat'] != null && result['lng'] != null && result['address'] != null) {
+                    final LatLng selectedLatLng = LatLng(result['lat'], result['lng']);
                     final String selectedAddress = result['address'];
 
                     print("📍 ได้ตำแหน่งจาก map: $selectedLatLng, $selectedAddress");
@@ -168,7 +165,6 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                           locationAddress = selectedAddress;
                         });
 
-                        // → ต่อ b > c > d ได้เลย
                         _showFirstPopup(context, plotName);
                       },
                     );
@@ -231,10 +227,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                   ),
                 );
 
-                if (result != null &&
-                    result['latLng'] != null &&
-                    result['address'] != null) {
-                  final LatLng selectedLatLng = result['latLng'];
+                if (result != null && result['lat'] != null && result['lng'] != null && result['address'] != null) {
+                  final LatLng selectedLatLng = LatLng(result['lat'], result['lng']);
                   final String selectedAddress = result['address'];
 
                   print("📍 ได้ตำแหน่งจาก map: $selectedLatLng, $selectedAddress");
@@ -336,6 +330,19 @@ class _Plot1ScreenState extends State<Plot1Screen> {
 
   // Card แสดงข้อมูลแปลงปลูก - แก้ไขใหม่
   Widget _buildPlotCard(Map<String, dynamic> plot, double width, double height) {
+    // ดึง lat/lng จาก plot (ต้องแน่ใจว่ามีข้อมูล)
+    final double? lat = plot['latitude'] is double
+        ? plot['latitude']
+        : (plot['latitude'] is int ? (plot['latitude'] as int).toDouble() : null);
+    final double? lng = plot['longitude'] is double
+        ? plot['longitude']
+        : (plot['longitude'] is int ? (plot['longitude'] as int).toDouble() : null);
+
+    LatLng? plotPosition;
+    if (lat != null && lng != null) {
+      plotPosition = LatLng(lat, lng);
+    }
+
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
@@ -354,26 +361,54 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // รูปภาพ (placeholder)
-          Container(
-            width: width * 0.2,
-            height: width * 0.2,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[200],
+      // Mini Google Map
+      plotPosition != null
+      ? Container(
+      width: width * 0.2,
+        height: width * 0.2,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: plotPosition,
+              zoom: 14,
             ),
-            child: Icon(
-              Icons.agriculture,
-              color: Color(0xFF34D396),
-              size: width * 0.08,
-            ),
+            markers: {
+              Marker(
+                markerId: MarkerId('plot_marker_${plot['_id']}'),
+                position: plotPosition,
+              ),
+            },
+            zoomControlsEnabled: false,
+            scrollGesturesEnabled: false,
+            rotateGesturesEnabled: false,
+            tiltGesturesEnabled: false,
+            zoomGesturesEnabled: false,
+            myLocationButtonEnabled: false,
+            liteModeEnabled: true, // ถ้าใช้ Android/iOS ที่รองรับ
           ),
-          SizedBox(width: 12),
-          // ข้อมูลแปลง
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        ),
+      )
+          : Container(
+      width: width * 0.2,
+      height: width * 0.2,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.grey[200],
+      ),
+      child: Icon(
+        Icons.agriculture,
+        color: Color(0xFF34D396),
+        size: width * 0.08,
+      ),
+    ),
+    SizedBox(width: 12),
+    // ... (ส่วนข้อมูลแปลงเหมือนเดิม)
+    // ... (ไม่ต้องแก้ไขส่วนนี้)
+    Expanded(
+    child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -658,40 +693,79 @@ class _Plot1ScreenState extends State<Plot1Screen> {
         ),
         // ปุ่มซ้าย
         Positioned(
-          bottom: height * 0.01, // ✅ ควบคุม position เอง
-          left: width * 0.07, // ✅ ควบคุม position เอง
-          child: Container(
-            width: width * 0.12,
-            height: height * 0.05,
-            decoration: ShapeDecoration(
-              color: Color(0xFF34D396),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(38),
+          bottom: height * 0.01, // 3% จากด้านล่าง
+          left: width * 0.07,
+          child: GestureDetector(
+            onTap: () {
+              // TODO: ใส่ฟังก์ชันเมื่อกด
+            },
+            child: Container(
+              width: width * 0.12,
+              height: height * 0.05,
+              decoration: ShapeDecoration(
+                color: Color(0xFF34D396),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(38),
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(38),
+                  child: Image.asset(
+                    'assets/โฮม.png',
+                    fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
+                  ),
+                ),
               ),
             ),
           ),
         ),
-        // ปุ่มขวา
+
+        //ปุ่มล่างสุด ขวา
         Positioned(
-          bottom: height * 0.01, // ✅ ควบคุม position เอง
-          right: width * 0.07, // ✅ ควบคุม position เอง
-          child: Container(
-            width: width * 0.12,
-            height: height * 0.05,
-            decoration: ShapeDecoration(
-              color: Color(0xFF34D396),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(38),
+          bottom: height * 0.01,
+          right: width * 0.07,
+          child: GestureDetector(
+            onTap: () {
+              // TODO: ใส่ฟังก์ชันเมื่อกด
+            },
+            child: Container(
+              width: width * 0.12,
+              height: height * 0.05,
+              decoration: ShapeDecoration(
+                color: Color(0xFF34D396),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(38),
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(38),
+                  child: Image.asset(
+                    'assets/โปรไฟล์.png',
+                    fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
+                  ),
+                ),
               ),
             ),
           ),
         ),
+
+
       ],
     );
   }
 
   // บันทึกข้อมูลและ refresh หน้าจอ
   void _savePlotData() async {
+    if (locationLatLng == null) {
+      print('❌ กรุณาเลือกตำแหน่งบนแผนที่ก่อนบันทึก');
+      _showErrorDialog(context, 'กรุณาเลือกตำแหน่งบนแผนที่ก่อนบันทึก');
+      return;
+    }
+
     print("📤 userId sent: ${widget.userId}");
     final response = await http.post(
       Uri.parse('http://10.0.2.2:3000/api/plots'),
@@ -702,14 +776,14 @@ class _Plot1ScreenState extends State<Plot1Screen> {
         "plantType": selectedPlant,
         "waterSource": selectedWater,
         "soilType": selectedSoil,
-        "latitude": locationLatLng?.latitude,
-        "longitude": locationLatLng?.longitude,
-        "address": locationAddress,
+        "latitude": locationLatLng!.latitude,
+        "longitude": locationLatLng!.longitude, // <== เพิ่มตรงนี้
       }),
     );
 
     if (response.statusCode == 200) {
       print('✅ บันทึกข้อมูลแปลงปลูกสำเร็จ');
+      print('จะบันทึก lat: ${locationLatLng?.latitude}, lng: ${locationLatLng?.longitude}');
       await _loadPlotData();
       _showSuccessDialog(context);
 
@@ -718,8 +792,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
         selectedPlant = '';
         selectedWater = '';
         selectedSoil = '';
-        locationLatLng = LatLng(0, 0);         // 🔁 reset ตำแหน่ง (ตามต้องการ)
-        locationAddress = '';
+        locationLatLng = null;
         _plotNameController.clear();
       });
     } else {

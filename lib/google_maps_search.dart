@@ -144,12 +144,18 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<PlaceSearchResult> _searchResults = [];
   bool _isLoading = false;
+  bool _isPositionSelected = false;
 
   // ตำแหน่งเริ่มต้น (ขอนแก่น)
   final LatLng _initialPosition = LatLng(16.4322, 102.8236);
   LatLng? _selectedPosition;
   Set<Marker> _markers = {};
   String _selectedAddress = '';
+  // เพิ่มใน State variables
+  Set<Polygon> _polygons = {};
+  bool _isDrawingMode = false;
+  bool _canFinishDrawing = false; // ตัวแปรใหม่
+  List<LatLng> _drawingPoints = [];
 
   @override
   void initState() {
@@ -188,6 +194,10 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   }
 
   void _updateSelectedLocation(LatLng location) async {
+    if (_isDrawingMode) {
+      _addDrawingPoint(location);
+      return;
+    }
     setState(() {
       _selectedPosition = location;
       _markers = {
@@ -296,6 +306,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
             onTap: _updateSelectedLocation,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
+            polygons: _polygons,
           ),
 
           // ส่วนค้นหาและปุ่มต่างๆ
@@ -414,29 +425,17 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
-                          child: ElevatedButton(
 
-                            onPressed: _selectedPosition != null
-                                ? () async {
-                              final address = await GooglePlacesService.getAddressFromLatLng(_selectedPosition!);
-
-                              print('📌 ตำแหน่งที่เลือก: $_selectedPosition');
-                              print('🗺️ ที่อยู่: $address');
-
-                              Navigator.pop(context, {
-                                'latLng': _selectedPosition,
-                                'address': address,
-                              });
-                            }
-                                : null,
-
-
-
+                          child: _selectedPosition == null
+                              ? Container()
+                              : !_isPositionSelected
+                              ? ElevatedButton(
+                            onPressed: _selectPosition,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Color(0xFF34D396),
                               padding: EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              shape: RoundedRectangleBorder
+                                (borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             child: Text(
@@ -446,6 +445,106 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                          )
+
+
+
+                              : Row(
+                            children: [
+                          Expanded(
+                          child: ElevatedButton(
+                          onPressed: _skipDrawing,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[600],
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              'ข้าม',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                              //ข้าม
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _undoLastPoint, // เรียกฟังก์ชันที่ลบจุดล่าสุด
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange[600],
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'ย้อนกลับจุด',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _canFinishDrawing
+                                      ? _skipDrawing // ถ้าวาดครบ 3 จุดขึ้นไป เรียก skipDrawing
+                                      : () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text('เริ่มระบุแผนที่'),
+                                          content: Text('คุณสามารถเริ่มวาดแปลงพื้นที่ได้เลย'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                                _skipDrawing();
+                                              },
+                                              child: Text('ข้าม'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                                _startDrawingMode();
+                                              },
+                                              child: Text('โอเค'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFF34D396),
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _canFinishDrawing ? 'ถัดไป' : 'วาดแผนที่',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+
+
+
+                            ],
                           ),
                         ),
                       ],
@@ -477,6 +576,169 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  void _selectPosition() async {
+    final address = await GooglePlacesService.getAddressFromLatLng(_selectedPosition!);
+    setState(() {
+      _selectedAddress = address;
+      _isPositionSelected = true;
+    });
+  }
+
+  void _startDrawingMode() {
+    setState(() {
+      _isDrawingMode = true;
+      _drawingPoints.clear();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('แตะบนแผนที่เพื่อวาดขอบเขตพื้นที่'),
+        duration: Duration(seconds: 3),
+        backgroundColor: Color(0xFF34D396),
+      ),
+    );
+  }
+
+  void _addDrawingPoint(LatLng point) {
+    setState(() {
+      _drawingPoints.add(point);
+
+      // สร้าง marker สำหรับจุดที่วาด
+      _markers = _drawingPoints.asMap().entries.map((entry) {
+        int index = entry.key;
+        LatLng point = entry.value;
+        return Marker(
+          markerId: MarkerId('drawing_point_$index'),
+          position: point,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          infoWindow: InfoWindow(title: 'จุดที่ ${index + 1}'),
+        );
+      }).toSet();
+
+      // สร้าง polygon เมื่อมี >= 3 จุด
+      if (_drawingPoints.length >= 3) {
+        _polygons = {
+          Polygon(
+            polygonId: PolygonId('drawn_area'),
+            points: _drawingPoints,
+            fillColor: Color(0xFF34D396).withOpacity(0.3),
+            strokeColor: Color(0xFF34D396),
+            strokeWidth: 2,
+          ),
+        };
+        _canFinishDrawing = true; // ✅ ชื่อไม่ชนแล้ว
+      } else {
+        _polygons.clear();
+        _canFinishDrawing = false;
+      }
+;
+    });
+  }
+
+
+  void _finishDrawing() {
+    if (_drawingPoints.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('กรุณาวาดอย่างน้อย 3 จุดเพื่อสร้างพื้นที่'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isDrawingMode = false;
+    });
+
+    Navigator.pop(context, {
+      'latLng': _selectedPosition,
+      'address': _selectedAddress,
+      'drawingPoints': _drawingPoints,
+      'centerPoint': _calculateCenterPoint(_drawingPoints),
+    });
+  }
+
+  void _cancelDrawing() {
+    setState(() {
+      _isDrawingMode = false;
+      _drawingPoints.clear();
+      _polygons.clear();
+      if (_selectedPosition != null) {
+        _markers = {
+          Marker(
+            markerId: MarkerId('selected'),
+            position: _selectedPosition!,
+            infoWindow: InfoWindow(title: 'ตำแหน่งที่เลือก'),
+          ),
+        };
+      }
+    });
+  }
+
+  void _skipDrawing() {
+    Navigator.pop(context, {
+      'lat': _selectedPosition!.latitude,
+      'lng': _selectedPosition!.longitude,
+      'address': _selectedAddress,
+    });
+  }
+
+
+
+  void _undoLastPoint() {
+    if (_drawingPoints.isNotEmpty) {
+      setState(() {
+        _drawingPoints.removeLast();
+
+        // อัปเดต markers
+        _markers = _drawingPoints.asMap().entries.map((entry) {
+          int index = entry.key;
+          LatLng point = entry.value;
+          return Marker(
+            markerId: MarkerId('drawing_point_$index'),
+            position: point,
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+            infoWindow: InfoWindow(title: 'จุดที่ ${index + 1}'),
+          );
+        }).toSet();
+
+        // อัปเดต polygon
+        if (_drawingPoints.length >= 3) {
+          _polygons = {
+            Polygon(
+              polygonId: PolygonId('drawn_area'),
+              points: _drawingPoints,
+              fillColor: Color(0xFF34D396).withOpacity(0.3),
+              strokeColor: Color(0xFF34D396),
+              strokeWidth: 2,
+            ),
+          };
+        } else {
+          _polygons.clear();
+        }
+      });
+    }
+  }
+
+
+  LatLng _calculateCenterPoint(List<LatLng> points) {
+    if (points.isEmpty) return _selectedPosition ?? _initialPosition;
+
+    double totalLat = 0;
+    double totalLng = 0;
+
+    for (LatLng point in points) {
+      totalLat += point.latitude;
+      totalLng += point.longitude;
+    }
+
+    return LatLng(
+      totalLat / points.length,
+      totalLng / points.length,
     );
   }
 
@@ -545,8 +807,9 @@ class _SearchLocationWidgetState extends State<SearchLocationWidget> {
       final placeDetail = await GooglePlacesService.getPlaceDetails(place.placeId);
       if (placeDetail != null) {
         Navigator.pop(context, {
-          'latLng': placeDetail.location,
-          'address': place.name,  // ใช้ name แทน description
+          'lat': placeDetail.location.latitude,
+          'lng': placeDetail.location.longitude,
+          'address': place.name, // ใช้ name แทน description
         });
       }
     } catch (e) {

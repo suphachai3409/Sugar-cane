@@ -48,6 +48,8 @@ flutter:
     - assets/ดินเหนียว.png
     - assets/ดินร่วน.png
     - assets/logo.png
+    - assets/โปรไฟล์.png
+    - assets/โฮม.png
 
 dependencies:
   flutter:

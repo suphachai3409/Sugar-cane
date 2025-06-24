@@ -15,7 +15,7 @@ void main() async{
 class Menu3Screen extends StatelessWidget {
 final String userId;
 
-Menu3Screen({required this.userId}); // ✅ ต้องมี userId ตรงนี้
+Menu3Screen({required this.userId});
 
 @override
 Widget build(BuildContext context) {
@@ -66,7 +66,7 @@ Widget build(BuildContext context) {
               // Container ฟ้า
               Positioned(
                 top: height * 0.02,
-                left: width * 0.05,
+                left: width * 0.065,
                 child: const WeatherWidget(),
               ),
 
@@ -316,8 +316,12 @@ Widget build(BuildContext context) {
               Positioned(
                   bottom: height * 0.01, // 3% จากด้านล่าง
                   left: width * 0.07,
+                child: GestureDetector(
+                  onTap: () {
+                    // TODO: ใส่ฟังก์ชันเมื่อกด
+                  },
                   child: Container(
-                    width: width * 0.12, // 12% ของความกว้างหน้าจอ
+                    width: width * 0.12,
                     height: height * 0.05,
                     decoration: ShapeDecoration(
                       color: Color(0xFF34D396),
@@ -325,16 +329,30 @@ Widget build(BuildContext context) {
                         borderRadius: BorderRadius.circular(38),
                       ),
                     ),
-                  )
+                    child: Padding(
+                      padding: EdgeInsets.all(6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(38),
+                        child: Image.asset(
+                          'assets/โฮม.png',
+                          fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-
 
               //ปุ่มล่างสุด ขวา
               Positioned(
-                  bottom: height * 0.01, // 3% จากด้านล่าง
-                  right: width * 0.07,
+                bottom: height * 0.01,
+                right: width * 0.07,
+                child: GestureDetector(
+                  onTap: () {
+                    // TODO: ใส่ฟังก์ชันเมื่อกด
+                  },
                   child: Container(
-                    width: width * 0.12, // 12% ของความกว้างหน้าจอ
+                    width: width * 0.12,
                     height: height * 0.05,
                     decoration: ShapeDecoration(
                       color: Color(0xFF34D396),
@@ -342,8 +360,20 @@ Widget build(BuildContext context) {
                         borderRadius: BorderRadius.circular(38),
                       ),
                     ),
-                  )
+                    child: Padding(
+                      padding: EdgeInsets.all(6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(38),
+                        child: Image.asset(
+                          'assets/โปรไฟล์.png',
+                          fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
+
 
             ],
           ),
