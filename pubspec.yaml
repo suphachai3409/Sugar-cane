@@ -50,7 +50,10 @@ flutter:
     - assets/logo.png
     - assets/โปรไฟล์.png
     - assets/โฮม.png
-
+    - assets/ข้อมูลแปลง.png
+    - assets/ประวัติ.png
+    - assets/แนะนำ.png
+    
 dependencies:
   flutter:
     sdk: flutter

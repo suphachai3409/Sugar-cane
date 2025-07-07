@@ -3,14 +3,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'google_maps_search.dart';
-import 'package:flutter/material.dart';
-import 'dart:math' as math;
-import 'package:geolocator/geolocator.dart';
 
 class Plot1Screen extends StatefulWidget {
   final String userId;
   Plot1Screen({required this.userId});
-  final TextEditingController _plotNameController = TextEditingController();
   @override
   _Plot1ScreenState createState() => _Plot1ScreenState();
 }

@@ -3,30 +3,26 @@ import 'plot1.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'weather_widget.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'dart:convert'; // เพิ่ม import สำหรับ jsonDecode
+import 'package:http/http.dart' as http; // เพิ่ม import สำหรับ http
+import 'equipment.dart';
+import 'moneytransfer.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('th_TH', null);
-  runApp(Menu2Screen(userId: '',));  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
+  runApp(MyApp());
 }
 
-class Menu2Screen extends StatelessWidget {
-final String userId;
-
-Menu2Screen({required this.userId});
-
-@override
-Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final width = size.width;
-    final height = size.height;
-
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Farm Management App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.green,
-        fontFamily: 'Kanit', // ฟอนต์ภาษาไทย
+        fontFamily: 'Kanit',
       ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -34,400 +30,672 @@ Widget build(BuildContext context) {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('th', 'TH'), // Thai
-        Locale('en', 'US'), // English
+        Locale('th', 'TH'),
+        Locale('en', 'US'),
       ],
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('ลูกไร่'),
+      home: Menu2Screen(userId: ''),
+    );
+  }
+}
+
+class Menu2Screen extends StatefulWidget {
+  final String userId;
+  const Menu2Screen({Key? key, required this.userId}) : super(key: key);
+
+  @override
+  _Menu2ScreenState createState() => _Menu2ScreenState(); // แก้ชื่อ class
+}
+
+class _Menu2ScreenState extends State<Menu2Screen> {
+  // แก้ชื่อ class
+  final String apiUrl = 'http://10.0.2.2:3000/pulluser';
+  List<Map<String, dynamic>> _users = [];
+  Map<String, dynamic>? _currentUser;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+        setState(() {
+          _users = jsonData.cast<Map<String, dynamic>>();
+          if (widget.userId.isNotEmpty) {
+            _currentUser = _users.firstWhere(
+              (user) => user['_id'] == widget.userId,
+              orElse: () => _users.isNotEmpty ? _users.first : {},
+            );
+          } else {
+            _currentUser = _users.isNotEmpty ? _users.first : null;
+          }
+          _isLoading = false;
+        });
+      } else {
+        print('Error: ${response.statusCode}');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showProfileDialog() {
+    if (_currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('ไม่พบข้อมูลผู้ใช้'),
+          backgroundColor: Colors.red.shade400,
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Stack(
-            children: [
-              // Container เขียว
-              Positioned(
-                top: height * 0.3, // 30% ของความสูงหน้าจอ
-                left: 0,
-                right: 0,
-                child: Container(
-                  width: width * 0.9, // 90% ของความกว้างหน้าจอ
-                  height: height * 0.5,
-                  decoration: ShapeDecoration(
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF34D396).withOpacity(0.1),
+                  Colors.white,
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
                     color: Color(0xFF34D396),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                ),
-              ),
-
-              // Container ฟ้า
-              Positioned(
-                top: height * 0.02,
-                left: width * 0.05,
-                child: const WeatherWidget(),
-              ),
-
-              // Container ปุ่มขาว
-              Positioned(
-                bottom: height * 0, // 2% จากด้านล่าง
-                left: width * 0.03, // 3% จากด้านซ้าย
-                right: width * 0.03,
-                child: Container(
-                  height: height * 0.07,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(83.50),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x7F646464),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                        spreadRadius: 0,
-                      )
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.person,
+                          size: 35,
+                          color: Color(0xFF34D396),
+                        ),
+                      ),
+                      SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'โปรไฟล์ของฉัน',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'ข้อมูลส่วนตัว',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-
-              // Text 'Main menu'
-              Positioned(
-                top: height * 0.31, // 31% ของความสูงหน้าจอ
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Text(
-                    'Main menu',
-                    style: TextStyle(
-                      color: Color(0xFF25624B),
-                      fontSize: width * 0.055, // 5% ของความกว้างหน้าจอ
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                SizedBox(height: 20),
+                _buildInfoCard(
+                  icon: Icons.account_circle,
+                  title: 'ชื่อผู้ใช้',
+                  value: _currentUser!['username'] ?? 'ไม่มีข้อมูล',
+                  color: Colors.purple,
                 ),
-              ),
-
-
-
-
-
-              //แปลงไร่
-              Positioned(
-                top: height * 0.36,
-                left: width * 0.06,
-                child: GestureDetector(
-                  onTap: () {
-                    // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: userId)), // ไปหน้า Plot1
-                    );
-                  },
-                  child: Container(
-                    height: height * 0.165,
-                    width: width * 0.36,
-                    decoration: ShapeDecoration(
-                      color: Colors.white,
+                SizedBox(height: 12),
+                _buildInfoCard(
+                  icon: Icons.person,
+                  title: 'ชื่อ',
+                  value: _currentUser!['name'] ?? 'ไม่มีข้อมูล',
+                  color: Color(0xFF25624B),
+                ),
+                SizedBox(height: 12),
+                _buildInfoCard(
+                  icon: Icons.email,
+                  title: 'อีเมล',
+                  value: _currentUser!['email'] ?? 'ไม่มีข้อมูล',
+                  color: Colors.orange,
+                ),
+                SizedBox(height: 12),
+                _buildInfoCard(
+                  icon: Icons.phone,
+                  title: 'เบอร์โทร',
+                  value: _currentUser!['number']?.toString() ?? 'ไม่มีข้อมูล',
+                  color: Colors.blue,
+                ),
+                SizedBox(height: 12),
+                _buildInfoCard(
+                  icon: Icons.menu_book,
+                  title: 'เมนู',
+                  value:
+                      'Menu ${_currentUser!['menu']?.toString() ?? 'ไม่ระบุ'}',
+                  color: Color(0xFF34D396),
+                ),
+                SizedBox(height: 25),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF34D396),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(19),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      shadows: [
-                        BoxShadow(
-                          color: Color(0x3F000000),
-                          blurRadius: 4,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(19),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Image.asset(
-                              'assets/kid.png',
-                              fit: BoxFit.cover,
-                              width: 149,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              'แปลงปลูก',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ],
+                    child: Text(
+                      'ปิด',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-              ),
-
-
-
-
-
-              //คนงาน
-              Positioned(
-                top: height * 0.36,
-                right: width * 0.06,
-                child: GestureDetector(
-                  onTap: () {
-                    // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
-                    );
-                  },
-                  child: Container(
-                    height: height * 0.165,
-                    width: width * 0.36,
-                    decoration: ShapeDecoration(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(19),
-                      ),
-                      shadows: [
-                        BoxShadow(
-                          color: Color(0x3F000000),
-                          blurRadius: 4,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(19),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Image.asset(
-                              'assets/worker.jpg',
-                              fit: BoxFit.cover,
-                              width: 149,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              'คนงาน',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-
-
-
-
-              //อุปกรณ์
-              Positioned(
-                top: height * 0.57,
-                left: width * 0.06,
-                child: GestureDetector(
-                  onTap: () {
-                    // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: '',)), // ไปหน้า Plot1
-                    );
-                  },
-                  child: Container(
-                    height: height * 0.165,
-                    width: width * 0.36,
-                    decoration: ShapeDecoration(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(19),
-                      ),
-                      shadows: [
-                        BoxShadow(
-                          color: Color(0x3F000000),
-                          blurRadius: 4,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(19),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Image.asset(
-                              'assets/trackter.png',
-                              fit: BoxFit.cover,
-                              width: 149,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              'อุปกรณ์',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-
-
-
-
-
-
-              //เบิกเงินทุน
-              Positioned(
-                top: height * 0.57,
-                right: width * 0.06,
-                child: GestureDetector(
-                  onTap: () {
-                    // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Plot1Screen(userId: userId)), // ไปหน้า Plot1
-                    );
-                  },
-                  child: Container(
-                    height: height * 0.165,
-                    width: width * 0.36,
-                    decoration: ShapeDecoration(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(19),
-                      ),
-                      shadows: [
-                        BoxShadow(
-                          color: Color(0x3F000000),
-                          blurRadius: 4,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(19),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Image.asset(
-                              'assets/money.png',
-                              fit: BoxFit.cover,
-                              width: 149,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              'ขอเบิกเงินทุน',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-
-
-
-              //ล่างซ้าย
-              Positioned(
-                bottom: height * 0.01, // 3% จากด้านล่าง
-                left: width * 0.07,
-                child: GestureDetector(
-                  onTap: () {
-                    // TODO: ใส่ฟังก์ชันเมื่อกด
-                  },
-                  child: Container(
-                    width: width * 0.12,
-                    height: height * 0.05,
-                    decoration: ShapeDecoration(
-                      color: Color(0xFF34D396),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(38),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(38),
-                        child: Image.asset(
-                          'assets/โฮม.png',
-                          fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              //ปุ่มล่างสุด ขวา
-              Positioned(
-                bottom: height * 0.01,
-                right: width * 0.07,
-                child: GestureDetector(
-                  onTap: () {
-                    // TODO: ใส่ฟังก์ชันเมื่อกด
-                  },
-                  child: Container(
-                    width: width * 0.12,
-                    height: height * 0.05,
-                    decoration: ShapeDecoration(
-                      color: Color(0xFF34D396),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(38),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(38),
-                        child: Image.asset(
-                          'assets/โปรไฟล์.png',
-                          fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-            ],
+              ],
+            ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('ลูกไร่'),
+        automaticallyImplyLeading: false,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Stack(
+          children: [
+            // Container เขียว
+            Positioned(
+              top: height * 0.3,
+              left: 0,
+              right: 0,
+              child: Container(
+                width: width * 0.9,
+                height: height * 0.5,
+                decoration: ShapeDecoration(
+                  color: Color(0xFF34D396),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+              ),
+            ),
+
+            // Container ฟ้า
+            Positioned(
+              top: height * 0.02,
+              left: width * 0.055,
+              child: const WeatherWidget(),
+            ),
+
+            // Container ปุ่มขาว
+            Positioned(
+              bottom: height * 0,
+              left: width * 0.03,
+              right: width * 0.03,
+              child: Container(
+                height: height * 0.07,
+                decoration: ShapeDecoration(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(83.50),
+                  ),
+                  shadows: [
+                    BoxShadow(
+                      color: Color(0x7F646464),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                      spreadRadius: 0,
+                    )
+                  ],
+                ),
+              ),
+            ),
+
+            // Text 'Main menu'
+            Positioned(
+              top: height * 0.31,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  'Main menu',
+                  style: TextStyle(
+                    color: Color(0xFF25624B),
+                    fontSize: width * 0.055,
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+
+            // แปลงไร่
+            Positioned(
+              top: height * 0.36,
+              left: width * 0.06,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            Plot1Screen(userId: widget.userId)),
+                  );
+                },
+                child: Container(
+                  height: height * 0.165,
+                  width: width * 0.36,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(19),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(19),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Image.asset(
+                            'assets/kid.png',
+                            fit: BoxFit.cover,
+                            width: 149,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'แปลงปลูก',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // คนงาน
+            Positioned(
+              top: height * 0.36,
+              right: width * 0.06,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => Plot1Screen(userId: '')),
+                  );
+                },
+                child: Container(
+                  height: height * 0.165,
+                  width: width * 0.36,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(19),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(19),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Image.asset(
+                            'assets/worker.jpg',
+                            fit: BoxFit.cover,
+                            width: 149,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'คนงาน',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // อุปกรณ์
+            Positioned(
+              top: height * 0.57,
+              left: width * 0.06,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EquipmentScreen(userId: widget.userId))
+                  );
+                },
+                child: Container(
+                  height: height * 0.165,
+                  width: width * 0.36,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(19),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(19),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Image.asset(
+                            'assets/trackter.png',
+                            fit: BoxFit.cover,
+                            width: 149,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'อุปกรณ์',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // เบิกเงินทุน
+            Positioned(
+              top: height * 0.57,
+              right: width * 0.06,
+              child: GestureDetector(
+                // ในส่วนที่เรียกใช้ moneytransferScreen
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => moneytransferScreen(userId: widget.userId))
+                  );
+                },
+                child: Container(
+                  height: height * 0.165,
+                  width: width * 0.36,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(19),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(19),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Image.asset(
+                            'assets/money.png',
+                            fit: BoxFit.cover,
+                            width: 149,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'ขอเบิกเงินทุน',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // ปุ่มล่างซ้าย
+            Positioned(
+              bottom: height * 0.01,
+              left: width * 0.07,
+              child: GestureDetector(
+                onTap: () {
+                  // TODO: ใส่ฟังก์ชันเมื่อกด
+                },
+                child: Container(
+                  width: width * 0.12,
+                  height: height * 0.05,
+                  decoration: ShapeDecoration(
+                    color: Color(0xFF34D396),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(6),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(38),
+                      child: Image.asset(
+                        'assets/โฮม.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // ปุ่มล่างขวา - Profile Button
+            Positioned(
+              bottom: height * 0.01,
+              right: width * 0.07,
+              child: GestureDetector(
+                onTap: () {
+                  if (_currentUser == null && !_isLoading) {
+                    fetchUserData().then((_) {
+                      if (_currentUser != null) {
+                        _showProfileDialog();
+                      }
+                    });
+                  } else if (_currentUser != null) {
+                    _showProfileDialog();
+                  }
+                },
+                child: Container(
+                  width: width * 0.12,
+                  height: height * 0.05,
+                  decoration: ShapeDecoration(
+                    color: Color(0xFF34D396),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(6),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(38),
+                      child: _isLoading
+                          ? Container(
+                              padding: EdgeInsets.all(8),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : Image.asset(
+                              'assets/โปรไฟล์.png',
+                              fit: BoxFit.contain,
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
