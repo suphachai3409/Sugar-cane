@@ -165,16 +165,21 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   }
 
   Future<void> _getCurrentLocation() async {
+    print('DEBUG _getCurrentLocation()');
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
+        print('ขออนุญาตใช้ตำแหน่ง');
         permission = await Geolocator.requestPermission();
       }
 
       if (permission == LocationPermission.whileInUse ||
           permission == LocationPermission.always) {
         Position position = await Geolocator.getCurrentPosition();
+        print('ได้ตำแหน่งปัจจุบัน: ${position.latitude}, ${position.longitude}');
         _moveToLocation(LatLng(position.latitude, position.longitude));
+      } else {
+        print('ไม่ได้รับอนุญาตใช้ตำแหน่ง');
       }
     } catch (e) {
       print('Error getting location: $e');
@@ -182,6 +187,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   }
 
   void _moveToLocation(LatLng location) {
+    print('DEBUG _moveToLocation()');
+    print('ย้ายไปตำแหน่ง: ${location.latitude}, ${location.longitude}');
+    
     _mapController?.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
@@ -195,9 +203,13 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
   void _updateSelectedLocation(LatLng location) async {
     if (_isDrawingMode) {
+      print('DEBUG _updateSelectedLocation() - โหมดวาด');
       _addDrawingPoint(location);
       return;
     }
+    
+    print('DEBUG _updateSelectedLocation() - โหมดเลือกตำแหน่ง');
+    print('ตำแหน่งใหม่: ${location.latitude}, ${location.longitude}');
     setState(() {
       _selectedPosition = location;
       _markers = {
@@ -213,6 +225,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
     print('📌 ตำแหน่งที่เลือก: $location');
     print('🗺️ ที่อยู่: $address');
+    print('📌 โหมดปัจจุบัน: ${_isDrawingMode ? "วาดขอบเขต" : "เลือกตำแหน่ง"}');
 
     setState(() {
       _selectedAddress = address;
@@ -256,6 +269,10 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     try {
       final placeDetail = await GooglePlacesService.getPlaceDetails(place.placeId);
       if (placeDetail != null) {
+        print('DEBUG _selectPlace()');
+        print('เลือกสถานที่: ${place.name}');
+        print('ตำแหน่ง: ${placeDetail.location.latitude}, ${placeDetail.location.longitude}');
+        
         _moveToLocation(placeDetail.location);
         _updateSelectedLocation(placeDetail.location); // ใช้งานร่วมกับฟังก์ชันด้านล่าง
 
@@ -471,7 +488,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                           ),
                         ),
 
-                              //ข้าม
+                              // ย้อนกลับจุด
                               Expanded(
                                 child: ElevatedButton(
                                   onPressed: _undoLastPoint, // เรียกฟังก์ชันที่ลบจุดล่าสุด
@@ -495,29 +512,41 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: _canFinishDrawing
-                                      ? _skipDrawing // ถ้าวาดครบ 3 จุดขึ้นไป เรียก skipDrawing
+                                  onPressed: _isDrawingMode
+                                  ? (_canFinishDrawing
+                                      ? () {
+                                          print('DEBUG: กดปุ่มถัดไป (วาดเสร็จแล้ว)');
+                                          _finishDrawing();
+                                        }
                                       : () {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('กรุณาวาดอย่างน้อย 3 จุดเพื่อสร้างพื้นที่ หรือกด "เลือกตำแหน่งเดียว"'),
+                                              backgroundColor: Colors.orange,
+                                            ),
+                                          );
+                                        })
+                                  : () {
                                     showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
                                         return AlertDialog(
-                                          title: Text('เริ่มระบุแผนที่'),
-                                          content: Text('คุณสามารถเริ่มวาดแปลงพื้นที่ได้เลย'),
+                                          title: Text('เลือกวิธีการระบุพื้นที่'),
+                                          content: Text('คุณต้องการวาดขอบเขตแปลงหรือเลือกแค่ตำแหน่งเดียว?'),
                                           actions: [
                                             TextButton(
                                               onPressed: () {
                                                 Navigator.of(context).pop();
                                                 _skipDrawing();
                                               },
-                                              child: Text('ข้าม'),
+                                              child: Text('เลือกตำแหน่งเดียว'),
                                             ),
                                             ElevatedButton(
                                               onPressed: () {
                                                 Navigator.of(context).pop();
                                                 _startDrawingMode();
                                               },
-                                              child: Text('โอเค'),
+                                              child: Text('วาดขอบเขต'),
                                             ),
                                           ],
                                         );
@@ -532,7 +561,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                     ),
                                   ),
                                   child: Text(
-                                    _canFinishDrawing ? 'ถัดไป' : 'วาดแผนที่',
+                                    _isDrawingMode 
+                                        ? (_canFinishDrawing ? 'ถัดไป' : 'วาดเพิ่ม')
+                                        : 'เลือกตำแหน่งนี้',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -580,14 +611,22 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   }
 
   void _selectPosition() async {
+    print('DEBUG _selectPosition()');
+    print('เลือกตำแหน่ง: ${_selectedPosition!.latitude}, ${_selectedPosition!.longitude}');
+    
     final address = await GooglePlacesService.getAddressFromLatLng(_selectedPosition!);
     setState(() {
       _selectedAddress = address;
       _isPositionSelected = true;
     });
+    
+    print('DEBUG _selectPosition() - ได้ที่อยู่: $address');
   }
 
   void _startDrawingMode() {
+    print('DEBUG _startDrawingMode()');
+    print('เริ่มโหมดวาดขอบเขตแปลง');
+    
     setState(() {
       _isDrawingMode = true;
       _drawingPoints.clear();
@@ -603,6 +642,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   }
 
   void _addDrawingPoint(LatLng point) {
+    print('DEBUG _addDrawingPoint()');
+    print('เพิ่มจุดที่ ${_drawingPoints.length + 1}: lat=${point.latitude}, lng=${point.longitude}');
+    
     setState(() {
       _drawingPoints.add(point);
 
@@ -630,9 +672,11 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
           ),
         };
         _canFinishDrawing = true; // ✅ ชื่อไม่ชนแล้ว
+        print('DEBUG _addDrawingPoint() - สร้าง polygon ได้แล้ว (${_drawingPoints.length} จุด)');
       } else {
         _polygons.clear();
         _canFinishDrawing = false;
+        print('DEBUG _addDrawingPoint() - ยังไม่ครบ 3 จุด (${_drawingPoints.length} จุด)');
       }
 ;
     });
@@ -640,29 +684,35 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
 
   void _finishDrawing() {
-    if (_drawingPoints.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('กรุณาวาดอย่างน้อย 3 จุดเพื่อสร้างพื้นที่'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     setState(() {
       _isDrawingMode = false;
     });
 
+    final drawingPointsMap = _drawingPoints.map((p) => {'latitude': p.latitude, 'longitude': p.longitude}).toList();
+    final centerPoint = _calculateCenterPoint(_drawingPoints);
+    
+    // ใช้ centerPoint เป็นตำแหน่งหลักถ้า _selectedPosition เป็น null
+    final positionToUse = _selectedPosition ?? centerPoint;
+    
+    print('DEBUG _finishDrawing()');
+    print('latLng: \\$positionToUse');
+    print('address: \\$_selectedAddress');
+    print('drawingPoints: \\${drawingPointsMap}');
+    print('centerPoint: \\${centerPoint}');
+    print('วาดขอบเขตแปลง (มี polygon)');
+
     Navigator.pop(context, {
-      'latLng': _selectedPosition,
+      'latLng': positionToUse,
       'address': _selectedAddress,
-      'drawingPoints': _drawingPoints,
-      'centerPoint': _calculateCenterPoint(_drawingPoints),
+      'drawingPoints': drawingPointsMap,
+      'centerPoint': centerPoint,
     });
   }
 
   void _cancelDrawing() {
+    print('DEBUG _cancelDrawing()');
+    print('ยกเลิกการวาด ขั้นตอนการวาด');
+    
     setState(() {
       _isDrawingMode = false;
       _drawingPoints.clear();
@@ -680,6 +730,12 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   }
 
   void _skipDrawing() {
+    print('DEBUG _skipDrawing()');
+    print('lat: \\${_selectedPosition!.latitude}');
+    print('lng: \\${_selectedPosition!.longitude}');
+    print('address: \\$_selectedAddress');
+    print('เลือกตำแหน่งเดียว (ไม่มี polygon)');
+    
     Navigator.pop(context, {
       'lat': _selectedPosition!.latitude,
       'lng': _selectedPosition!.longitude,
@@ -691,10 +747,14 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
   void _undoLastPoint() {
     if (_drawingPoints.isNotEmpty) {
-      setState(() {
-        _drawingPoints.removeLast();
+      print('DEBUG _undoLastPoint()');
+      print('ลบจุดล่าสุด (เหลือ ${_drawingPoints.length - 1} จุด)');
+      
+              setState(() {
+          _drawingPoints.removeLast();
+          print('DEBUG _undoLastPoint() - ลบจุดล่าสุดแล้ว (เหลือ ${_drawingPoints.length} จุด)');
 
-        // อัปเดต markers
+          // อัปเดต markers
         _markers = _drawingPoints.asMap().entries.map((entry) {
           int index = entry.key;
           LatLng point = entry.value;
@@ -705,6 +765,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
             infoWindow: InfoWindow(title: 'จุดที่ ${index + 1}'),
           );
         }).toSet();
+        
+        print('DEBUG _undoLastPoint() - อัปเดต markers แล้ว (${_markers.length} markers)');
 
         // อัปเดต polygon
         if (_drawingPoints.length >= 3) {
@@ -717,8 +779,10 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
               strokeWidth: 2,
             ),
           };
+          print('DEBUG _undoLastPoint() - ยังมี polygon (${_drawingPoints.length} จุด)');
         } else {
           _polygons.clear();
+          print('DEBUG _undoLastPoint() - ไม่มี polygon แล้ว (${_drawingPoints.length} จุด)');
         }
       });
     }
@@ -726,7 +790,10 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
 
   LatLng _calculateCenterPoint(List<LatLng> points) {
-    if (points.isEmpty) return _selectedPosition ?? _initialPosition;
+    if (points.isEmpty) {
+      print('DEBUG _calculateCenterPoint() - ไม่มีจุด ใช้ตำแหน่งที่เลือก');
+      return _selectedPosition ?? _initialPosition;
+    }
 
     double totalLat = 0;
     double totalLng = 0;
@@ -736,10 +803,15 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
       totalLng += point.longitude;
     }
 
-    return LatLng(
+    final centerPoint = LatLng(
       totalLat / points.length,
       totalLng / points.length,
     );
+    
+    print('DEBUG _calculateCenterPoint() - คำนวณจุดกลางจาก ${points.length} จุด');
+    print('จุดกลาง: ${centerPoint.latitude}, ${centerPoint.longitude}');
+    
+    return centerPoint;
   }
 
 
