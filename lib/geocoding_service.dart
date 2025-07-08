@@ -5,7 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 // พัฒนาคลาสสำหรับใช้งาน Google Geocoding API
 class GeocodingService {
   // คีย์ API (ต้องใส่คีย์ของคุณเอง)
-  final String apiKey = 'AIzaSyB81ZmHmlp2Ye1SQNFhtmVSopn1KOcY2wo';
+  final String apiKey = 'AIzaSyAOqwGzcv9K8GTRX8brAWno85_fwP6G8tI';
 
   // ค้นหาตำแหน่งจากชื่อสถานที่หรือที่อยู่
   Future<List<PlaceDetail>> searchPlaces(String query) async {

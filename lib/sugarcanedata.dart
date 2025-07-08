@@ -9,6 +9,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +20,7 @@ void main() async {
   ]);
 
   await initializeDateFormatting('th_TH', null);
-  runApp(sugarcanedata());
+  runApp(sugarcanedata(userId: 'default_user_id')); // ใช้ค่าจริงจากระบบล็อกอิน
 }
 
 class PlotInfo {
@@ -60,7 +62,6 @@ class MyApp extends StatelessWidget {
         Locale('th', 'TH'),
         Locale('en', 'US'),
       ],
-      home: const sugarcanedata(),
     );
   }
 }
@@ -358,7 +359,9 @@ class _SugarcaneDataScreenWithPlotInfoState
 }
 
 class sugarcanedata extends StatelessWidget {
-  const sugarcanedata({Key? key}) : super(key: key);
+  final String userId;
+
+  const sugarcanedata({Key? key, required this.userId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -366,7 +369,7 @@ class sugarcanedata extends StatelessWidget {
       create: (_) => SoilAnalysisProvider(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: HomeScreen(),
+        home: HomeScreen(userId: userId),
       ),
     );
   }
@@ -484,11 +487,289 @@ class SoilAnalysisProvider with ChangeNotifier {
 }
 
 class HomeScreen extends StatefulWidget {
+  final String userId;
+
+  const HomeScreen({Key? key, required this.userId}) : super(key: key);
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // เพิ่มตัวแปรสำหรับเก็บข้อมูลผู้ใช้
+  final String apiUrl = 'http://10.0.2.2:3000/pulluser';
+  List<Map<String, dynamic>> _users = [];
+  Map<String, dynamic>? _currentUser;
+  bool _isLoading = false;
+
+  // เพิ่ม getter สำหรับ userId
+  String get userId => widget.userId;
+
+  // ฟังก์ชันดึงข้อมูลผู้ใช้
+  Future<void> fetchUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+        setState(() {
+          _users = jsonData.cast<Map<String, dynamic>>();
+          // ใช้ userId ที่รับมาจาก widget
+          if (userId.isNotEmpty) {
+            _currentUser = _users.firstWhere(
+              (user) => user['_id'] == userId,
+              orElse: () => _users.isNotEmpty ? _users.first : {},
+            );
+          } else {
+            _currentUser = _users.isNotEmpty ? _users.first : null;
+          }
+          _isLoading = false;
+        });
+      } else {
+        print('Error: ${response.statusCode}');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // ฟังก์ชันแสดงโปรไฟล์ (เหมือนใน moneytransfer.dart)
+  void _showProfileDialog() {
+    if (_currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('ไม่พบข้อมูลผู้ใช้'),
+          backgroundColor: Colors.red.shade400,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF34D396).withOpacity(0.1),
+                  Colors.white,
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF34D396),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.person,
+                          size: 35,
+                          color: Color(0xFF34D396),
+                        ),
+                      ),
+                      SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'โปรไฟล์ของฉัน',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'ข้อมูลส่วนตัว',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 20),
+
+                // User Information
+                _buildInfoCard(
+                  icon: Icons.account_circle,
+                  title: 'ชื่อผู้ใช้',
+                  value: _currentUser!['username'] ?? 'ไม่มีข้อมูล',
+                  color: Colors.purple,
+                ),
+                SizedBox(height: 12),
+
+                _buildInfoCard(
+                  icon: Icons.person,
+                  title: 'ชื่อ',
+                  value: _currentUser!['name'] ?? 'ไม่มีข้อมูล',
+                  color: Color(0xFF25624B),
+                ),
+                SizedBox(height: 12),
+
+                _buildInfoCard(
+                  icon: Icons.email,
+                  title: 'อีเมล',
+                  value: _currentUser!['email'] ?? 'ไม่มีข้อมูล',
+                  color: Colors.orange,
+                ),
+                SizedBox(height: 12),
+
+                _buildInfoCard(
+                  icon: Icons.phone,
+                  title: 'เบอร์โทร',
+                  value: _currentUser!['number']?.toString() ?? 'ไม่มีข้อมูล',
+                  color: Colors.blue,
+                ),
+                SizedBox(height: 12),
+
+                _buildInfoCard(
+                  icon: Icons.menu_book,
+                  title: 'เมนู',
+                  value:
+                      'Menu ${_currentUser!['menu']?.toString() ?? 'ไม่ระบุ'}',
+                  color: Color(0xFF34D396),
+                ),
+
+                SizedBox(height: 25),
+
+                // Close Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF34D396),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'ปิด',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // ดึงข้อมูลผู้ใช้เมื่อเริ่มต้น
+    fetchUserData();
+  }
+
   // ตำแหน่งของ Container สีเขียว ซึ่งสามารถปรับได้ด้วยการลากแถบ
   double _greenContainerTop = 0.3;
   // ความสูงของ Container สีเขียว
@@ -731,32 +1012,82 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            // ปุ่มซ้าย
+            //ปุ่มล่างสุด ซ้าย
             Positioned(
-              bottom: height * 0.01, // ✅ ควบคุม position เอง
-              left: width * 0.07, // ✅ ควบคุม position เอง
-              child: Container(
-                width: width * 0.12,
-                height: height * 0.05,
-                decoration: ShapeDecoration(
-                  color: Color(0xFF34D396),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(38),
+              bottom: height * 0.01, // 3% จากด้านล่าง
+              left: width * 0.07,
+              child: GestureDetector(
+                onTap: () {
+                  // TODO: ใส่ฟังก์ชันเมื่อกด
+                },
+                child: Container(
+                  width: width * 0.12,
+                  height: height * 0.05,
+                  decoration: ShapeDecoration(
+                    color: Color(0xFF34D396),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(
+                        6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(38),
+                      child: Image.asset(
+                        'assets/โฮม.png',
+                        fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
+
             // ปุ่มขวา
             Positioned(
-              bottom: height * 0.01, // ✅ ควบคุม position เอง
-              right: width * 0.07, // ✅ ควบคุม position เอง
-              child: Container(
-                width: width * 0.12,
-                height: height * 0.05,
-                decoration: ShapeDecoration(
-                  color: Color(0xFF34D396),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(38),
+              bottom: height * 0.01,
+              right: width * 0.07,
+              child: GestureDetector(
+                onTap: () {
+                  if (_currentUser == null && !_isLoading) {
+                    fetchUserData().then((_) {
+                      if (_currentUser != null) {
+                        _showProfileDialog();
+                      }
+                    });
+                  } else if (_currentUser != null) {
+                    _showProfileDialog();
+                  }
+                },
+                child: Container(
+                  width: width * 0.12,
+                  height: height * 0.05,
+                  decoration: ShapeDecoration(
+                    color: Color(0xFF34D396),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(
+                        6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(38),
+                      child: _isLoading
+                          ? Container(
+                              padding: EdgeInsets.all(8),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : Image.asset(
+                              'assets/โปรไฟล์.png',
+                              fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
+                            ),
+                    ),
                   ),
                 ),
               ),
