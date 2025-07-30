@@ -5,6 +5,10 @@ import 'weather_widget.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'profile.dart';
+import 'workerscreen.dart'; // Added import for WorkerScreen
 
 
 void main() async {
@@ -27,6 +31,7 @@ class _Menu1ScreenState extends State<Menu1Screen> {
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
+  File? _selectedImage;
 
   @override
   void initState() {
@@ -71,223 +76,10 @@ class _Menu1ScreenState extends State<Menu1Screen> {
     }
   }
 
-  void _showProfileDialog() {
-    if (_currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('ไม่พบข้อมูลผู้ใช้'),
-          backgroundColor: Colors.red.shade400,
-        ),
-      );
-      return;
-    }
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF34D396).withOpacity(0.1),
-                  Colors.white,
-                ],
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF34D396),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          size: 35,
-                          color: Color(0xFF34D396),
-                        ),
-                      ),
-                      SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'โปรไฟล์ของฉัน',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'ข้อมูลส่วนตัว',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20),
-                
-                // User Information
-                _buildInfoCard(
-                  icon: Icons.account_circle,
-                  title: 'ชื่อผู้ใช้',
-                  value: _currentUser!['username'] ?? 'ไม่มีข้อมูล',
-                  color: Colors.purple,
-                ),
-                SizedBox(height: 12),
-                
-                _buildInfoCard(
-                  icon: Icons.person,
-                  title: 'ชื่อ',
-                  value: _currentUser!['name'] ?? 'ไม่มีข้อมูล',
-                  color: Color(0xFF25624B),
-                ),
-                SizedBox(height: 12),
-                
-                _buildInfoCard(
-                  icon: Icons.email,
-                  title: 'อีเมล',
-                  value: _currentUser!['email'] ?? 'ไม่มีข้อมูล',
-                  color: Colors.orange,
-                ),
-                SizedBox(height: 12),
-                
-                _buildInfoCard(
-                  icon: Icons.phone,
-                  title: 'เบอร์โทร',
-                  value: _currentUser!['number']?.toString() ?? 'ไม่มีข้อมูล',
-                  color: Colors.blue,
-                ),
-                SizedBox(height: 12),
-                
-                _buildInfoCard(
-                  icon: Icons.menu_book,
-                  title: 'เมนู',
-                  value: 'Menu ${_currentUser!['menu']?.toString() ?? 'ไม่ระบุ'}',
-                  color: Color(0xFF34D396),
-                ),
-                
-                SizedBox(height: 25),
-                
-                // Close Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF34D396),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      'ปิด',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -436,46 +228,55 @@ class _Menu1ScreenState extends State<Menu1Screen> {
                   Positioned(
                     top: height * 0.36,
                     right: width * 0.06,
-                    child: Container(
-                      height: height * 0.165,
-                      width: width * 0.36,
-                      decoration: ShapeDecoration(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(19),
-                        ),
-                        shadows: [
-                          BoxShadow(
-                            color: Color(0x3F000000),
-                            blurRadius: 4,
-                            offset: Offset(0, 4),
+                    child: GestureDetector(
+                      onTap: () {
+                        // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => WorkerScreen(userId: widget.userId)),
+                        );
+                      },
+                      child: Container(
+                        height: height * 0.165,
+                        width: width * 0.36,
+                        decoration: ShapeDecoration(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(19),
                           ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(19),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Image.asset(
-                                'assets/worker.jpg',
-                                fit: BoxFit.cover,
-                                width: 149,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                'คนงาน',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
+                          shadows: [
+                            BoxShadow(
+                              color: Color(0x3F000000),
+                              blurRadius: 4,
+                              offset: Offset(0, 4),
                             ),
                           ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(19),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Image.asset(
+                                  'assets/kid.png',
+                                  fit: BoxFit.cover,
+                                  width: 149,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  'คนงาน',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -643,11 +444,11 @@ class _Menu1ScreenState extends State<Menu1Screen> {
                         if (_currentUser == null && !_isLoading) {
                           fetchUserData().then((_) {
                             if (_currentUser != null) {
-                              _showProfileDialog();
+                              showProfileDialog(context, _currentUser!, refreshUser: fetchUserData);
                             }
                           });
                         } else if (_currentUser != null) {
-                          _showProfileDialog();
+                          showProfileDialog(context, _currentUser!, refreshUser: fetchUserData);
                         }
                       },
                       child: Container(
@@ -680,6 +481,8 @@ class _Menu1ScreenState extends State<Menu1Screen> {
                       ),
                     ),
                   ),
+
+
                 ],
               ),
             ),

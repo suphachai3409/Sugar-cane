@@ -7,8 +7,9 @@ import 'menu2.dart';
 import 'menu3.dart';    // Import menu1.dart
 import 'datahuman.dart'; // เพิ่มไฟล์ datahuman.dart ที่คุณเขียนไว้
 
-void main() {
-  runApp(MyApp());  // เพิ่ม runApp(MyApp()) ตรงนี้เพื่อให้แอปเริ่มทำงาน
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // ต้องเพิ่มบรรทัดนี้เพื่อให้ shared_preferences ใช้งานได้
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
