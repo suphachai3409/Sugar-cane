@@ -1,0 +1,7 @@
+com.example.project.app-pngs-0 E:\Sugar-cane\android\app\build\generated\res\pngs\release
+com.example.project.app-resValues-1 E:\Sugar-cane\android\app\build\generated\res\resValues\release
+com.example.project.app-packageReleaseResources-2 E:\Sugar-cane\android\app\build\intermediates\incremental\release\packageReleaseResources\merged.dir
+com.example.project.app-packageReleaseResources-3 E:\Sugar-cane\android\app\build\intermediates\incremental\release\packageReleaseResources\stripped.dir
+com.example.project.app-merged_res-4 E:\Sugar-cane\android\app\build\intermediates\merged_res\release
+com.example.project.app-main-5 E:\Sugar-cane\android\app\src\main\res
+com.example.project.app-release-6 E:\Sugar-cane\android\app\src\release\res

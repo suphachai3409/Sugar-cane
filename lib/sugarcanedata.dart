@@ -11,6 +11,8 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'profile.dart';
+import 'workerscreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -344,7 +346,8 @@ class sugarcanedata extends StatelessWidget {
   final String? soilType;
   final LatLng? plotPosition;
   final List<LatLng>? polygonPoints;
-
+  final bool isWorkerMode; // เพิ่มพารามิเตอร์นี้
+  final bool isViewMode;
   const sugarcanedata({
     Key? key,
     required this.plotId,
@@ -355,6 +358,8 @@ class sugarcanedata extends StatelessWidget {
     this.soilType,
     this.plotPosition,
     this.polygonPoints,
+    this.isWorkerMode = false, // กำหนดค่าเริ่มต้น
+    this.isViewMode = false,
   }) : super(key: key);
 
   @override
@@ -1019,8 +1024,14 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Positioned(
               top: height * 0.02,
-              left: width * 0.055,
-              child: const WeatherWidget(),
+              left: 0,
+              right: 0,
+              child: Container(
+                width: width * 0.9, // กำหนดความกว้างสูงสุด 90% ของหน้าจอ
+                child: Center(
+                  child: WeatherWidget(),
+                ),
+              ),
             ),
             // กล่องสีเขียวหลัก
             Positioned(
@@ -1160,8 +1171,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           Expanded(
                             child: TabBarView(
                               children: [
-                                HistoryTab(plotId: widget.plotId),
-                                SuggestionTab(plotId: widget.plotId),
+                                HistoryTab(
+                                    plotId: widget.plotId,
+                                    userId: widget.userId), // Pass userId here
+                                SuggestionTab(
+                                    plotId: widget.plotId,
+                                    userId: widget.userId),
                                 SingleChildScrollView(
                                   child: Container(
                                     padding: EdgeInsets.all(16),
@@ -1437,11 +1452,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (_currentUser == null && !_isLoading) {
                     fetchUserData().then((_) {
                       if (_currentUser != null) {
-                        _showProfileDialog();
+                        showProfileDialog(context, _currentUser!,
+                            refreshUser: fetchUserData);
                       }
                     });
                   } else if (_currentUser != null) {
-                    _showProfileDialog();
+                    showProfileDialog(context, _currentUser!,
+                        refreshUser: fetchUserData);
                   }
                 },
                 child: Container(
@@ -1533,8 +1550,13 @@ class FullScreenMap extends StatelessWidget {
 // แท็บแนะนำ
 class SuggestionTab extends StatefulWidget {
   final String plotId;
+  final String userId; // Add this line
 
-  const SuggestionTab({Key? key, required this.plotId}) : super(key: key);
+  const SuggestionTab({
+    Key? key,
+    required this.plotId,
+    required this.userId, // Add this line
+  }) : super(key: key);
 
   @override
   _SuggestionTabState createState() => _SuggestionTabState();
@@ -1856,7 +1878,6 @@ class _SuggestionTabState extends State<SuggestionTab> {
             'Failed to load recommendations. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      // จัดการข้อผิดพลาดทั้งหมดที่นี่
       throw Exception('เกิดข้อผิดพลาด: ${e.toString()}');
     }
   }
@@ -2010,6 +2031,7 @@ class _SuggestionTabState extends State<SuggestionTab> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => AnalyzeSoilScreen(
+                                      userId: widget.userId,
                                       plotId: widget.plotId,
                                       topic: topic.title,
                                       date: data['date'],
@@ -2020,16 +2042,13 @@ class _SuggestionTabState extends State<SuggestionTab> {
                                           .map((path) => File(path.toString()))
                                           .toList(),
                                       isEditing: true,
+                                      canAssignTask: true,
+                                      isWorker: false,
+                                      onDataChanged: () =>
+                                          _fetchRecommendations(), // Add this callback
                                     ),
                                   ),
-                                ).then((shouldRefresh) {
-                                  if (shouldRefresh == true) {
-                                    _fetchRecommendations(); // รีเฟรชข้อมูลหลังแก้ไข
-                                  }
-                                });
-                              } else {
-                                throw Exception(
-                                    'Failed to load recommendation data');
+                                );
                               }
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -2052,16 +2071,17 @@ class _SuggestionTabState extends State<SuggestionTab> {
                               MaterialPageRoute(
                                 builder: (context) => AnalyzeSoilScreen(
                                   plotId: widget.plotId,
+                                  userId: widget.userId,
                                   topic: topic.title,
                                   date: currentDate,
                                   isEditing: false,
+                                  canAssignTask: true,
+                                  isWorker: false,
+                                  onDataChanged: () =>
+                                      _fetchRecommendations(), // Add this callback
                                 ),
                               ),
-                            ).then((shouldRefresh) {
-                              if (shouldRefresh == true) {
-                                _fetchRecommendations(); // รีเฟรชข้อมูลหลังบันทึกใหม่
-                              }
-                            });
+                            );
                           }
                         },
                         child: Padding(
@@ -2278,8 +2298,13 @@ class TopicItem {
 // แท็บประวัติ
 class HistoryTab extends StatefulWidget {
   final String plotId;
+  final String userId;
 
-  const HistoryTab({Key? key, required this.plotId}) : super(key: key);
+  const HistoryTab({
+    Key? key,
+    required this.plotId,
+    required this.userId,
+  }) : super(key: key);
 
   @override
   _HistoryTabState createState() => _HistoryTabState();
@@ -2295,6 +2320,7 @@ class _HistoryTabState extends State<HistoryTab> {
     'การจัดการวัชพืช',
     'การเก็บเกี่ยว'
   ];
+  Map<String, String> _workerNames = {}; // เก็บชื่อคนงาน
 
   @override
   void initState() {
@@ -2316,7 +2342,17 @@ class _HistoryTabState extends State<HistoryTab> {
       if (response.statusCode == 200) {
         final List<dynamic> recommendations = jsonDecode(response.body);
 
-        // จัดกลุ่มข้อมูลใหม่ให้ครอบคลุมทุกหัวข้อ
+        // ดึงข้อมูล tasks เพื่อหาชื่อคนงาน
+        final tasksResponse = await http.get(
+          Uri.parse('http://10.0.2.2:3000/api/plots/${widget.plotId}/tasks'),
+        );
+
+        if (tasksResponse.statusCode == 200) {
+          final tasks = jsonDecode(tasksResponse.body);
+          await _fetchWorkerNames(tasks); // ดึงชื่อคนงาน
+        }
+
+        // จัดกลุ่มข้อมูลใหม่
         final Map<String, List<dynamic>> grouped = {
           'การเตรียมดิน': recommendations
               .where((rec) =>
@@ -2359,6 +2395,53 @@ class _HistoryTabState extends State<HistoryTab> {
     }
   }
 
+// ดึงชื่อคนงานจาก workerId
+  Future<void> _fetchWorkerNames(List<dynamic> tasks) async {
+    final workerIds = tasks
+        .where((task) => task['assignedWorkerId'] != null)
+        .map((task) => task['assignedWorkerId'].toString())
+        .toSet()
+        .toList();
+
+    for (final workerId in workerIds) {
+      try {
+        final response = await http.get(
+          Uri.parse('http://10.0.2.2:3000/api/workers/$workerId'),
+        );
+
+        if (response.statusCode == 200) {
+          final workerData = jsonDecode(response.body);
+          _workerNames[workerId] = workerData['name'] ?? 'ไม่ทราบชื่อ';
+        }
+      } catch (e) {
+        print('Error fetching worker name: $e');
+        _workerNames[workerId] = 'ไม่ทราบชื่อ';
+      }
+    }
+  }
+
+// ฟังก์ชันหาชื่อคนงานจาก task
+  String _getWorkerNameForTask(String topic) {
+    try {
+      // หา task ที่เกี่ยวข้อง
+      final relatedTask = _groupedRecommendations.entries
+          .expand((entry) => entry.value)
+          .firstWhere(
+            (rec) => rec['topic'] == topic,
+            orElse: () => null,
+          );
+
+      if (relatedTask != null) {
+        // ในกรณีนี้เราอาจต้องปรับ logic ตามโครงสร้างข้อมูลจริง
+        // อาจต้องมี field ที่เชื่อมโยงระหว่าง recommendation กับ task
+        return _workerNames[relatedTask['assignedWorkerId']] ?? 'ไม่ทราบคนงาน';
+      }
+    } catch (e) {
+      print('Error getting worker name: $e');
+    }
+    return 'ไม่ทราบคนงาน';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -2399,6 +2482,8 @@ class _HistoryTabState extends State<HistoryTab> {
                 ),
               ),
               ...items.map((rec) {
+                final workerName = _getWorkerNameForTask(rec['topic']);
+
                 return Card(
                   margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   shape: RoundedRectangleBorder(
@@ -2436,6 +2521,16 @@ class _HistoryTabState extends State<HistoryTab> {
                             color: Colors.grey,
                           ),
                         ),
+                        SizedBox(height: 4),
+                        if (workerName != 'ไม่ทราบคนงาน')
+                          Text(
+                            'ผู้ทำ: $workerName',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                       ],
                     ),
                     trailing:
@@ -2444,17 +2539,19 @@ class _HistoryTabState extends State<HistoryTab> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AnalyzeSoilScreen(
-                            plotId: widget.plotId,
-                            topic: rec['topic'],
-                            date: rec['date'],
-                            message: rec['message'],
-                            images: (rec['images'] as List<dynamic>)
-                                .map((path) => File(path))
-                                .toList(),
-                            isEditing: true,
-                          ),
-                        ),
+                            builder: (context) => AnalyzeSoilScreen(
+                                  plotId: widget.plotId,
+                                  userId: widget.userId,
+                                  topic: rec['topic'],
+                                  date: rec['date'],
+                                  message: rec['message'],
+                                  images: (rec['images'] as List<dynamic>)
+                                      .map((path) => File(path))
+                                      .toList(),
+                                  isEditing: true,
+                                  canAssignTask: true,
+                                  isWorker: false,
+                                )),
                       ).then((shouldRefresh) {
                         if (shouldRefresh == true) {
                           _fetchRecommendations();
@@ -2475,22 +2572,31 @@ class _HistoryTabState extends State<HistoryTab> {
 
 class AnalyzeSoilScreen extends StatefulWidget {
   final String plotId;
+  final String userId;
   final String topic;
   final String? date;
-  final List<File>? images; // เปลี่ยนจาก File? เป็น List<File>
+  final List<File>? images;
   final String? message;
   final bool isEditing;
-  final SoilAnalysis? analysis;
+  final bool canAssignTask;
+  final bool isWorker;
+  final String? taskId; // ✅ เพิ่ม taskId
+  final VoidCallback? onDataChanged;
 
-  AnalyzeSoilScreen({
+  const AnalyzeSoilScreen({
     required this.plotId,
+    required this.userId,
     required this.topic,
+    this.canAssignTask = true,
     this.date,
     this.images,
     this.message = "",
     this.isEditing = false,
-    this.analysis,
-  });
+    this.isWorker = false,
+    this.taskId, // ✅ เพิ่ม taskId
+    this.onDataChanged,
+    Key? key,
+  }) : super(key: key);
 
   @override
   _AnalyzeSoilScreenState createState() => _AnalyzeSoilScreenState();
@@ -2501,19 +2607,96 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   late TextEditingController _messageController;
   List<File> _images = []; // เปลี่ยนจาก File? เป็น List<File>
   bool _isLoading = false;
+  List<Map<String, dynamic>> _workers = [];
+  String? _selectedWorkerId;
+  bool _isLoadingWorkers = false;
+  bool _isTaskAssigned = false; // เพิ่มตัวแปรตรวจสอบว่ามอบหมายงานแล้ว
+  Map<String, dynamic>? _assignedWorker; // เก็บข้อมูลคนงานที่มอบหมายแล้ว
 
-  @override
-  void initState() {
-    super.initState();
-    _dateController = TextEditingController(text: widget.date ?? "");
-    _messageController = TextEditingController(text: widget.message ?? "");
-    _images = widget.images ?? [];
+  Future<void> _fetchWorkers() async {
+    if (_isTaskAssigned) return; // ไม่ต้องดึงถ้ามอบหมายแล้ว
 
-    // ถ้าเป็นโหมดแก้ไขและไม่มีวันที่ ให้ใช้วันที่ปัจจุบัน
-    if (widget.isEditing && widget.date == null) {
-      final now = DateTime.now();
-      final formatter = DateFormat('dd/MM/yyyy');
-      _dateController.text = formatter.format(now);
+    setState(() => _isLoadingWorkers = true);
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/api/profile/workers/${widget.userId}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.userId}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _workers = List<Map<String, dynamic>>.from(data['workers'] ?? []);
+          _isLoadingWorkers = false;
+        });
+      }
+    } catch (e) {
+      setState(() => _isLoadingWorkers = false);
+    }
+  }
+
+  // เพิ่มตัวแปรนี้ใน class
+  Map<String, dynamic>? _selectedWorker;
+
+// แล้วใน _assignTask() ใช้ _selectedWorker โดยตรง
+  Future<void> _assignTask() async {
+    if (_selectedWorkerId == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/api/plots/${widget.plotId}/tasks'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'title': widget.topic,
+          'description': _messageController.text,
+          'assignedWorkerId': _selectedWorkerId,
+          'dueDate': _dateController.text,
+          'images': _images.map((file) => file.path).toList(),
+        }),
+      );
+
+      print('📤 Assign task response: ${response.statusCode}');
+      print('📤 Assign task body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+
+        // อัปเดตสถานะว่ามอบหมายงานแล้ว
+        setState(() {
+          _isTaskAssigned = true;
+        });
+
+        // ดึงข้อมูลคนงานที่มอบหมายแล้ว
+        _fetchAssignedWorkerInfo(_selectedWorkerId!);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('มอบหมายงานให้ ${_selectedWorker?['name']} สำเร็จ'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('เกิดข้อผิดพลาดในการมอบหมายงาน'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error assigning task: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('เกิดข้อผิดพลาด: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -2585,19 +2768,9 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
       return;
     }
 
-// ตรวจสอบว่ามีวันที่
-    if (_dateController.text.isEmpty) {
-      final now = DateTime.now();
-      final formatter = DateFormat('dd/MM/yyyy');
-      _dateController.text = formatter.format(now);
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      // สร้างข้อมูลที่จะส่งไปยัง API
       final requestData = {
         'topic': widget.topic,
         'date': _dateController.text,
@@ -2605,60 +2778,69 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
         'images': _images.map((file) => file.path).toList(),
       };
 
-      // แสดงข้อมูลที่กำลังส่ง (สำหรับ debug)
-      print('กำลังส่งข้อมูล: ${jsonEncode(requestData)}');
-
+      // ✅ บันทึก recommendation เสมอ
       final response = widget.isEditing
           ? await http.put(
               Uri.parse(
                   'http://10.0.2.2:3000/api/plots/${widget.plotId}/recommendations/${widget.topic}'),
               headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({
-                'topic': widget.topic,
-                'date': _dateController.text,
-                'message': _messageController.text,
-                'images': _images.map((file) => file.path).toList(),
-              }),
+              body: jsonEncode(requestData),
             )
           : await http.post(
               Uri.parse(
-                  'http://10.0.2.2:3000/api/plots/${widget.plotId}/recommendations'),
+                  'http://10.0.2.2:3000/api/plots/${widget.plotId}/recommendations'), // ✅ ต้องมี s
               headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({
-                'topic': widget.topic,
-                'date': _dateController.text,
-                'message': _messageController.text,
-                'images': _images.map((file) => file.path).toList(),
-              }),
+              body: jsonEncode(requestData),
             );
+
+      print('📤 Save recommendation response: ${response.statusCode}');
+      print('📤 Save recommendation body: ${response.body}');
+
+      // ✅ ถ้าเป็นคนงานและมี taskId ให้อัปเดตสถานะงาน
+      if (widget.isWorker && widget.taskId != null) {
+        try {
+          final taskResponse = await http.put(
+            Uri.parse(
+                'http://10.0.2.2:3000/api/plots/${widget.plotId}/tasks/${widget.taskId}/status'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'status': 'completed',
+              'completedAt': DateTime.now().toIso8601String()
+            }),
+          );
+
+          if (taskResponse.statusCode == 200) {
+            print('✅ Updated task status to completed');
+          } else {
+            print('❌ Failed to update task status: ${taskResponse.statusCode}');
+          }
+        } catch (e) {
+          print('⚠️ Error updating task status: $e');
+        }
+      }
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                widget.isEditing ? 'อัปเดตข้อมูลสำเร็จ' : 'บันทึกข้อมูลสำเร็จ'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.all(20),
-          ),
+          SnackBar(content: Text('บันทึกข้อมูลสำเร็จ')),
         );
-        // ปิดหน้าและส่งค่า true กลับไปเพื่อให้หน้าหลักรีเฟรชข้อมูล
+
+        // ✅ เรียก callback เพื่อแจ้งให้ parent screen รู้
+        if (widget.onDataChanged != null) {
+          widget.onDataChanged!();
+        }
+
         Navigator.of(context).pop(true);
       } else {
-        throw Exception('Failed to save recommendation');
+        throw Exception(
+            'Failed to save recommendation: ${response.statusCode}');
       }
     } catch (e) {
+      print('❌ Error in _saveData: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('เกิดข้อผิดพลาดในการบันทึกข้อมูล: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
@@ -2684,6 +2866,19 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                   );
 
                   if (response.statusCode == 200) {
+                    // ✅ ถ้าเป็นคนงานและมี taskId ให้อัปเดตสถานะงาน
+                    if (widget.isWorker && widget.taskId != null) {
+                      await http.put(
+                        Uri.parse(
+                            'http://10.0.2.2:3000/api/plots/${widget.plotId}/tasks/${widget.taskId}/status'),
+                        headers: {'Content-Type': 'application/json'},
+                        body: jsonEncode({
+                          'status': 'completed',
+                          'completedAt': DateTime.now().toIso8601String()
+                        }),
+                      );
+                    }
+
                     Navigator.of(context).pop(true);
                   } else {
                     throw Exception('Failed to delete recommendation');
@@ -2706,17 +2901,91 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
     );
 
     if (shouldDelete == true) {
-      // แสดง SnackBar ทันทีหลังลบสำเร็จ
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('ลบข้อมูลสำเร็จ'),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(20),
         ),
       );
+      if (widget.onDataChanged != null) {
+        widget.onDataChanged!();
+      }
       Navigator.pop(context, true);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _dateController = TextEditingController(text: widget.date ?? "");
+    _messageController = TextEditingController(text: widget.message ?? "");
+    _images = widget.images ?? [];
+    _fetchWorkers();
+    _checkIfTaskAssigned();
+    // ถ้าเป็นโหมดแก้ไขและไม่มีวันที่ ให้ใช้วันที่ปัจจุบัน
+    if (widget.isEditing && widget.date == null) {
+      final now = DateTime.now();
+      final formatter = DateFormat('dd/MM/yyyy');
+      _dateController.text = formatter.format(now);
+    }
+  }
+
+  // ใน _checkIfTaskAssigned() ให้แก้ไขเป็น
+  Future<void> _checkIfTaskAssigned() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/api/plots/${widget.plotId}/tasks'),
+      );
+
+      if (response.statusCode == 200) {
+        final tasks = jsonDecode(response.body);
+        // หางานที่มี topic ตรงกับหน้าปัจจุบัน
+        final existingTask = tasks.firstWhere(
+          (task) => task['taskType'] == widget.topic,
+          orElse: () => null,
+        );
+
+        if (existingTask != null) {
+          setState(() {
+            _isTaskAssigned = true;
+            _selectedWorkerId = existingTask['assignedWorkerId'];
+          });
+
+          // ดึงข้อมูลคนงานที่มอบหมายแล้ว
+          _fetchAssignedWorkerInfo(existingTask['assignedWorkerId']);
+
+          // อัปเดตรายการคนงานโดยไม่แสดงคนที่มอบหมายแล้ว
+          _updateWorkerList(existingTask['assignedWorkerId']);
+        }
+      }
+    } catch (e) {
+      print('Error checking task assignment: $e');
+    }
+  }
+
+// ฟังก์ชันอัปเดตรายการคนงานโดยไม่แสดงคนที่มอบหมายแล้ว
+  void _updateWorkerList(String assignedWorkerId) {
+    setState(() {
+      _workers = _workers
+          .where((worker) => worker['_id'] != assignedWorkerId)
+          .toList();
+    });
+  }
+
+  Future<void> _fetchAssignedWorkerInfo(String workerId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/api/workers/$workerId'),
+      );
+
+      if (response.statusCode == 200) {
+        final workerData = jsonDecode(response.body);
+        setState(() {
+          _assignedWorker = workerData;
+        });
+      }
+    } catch (e) {
+      print('Error fetching worker info: $e');
     }
   }
 
@@ -2838,6 +3107,145 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // ส่วนมอบหมายงาน (แสดงเฉพาะเมื่อ canAssignTask เป็น true)
+                            if (widget.canAssignTask &&
+                                !widget.isWorker &&
+                                !_isTaskAssigned) ...[
+                              Text(
+                                "มอบหมายงานให้คนงาน",
+                                style: TextStyle(
+                                  color: Color(0xFF25634B),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              _isLoadingWorkers
+                                  ? Center(child: CircularProgressIndicator())
+                                  : _workers.isEmpty
+                                      ? Column(
+                                          children: [
+                                            Text('ไม่พบคนงานในระบบ'),
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                await Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        WorkerScreen(
+                                                            userId:
+                                                                widget.userId),
+                                                  ),
+                                                );
+                                                _fetchWorkers();
+                                              },
+                                              child: Text('จัดการคนงาน'),
+                                            ),
+                                          ],
+                                        )
+                                      : Column(
+                                          children: [
+                                            ConstrainedBox(
+                                              constraints:
+                                                  BoxConstraints(maxWidth: 300),
+                                              child: DropdownButtonFormField<
+                                                  String>(
+                                                value: _selectedWorkerId,
+                                                decoration: InputDecoration(
+                                                  labelText: 'เลือกคนงาน',
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                                isExpanded: true,
+                                                items: _workers.map((worker) {
+                                                  return DropdownMenuItem<
+                                                      String>(
+                                                    value: worker['_id'],
+                                                    child: Text(
+                                                      worker['name'] ??
+                                                          'ไม่ทราบชื่อ', // แสดงแค่ชื่อ
+                                                      style: TextStyle(
+                                                          fontSize: 14),
+                                                    ),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    _selectedWorkerId = value;
+                                                    _selectedWorker =
+                                                        _workers.firstWhere(
+                                                      (worker) =>
+                                                          worker['_id'] ==
+                                                          value,
+                                                      orElse: () => {},
+                                                    );
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                            if (_selectedWorkerId != null)
+                                              Padding(
+                                                padding:
+                                                    EdgeInsets.only(top: 16),
+                                                child: ElevatedButton(
+                                                  onPressed: _assignTask,
+                                                  child: Text('มอบหมายงาน'),
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    minimumSize: Size(
+                                                        double.infinity, 50),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                              SizedBox(height: 20),
+                            ],
+                            // แสดงสถานะเมื่อมอบหมายงานแล้ว
+                            if (_isTaskAssigned && _assignedWorker != null)
+                              Container(
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.green[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.green),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.check_circle,
+                                        color: Colors.green),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'มอบหมายงานแล้ว',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green[800],
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'ให้: ${_assignedWorker!['name']}',
+                                            style: TextStyle(
+                                                color: Colors.green[700]),
+                                          ),
+                                          if (_assignedWorker!['phone'] != null)
+                                            Text(
+                                              'โทร: ${_assignedWorker!['phone']}',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.green[600],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             Text(
                               "วันที่",
                               style: TextStyle(
@@ -3114,6 +3522,8 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                     ],
                   ),
                 ),
+
+                // ปุ่มบันทึก
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ElevatedButton(

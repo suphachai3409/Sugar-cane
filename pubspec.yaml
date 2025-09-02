@@ -29,6 +29,8 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`
 flutter:
+  uses-material-design: true
+  
   assets:
     - assets/worker.jpg
     - assets/money.png
@@ -53,13 +55,18 @@ flutter:
     - assets/ข้อมูลแปลง.png
     - assets/ประวัติ.png
     - assets/แนะนำ.png
-    
+  fonts:
+    - family: NotoSansThai
+      fonts:
+        - asset: assets/fonts/NotoSansThai-Regular.ttf
+        - asset: assets/fonts/NotoSansThai-Bold.ttf
+          weight: 700
+          
 dependencies:
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-
   screenshot: ^2.1.0
   geolocator: ^11.0.0
   geocoding: ^2.2.2
@@ -75,3 +82,4 @@ dependencies:
   font_awesome_flutter: ^10.1.0
   material_design_icons_flutter: ^7.0.7296
   shared_preferences: ^2.2.2
+  flutter_secure_storage: ^8.0.0

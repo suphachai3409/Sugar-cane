@@ -304,9 +304,20 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     super.dispose();
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('เลือกตำแหน่งแปลงปลูก'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        backgroundColor: Color(0xFF34D396),
+        elevation: 0,
+      ),
       body: Stack(
         children: [
           // แผนที่
@@ -329,7 +340,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
           SafeArea(
             child: Column(
               children: [
-                // กล่องค้นหา
+                // กล่องค้นหา (ปรับแต่งใหม่)
                 Container(
                   margin: EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -353,50 +364,83 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                           prefixIcon: Icon(Icons.search, color: Color(0xFF34D396)),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                            icon: Icon(Icons.clear, color: Colors.grey),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchResults = [];
-                              });
-                            },
-                          )
+                                  icon: Icon(Icons.clear, color: Colors.grey),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {
+                                      _searchResults = [];
+                                    });
+                                  },
+                                )
                               : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
+                          border: InputBorder.none,
                           filled: true,
                           fillColor: Colors.white,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         ),
                         onChanged: _performSearch,
+                        style: TextStyle(fontSize: 16),
                       ),
 
-                      // ผลการค้นหา
+                      // ผลการค้นหา (ปรับแต่งใหม่)
                       if (_searchResults.isNotEmpty)
                         Container(
                           constraints: BoxConstraints(maxHeight: 200),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(12),
+                              bottomRight: Radius.circular(12),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
                           child: ListView.separated(
+                            padding: EdgeInsets.zero,
                             shrinkWrap: true,
                             itemCount: math.min(_searchResults.length, 5),
-                            separatorBuilder: (context, index) => Divider(height: 1),
+                            separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey[200]),
                             itemBuilder: (context, index) {
                               final place = _searchResults[index];
-                              return ListTile(
-                                leading: Icon(Icons.location_on, color: Color(0xFF34D396)),
-                                title: Text(
-                                  place.name,
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => _selectPlace(place),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: ListTile(
+                                      leading: Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF34D396).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(Icons.location_on, color: Color(0xFF34D396)),
+                                      ),
+                                      title: Text(
+                                        place.name,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        place.address,
+                                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      dense: true,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                                    ),
+                                  ),
                                 ),
-                                subtitle: Text(
-                                  place.address,
-                                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                onTap: () => _selectPlace(place),
-                                dense: true,
                               );
                             },
                           ),
@@ -407,7 +451,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
                 Spacer(),
 
-                // แสดงที่อยู่ที่เลือก
+                // แสดงที่อยู่ที่เลือก (ปรับแต่งใหม่)
                 if (_selectedAddress.isNotEmpty)
                   Container(
                     margin: EdgeInsets.all(16),
@@ -426,156 +470,157 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'ตำแหน่งที่เลือก:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                        Row(
+                          children: [
+                            Icon(Icons.location_pin, color: Color(0xFF34D396), size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'ตำแหน่งที่เลือก:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color(0xFF25634B),
+                              ),
+                            ),
+                          ],
                         ),
                         SizedBox(height: 8),
                         Text(
                           _selectedAddress,
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: TextStyle(color: Colors.grey[700], fontSize: 14),
                         ),
                         SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
-
                           child: _selectedPosition == null
                               ? Container()
                               : !_isPositionSelected
-                              ? ElevatedButton(
-                            onPressed: _selectPosition,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF34D396),
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder
-                                (borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              'เลือกตำแหน่งนี้',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          )
-
-
-
-                              : Row(
-                            children: [
-                          Expanded(
-                          child: ElevatedButton(
-                          onPressed: _skipDrawing,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey[600],
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              'ข้าม',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                              // ย้อนกลับจุด
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: _undoLastPoint, // เรียกฟังก์ชันที่ลบจุดล่าสุด
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange[600],
-                                    padding: EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'ย้อนกลับจุด',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: _isDrawingMode
-                                  ? (_canFinishDrawing
-                                      ? () {
-                                          print('DEBUG: กดปุ่มถัดไป (วาดเสร็จแล้ว)');
-                                          _finishDrawing();
-                                        }
-                                      : () {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('กรุณาวาดอย่างน้อย 3 จุดเพื่อสร้างพื้นที่ หรือกด "เลือกตำแหน่งเดียว"'),
-                                              backgroundColor: Colors.orange,
+                                  ? ElevatedButton(
+                                      onPressed: _selectPosition,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color(0xFF34D396),
+                                        padding: EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'เลือกตำแหน่งนี้',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : Row(
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: _skipDrawing,
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.grey[600],
+                                              padding: EdgeInsets.symmetric(vertical: 14),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
                                             ),
-                                          );
-                                        })
-                                  : () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: Text('เลือกวิธีการระบุพื้นที่'),
-                                          content: Text('คุณต้องการวาดขอบเขตแปลงหรือเลือกแค่ตำแหน่งเดียว?'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                                _skipDrawing();
-                                              },
-                                              child: Text('เลือกตำแหน่งเดียว'),
+                                            child: Text(
+                                              'ข้าม',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
                                             ),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                                _startDrawingMode();
-                                              },
-                                              child: Text('วาดขอบเขต'),
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: _undoLastPoint,
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.orange[600],
+                                              padding: EdgeInsets.symmetric(vertical: 14),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
                                             ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFF34D396),
-                                    padding: EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                            child: Text(
+                                              'ย้อนกลับจุด',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: _isDrawingMode
+                                                ? (_canFinishDrawing
+                                                    ? () {
+                                                        print('DEBUG: กดปุ่มถัดไป (วาดเสร็จแล้ว)');
+                                                        _finishDrawing();
+                                                      }
+                                                    : () {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text('กรุณาวาดอย่างน้อย 3 จุดเพื่อสร้างพื้นที่ หรือกด "เลือกตำแหน่งเดียว"'),
+                                                            backgroundColor: Colors.orange,
+                                                          ),
+                                                        );
+                                                      })
+                                                : () {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (BuildContext context) {
+                                                        return AlertDialog(
+                                                          title: Text('เลือกวิธีการระบุพื้นที่'),
+                                                          content: Text('คุณต้องการวาดขอบเขตแปลงหรือเลือกแค่ตำแหน่งเดียว?'),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(context).pop();
+                                                                _skipDrawing();
+                                                              },
+                                                              child: Text('เลือกตำแหน่งเดียว'),
+                                                            ),
+                                                            ElevatedButton(
+                                                              onPressed: () {
+                                                                Navigator.of(context).pop();
+                                                                _startDrawingMode();
+                                                              },
+                                                              child: Text('วาดขอบเขต'),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Color(0xFF34D396),
+                                              padding: EdgeInsets.symmetric(vertical: 14),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              _isDrawingMode
+                                                  ? (_canFinishDrawing ? 'ถัดไป' : 'วาดเพิ่ม')
+                                                  : 'เลือกตำแหน่งนี้',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  child: Text(
-                                    _isDrawingMode 
-                                        ? (_canFinishDrawing ? 'ถัดไป' : 'วาดเพิ่ม')
-                                        : 'เลือกตำแหน่งนี้',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-
-
-
-                            ],
-                          ),
                         ),
                       ],
                     ),
@@ -584,24 +629,38 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
             ),
           ),
 
-          // ปุ่ม My Location
+          // ปุ่ม My Location (ปรับแต่งใหม่)
           Positioned(
             right: 16,
             bottom: _selectedAddress.isNotEmpty ? 180 : 100,
             child: FloatingActionButton(
               onPressed: _getCurrentLocation,
               backgroundColor: Colors.white,
-              child: Icon(Icons.my_location, color: Color(0xFF34D396)),
-              mini: true,
+              child: Icon(Icons.my_location, color: Color(0xFF34D396), size: 24),
+              elevation: 2,
             ),
           ),
 
-          // Loading
+          // Loading (ปรับแต่งใหม่)
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.3),
               child: Center(
-                child: CircularProgressIndicator(color: Color(0xFF34D396)),
+                child: Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: Color(0xFF34D396)),
+                      SizedBox(height: 10),
+                      Text('กำลังโหลด...', style: TextStyle(color: Color(0xFF25634B))),
+                    ],
+                  ),
+                ),
               ),
             ),
         ],

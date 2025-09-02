@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http; // เพิ่ม import สำหร�
 import 'equipment.dart';
 import 'moneytransfer.dart';
 import 'profile.dart';
+import 'WorkerTasksScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,11 +54,90 @@ class _Menu3ScreenState extends State<Menu3Screen> {
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
-
+  String? _workerId;
+  String? _ownerId;
+  bool _isLoadingOwner = false;
+  int _plotCount = 0;
+  List<Map<String, dynamic>> plotList = [];
   @override
   void initState() {
     super.initState();
-    fetchUserData();
+    _fetchOwnerData();
+  }
+
+  Future<void> _loadPlotData() async {
+    try {
+      // ใช้ ownerId ที่ดึงมาจาก _fetchOwnerData
+      if (_ownerId != null) {
+        final response = await http.get(
+          Uri.parse('http://10.0.2.2:3000/api/plots/$_ownerId'),
+          headers: {"Content-Type": "application/json"},
+        );
+
+        if (response.statusCode == 200) {
+          final List<dynamic> plots = jsonDecode(response.body);
+          setState(() {
+            plotList = plots.cast<Map<String, dynamic>>();
+            _plotCount = plots.length;
+          });
+          print('✅ Loaded ${plots.length} plots for owner: $_ownerId');
+        } else {
+          print('❌ Error loading plot data: ${response.statusCode}');
+          setState(() {
+            plotList = [];
+            _plotCount = 0;
+          });
+        }
+      }
+    } catch (e) {
+      print('❌ Error loading plot data: $e');
+      setState(() {
+        plotList = [];
+        _plotCount = 0;
+      });
+    }
+  }
+
+  // ใน menu3.dart
+  Future<void> _fetchOwnerData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/api/plots/owner/${widget.userId}'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['ownerId'] != null) {
+          setState(() {
+            _ownerId = data['ownerId']; // ได้ ownerId มาครบถ้วน
+          });
+          await _fetchPlotCount();
+        }
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<void> _fetchPlotCount() async {
+    if (_ownerId == null) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/api/plots/count/$_ownerId'),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _plotCount = data['count'] ?? 0;
+        });
+        print('✅ Plot count: $_plotCount');
+      }
+    } catch (e) {
+      print('❌ Error fetching plot count: $e');
+    }
   }
 
   Future<void> fetchUserData() async {
@@ -95,6 +176,21 @@ class _Menu3ScreenState extends State<Menu3Screen> {
     }
   }
 
+  Future<int> _fetchTaskCount() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:3000/api/profile/worker-tasks/${widget.userId}'),
+      );
+      if (response.statusCode == 200) {
+        final tasks = jsonDecode(response.body);
+        return tasks.length;
+      }
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,8 +227,14 @@ class _Menu3ScreenState extends State<Menu3Screen> {
             // Container ฟ้า
             Positioned(
               top: height * 0.02,
-              left: width * 0.055,
-              child: const WeatherWidget(),
+              left: 0,
+              right: 0,
+              child: Container(
+                width: width * 0.9, // กำหนดความกว้างสูงสุด 90% ของหน้าจอ
+                child: Center(
+                  child: WeatherWidget(),
+                ),
+              ),
             ),
 
             // Text 'Main menu'
@@ -155,16 +257,129 @@ class _Menu3ScreenState extends State<Menu3Screen> {
 
             //แปลงไร่
             Positioned(
-              top: height * 0.38,
+              top: height * 0.36,
               left: width * 0.06,
               child: GestureDetector(
                 onTap: () {
-                  // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
+                  print('🧭 Navigating to Plot1Screen:');
+                  print('   - current widget.userId: ${widget.userId}');
+                  print('   - _ownerId: $_ownerId');
+                  if (_ownerId != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Plot1Screen(
+                          userId: widget
+                              .userId, // ✅ ต้องส่ง userId ของคนงาน (6891b28d4e22c3470ee055b8)
+                          isWorkerMode: true,
+                        ),
+                      ),
+                    );
+                  } else {
+                    _fetchOwnerData();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('กำลังโหลดข้อมูลแปลงปลูก...'),
+                        backgroundColor: Colors.blue,
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  height: height * 0.165,
+                  width: width * 0.36,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(19),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(19),
+                    child: Stack(
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Image.asset(
+                                'assets/kid.png',
+                                fit: BoxFit.cover,
+                                width: 149,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'แปลงปลูก',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF25624B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_isLoadingOwner)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withOpacity(0.3),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (_plotCount > 0)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                _plotCount.toString(),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // แก้ไขส่วนของปุ่มรับงาน
+            Positioned(
+              top: height * 0.36,
+              right: width * 0.06,
+              child: GestureDetector(
+                onTap: () {
+                  print(
+                      '🚀 Navigating to WorkerTasksScreen with user ID: ${widget.userId}');
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            Plot1Screen(userId: widget.userId)),
+                      builder: (context) =>
+                          WorkerTasksScreen(userId: widget.userId),
+                    ),
                   );
                 },
                 child: Container(
@@ -185,27 +400,61 @@ class _Menu3ScreenState extends State<Menu3Screen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(19),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Stack(
                       children: [
-                        Expanded(
-                          child: Image.asset(
-                            'assets/kid.png',
-                            fit: BoxFit.cover,
-                            width: 149,
-                          ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Image.asset(
+                                'assets/ประวัติ.png', // เปลี่ยนเป็น path ของรูปภาพงาน
+                                fit: BoxFit.cover,
+                                width: 149,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'รับงาน',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF25624B),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            'แปลงปลูก',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+
+                        // Badge แสดงจำนวนงาน
+                        if (_workerId != null)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: FutureBuilder(
+                              future: _fetchTaskCount(),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData && snapshot.data! > 0) {
+                                  return Container(
+                                    padding: EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      snapshot.data.toString(),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return SizedBox();
+                              },
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -213,15 +462,17 @@ class _Menu3ScreenState extends State<Menu3Screen> {
               ),
             ),
 
-            //อุปกรณ์
+            // อุปกรณ์
             Positioned(
-              top: height * 0.38,
-              right: width * 0.06,
+              top: height * 0.57,
+              left: width * 0.06,
               child: GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => EquipmentScreen(userId: widget.userId))
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            EquipmentScreen(userId: widget.userId)),
                   );
                 },
                 child: Container(
@@ -259,7 +510,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: Color(0xFF25624B),
                             ),
                           ),
                         ),
@@ -272,16 +523,16 @@ class _Menu3ScreenState extends State<Menu3Screen> {
 
             //เบิกเงินทุน
             Positioned(
-              top: height * 0.60,
-              right: width * 0.28,
+              top: height * 0.57,
+              right: width * 0.06,
               child: GestureDetector(
-                // ในส่วนที่เรียกใช้ moneytransferScreen
                 onTap: () {
                   Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              moneytransferScreen(userId: widget.userId)));
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            moneytransferScreen(userId: widget.userId)),
+                  );
                 },
                 child: Container(
                   height: height * 0.165,
@@ -318,7 +569,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: Color(0xFF25624B),
                             ),
                           ),
                         ),
@@ -385,7 +636,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
               ),
             ),
 
-            // ปุ่มล่างขวา - Profile Button
+            //ปุ่มล่างสุด ขวา - Profile Button
             Positioned(
               bottom: height * 0.01,
               right: width * 0.07,
@@ -394,11 +645,13 @@ class _Menu3ScreenState extends State<Menu3Screen> {
                   if (_currentUser == null && !_isLoading) {
                     fetchUserData().then((_) {
                       if (_currentUser != null) {
-                        showProfileDialog(context, _currentUser!, refreshUser: fetchUserData);
+                        showProfileDialog(context, _currentUser!,
+                            refreshUser: fetchUserData);
                       }
                     });
                   } else if (_currentUser != null) {
-                    showProfileDialog(context, _currentUser!, refreshUser: fetchUserData);
+                    showProfileDialog(context, _currentUser!,
+                        refreshUser: fetchUserData);
                   }
                 },
                 child: Container(
@@ -411,21 +664,23 @@ class _Menu3ScreenState extends State<Menu3Screen> {
                     ),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
+                    padding: EdgeInsets.all(
+                        6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(38),
                       child: _isLoading
                           ? Container(
-                        padding: EdgeInsets.all(8),
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
+                              padding: EdgeInsets.all(8),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
                           : Image.asset(
-                        'assets/โปรไฟล์.png',
-                        fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
-                      ),
+                              'assets/โปรไฟล์.png',
+                              fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
+                            ),
                     ),
                   ),
                 ),
@@ -435,7 +690,5 @@ class _Menu3ScreenState extends State<Menu3Screen> {
         ),
       ),
     );
-
-
   }
 }

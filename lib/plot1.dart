@@ -4,14 +4,20 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'google_maps_search.dart';
 import 'plot_map_fullscreen.dart';
-import 'package:flutter/material.dart';
-import 'dart:math' as math;
-import 'package:geolocator/geolocator.dart';
 import 'sugarcanedata.dart';
+import 'profile.dart';
 
 class Plot1Screen extends StatefulWidget {
   final String userId;
-  Plot1Screen({required this.userId});
+  final bool isWorkerMode;
+  final bool isViewMode;
+  final String? farmerName;
+  Plot1Screen({
+    required this.userId,
+    this.isWorkerMode = false,
+    this.isViewMode = false,
+    this.farmerName,
+  });
   final TextEditingController _plotNameController = TextEditingController();
   @override
   _Plot1ScreenState createState() => _Plot1ScreenState();
@@ -20,7 +26,7 @@ class Plot1Screen extends StatefulWidget {
 class _Plot1ScreenState extends State<Plot1Screen> {
   List<Map<String, dynamic>> plotList = [];
   bool isLoading = true;
-
+  String? _ownerId;
   LatLng? locationLatLng;
   String? locationAddress;
   String selectedPlant = '';
@@ -33,48 +39,117 @@ class _Plot1ScreenState extends State<Plot1Screen> {
   @override
   void initState() {
     super.initState();
-    _loadPlotData();
+
+    print('🎯 Plot1Screen initialized:');
+    print('   - userId: ${widget.userId}');
+    print('   - isWorkerMode: ${widget.isWorkerMode}');
+    print('   - isViewMode: ${widget.isViewMode}');
+
+    if (widget.isWorkerMode) {
+      print('👷 Worker mode - Fetching owner data...');
+      _fetchOwnerData().then((_) {
+        if (_ownerId != null) {
+          print('✅ Owner found: $_ownerId, loading plots...');
+          _loadPlotData();
+        } else {
+          print('❌ No owner found');
+          setState(() => isLoading = false);
+        }
+      });
+    } else if (widget.isViewMode) {
+      // โหมดดูข้อมูลลูกไร่ - ใช้ userId ของลูกไร่โดยตรง
+      print('👨‍🌾 View mode - Loading farmer plots: ${widget.userId}');
+      _loadPlotData();
+    } else {
+      print('👨‍🌾 Normal mode - Loading own plots...');
+      _loadPlotData();
+    }
   }
 
-  // ดึงข้อมูลแปลงปลูกจาก database
+// ฟังก์ชันดึงข้อมูลเจ้าของจากคนงาน
+  Future<void> _fetchOwnerData() async {
+    try {
+      print('🔄 Fetching owner data for worker: ${widget.userId}');
+
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/api/plots/owner/${widget.userId}'),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      print('📥 Response status: ${response.statusCode}');
+      print('📥 Response body: ${response.body}'); // ✅ เพิ่ม logging นี้
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['ownerId'] != null) {
+          print('✅ Found owner: ${data['ownerId']}');
+          setState(() {
+            _ownerId = data['ownerId'];
+          });
+        } else {
+          print('❌ No owner data found in response');
+        }
+      } else {
+        print('❌ HTTP Error: ${response.statusCode}');
+        // ✅ แสดง error message จาก server
+        if (response.body.isNotEmpty) {
+          try {
+            final errorData = jsonDecode(response.body);
+            print('❌ Server error: ${errorData['message']}');
+          } catch (e) {
+            print('❌ Server error: ${response.body}');
+          }
+        }
+      }
+    } catch (e) {
+      print('❌ Error fetching owner data: $e');
+    }
+  }
+
+// แก้ไขฟังก์ชัน _loadPlotData
   Future<void> _loadPlotData() async {
     try {
+      String targetUserId;
+
+      if (widget.isWorkerMode) {
+        // โหมดคนงาน: ใช้ ownerId จากข้อมูล worker
+        if (_ownerId != null) {
+          targetUserId = _ownerId!;
+          print('👷 Worker mode - Using ownerId: $targetUserId');
+        } else {
+          // ถ้ายังไม่มี ownerId ให้ดึงใหม่
+          await _fetchOwnerData();
+          if (_ownerId != null) {
+            targetUserId = _ownerId!;
+            print('👷 Worker mode - Fetched ownerId: $targetUserId');
+          } else {
+            setState(() {
+              isLoading = false;
+            });
+            return;
+          }
+        }
+      } else {
+        // โหมดเจ้าของหรือลูกไร่: ใช้ userId ปกติ
+        targetUserId = widget.userId;
+        print('👨‍🌾 Owner/Farmer mode - Using userId: $targetUserId');
+      }
+
+      // ✅ เรียก API ที่ถูกต้อง: ดึงแปลงปลูกโดยใช้ targetUserId
       final response = await http.get(
-        Uri.parse(
-            'http://10.0.2.2:3000/api/plots/${widget.userId}'), // ✅ แก้ไข URL ให้ตรงกับ backend
+        Uri.parse('http://10.0.2.2:3000/api/plots/$targetUserId'),
         headers: {"Content-Type": "application/json"},
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> plots =
-            jsonDecode(response.body); // ✅ backend ส่งกลับเป็น array โดยตรง
+        final List<dynamic> plots = jsonDecode(response.body);
         setState(() {
           plotList = plots.cast<Map<String, dynamic>>();
           isLoading = false;
         });
-        print('✅ Loaded ${plots.length} plots'); // ✅ debug
-
-        // แสดงข้อมูล polygon ของแต่ละแปลง
-        print('📍 ===== ข้อมูลที่โหลดมา =====');
-        for (int i = 0; i < plots.length; i++) {
-          final plot = plots[i];
-          print('📍 แปลงที่ ${i + 1}: ${plot['plotName']}');
-          print('📍   - ตำแหน่ง: ${plot['latitude']}, ${plot['longitude']}');
-          if (plot['polygonPoints'] != null) {
-            print('📍   - polygon points: ${plot['polygonPoints'].length} จุด');
-            for (int j = 0; j < plot['polygonPoints'].length; j++) {
-              var p = plot['polygonPoints'][j];
-              print(
-                  '📍     จุดที่ ${j + 1}: lat=${p['latitude']}, lng=${p['longitude']}');
-            }
-          } else {
-            print('📍   - ไม่มี polygon points');
-          }
-        }
-        print('📍 ===========================');
+        print('✅ Loaded ${plots.length} plots for user: $targetUserId');
       } else {
-        print(
-            '❌ Error response: ${response.statusCode} - ${response.body}'); // ✅ debug
+        print('❌ Error response: ${response.statusCode} - ${response.body}');
         setState(() {
           plotList = [];
           isLoading = false;
@@ -85,6 +160,48 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       setState(() {
         plotList = [];
         isLoading = false;
+      });
+    }
+  }
+
+  final String apiUrl = 'http://10.0.2.2:3000/pulluser';
+  List<Map<String, dynamic>> _users = [];
+  Map<String, dynamic>? _currentUser;
+  bool _isLoading = false;
+
+  Future<void> fetchUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+        setState(() {
+          _users = jsonData.cast<Map<String, dynamic>>();
+          // ถ้ามี userId ให้หาข้อมูลผู้ใช้นั้น ถ้าไม่มีให้ใช้คนแรก
+          if (widget.userId.isNotEmpty) {
+            _currentUser = _users.firstWhere(
+              (user) => user['_id'] == widget.userId,
+              orElse: () => _users.isNotEmpty ? _users.first : {},
+            );
+          } else {
+            _currentUser = _users.isNotEmpty ? _users.first : null;
+          }
+          _isLoading = false;
+        });
+      } else {
+        print('Error: ${response.statusCode}');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+      setState(() {
+        _isLoading = false;
       });
     }
   }
@@ -175,15 +292,25 @@ class _Plot1ScreenState extends State<Plot1Screen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('แปลงปลูก'),
+        title: widget.isViewMode && widget.farmerName != null
+            ? Text('แปลงปลูกของ ${widget.farmerName!}')
+            : const Text('แปลงปลูก',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Color(0xFF25634B),
+                  fontWeight: FontWeight.w800,
+                )),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        // แสดงปุ่มเพิ่มแปลงด้านบนเมื่อมีข้อมูลแล้ว
-        actions: plotList.isNotEmpty
+        // แสดงปุ่มเพิ่มแปลงด้านบนเมื่อมีข้อมูลแล้ว และไม่ใช่โหมดดูข้อมูล
+        actions: plotList.isNotEmpty &&
+                !widget.isWorkerMode &&
+                _ownerId == null &&
+                !widget.isViewMode // ✅ ตรวจสอบว่าไม่ใช่โหมดดูข้อมูล
             ? [
                 Padding(
                   padding: EdgeInsets.only(right: 16.0),
@@ -325,150 +452,182 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       padding: const EdgeInsets.all(16.0),
       child: Stack(
         children: [
-          // ✅ ปุ่มกึ่งกลางจอ
-          Positioned(
-            top: height * 0.35,
-            left: width * 0.35,
-            child: GestureDetector(
-              onTap: () async {
-                print("📌 เริ่มไปหน้า MapSearchScreen");
+          // ส่วนเนื้อหาหลัก
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // ในโหมดดูข้อมูล จะไม่แสดงปุ่มเพิ่มแปลง
+                if (!widget.isViewMode)
+                  GestureDetector(
+                    onTap: () async {
+                      print("📌 เริ่มไปหน้า MapSearchScreen");
 
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MapSearchScreen(),
-                  ),
-                );
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MapSearchScreen(),
+                        ),
+                      );
 
-                if (result != null && result['address'] != null) {
-                  print(
-                      '🎯 ===== รับข้อมูลจาก Google Maps Search (Empty State) =====');
-                  print('🎯 result keys: ${result.keys.toList()}');
-
-                  // ตรวจสอบว่ามี latLng หรือ centerPoint หรือ lat/lng
-                  LatLng? selectedLatLng;
-                  if (result['latLng'] != null) {
-                    selectedLatLng = result['latLng'];
-                    print(
-                        '🎯 ใช้ latLng: ${selectedLatLng?.latitude}, ${selectedLatLng?.longitude}');
-                  } else if (result['centerPoint'] != null) {
-                    selectedLatLng = result['centerPoint'];
-                    print(
-                        '🎯 ใช้ centerPoint: ${selectedLatLng?.latitude}, ${selectedLatLng?.longitude}');
-                  } else if (result['lat'] != null && result['lng'] != null) {
-                    selectedLatLng = LatLng(result['lat'], result['lng']);
-                    print(
-                        '🎯 ใช้ lat/lng: ${selectedLatLng.latitude}, ${selectedLatLng.longitude}');
-                  }
-
-                  if (selectedLatLng != null) {
-                    final String selectedAddress = result['address'];
-                    List<LatLng> drawingPoints = [];
-                    if (result['drawingPoints'] != null) {
-                      drawingPoints = List.from(result['drawingPoints'])
-                          .map((p) => LatLng(p['latitude'], p['longitude']))
-                          .toList();
-                      print('🎯 จำนวน drawing points: ${drawingPoints.length}');
-                      for (int i = 0; i < drawingPoints.length; i++) {
+                      if (result != null && result['address'] != null) {
                         print(
-                            '🎯   จุดที่ ${i + 1}: lat=${drawingPoints[i].latitude}, lng=${drawingPoints[i].longitude}');
-                      }
-                    } else {
-                      print('🎯 ไม่มี drawing points');
-                    }
+                            '🎯 ===== รับข้อมูลจาก Google Maps Search (Empty State) =====');
+                        print('🎯 result keys: ${result.keys.toList()}');
 
-                    print(
-                        "📍 ได้ตำแหน่งจาก map: $selectedLatLng, $selectedAddress");
-                    if (drawingPoints.isNotEmpty) {
-                      print(
-                          "📍 มี polygon points: ${drawingPoints.length} จุด");
-                    }
-                    print('🎯 =========================================');
-
-                    // 👉 เปิด popup ตั้งชื่อแปลง
-                    PlotDialogs.showPlotNamePopup(
-                      context: context,
-                      plotNameController: _plotNameController,
-                      onNext: (name) {
-                        print(
-                            "✅ onNext ของชื่อแปลงถูกเรียกแล้ว ด้วยค่า: $name");
-
-                        if (name.trim().isEmpty) {
-                          _showErrorDialog(context, 'กรุณากรอกชื่อแปลง');
-                          return;
+                        // ตรวจสอบว่ามี latLng หรือ centerPoint หรือ lat/lng
+                        LatLng? selectedLatLng;
+                        if (result['latLng'] != null) {
+                          selectedLatLng = result['latLng'];
+                          print(
+                              '🎯 ใช้ latLng: ${selectedLatLng?.latitude}, ${selectedLatLng?.longitude}');
+                        } else if (result['centerPoint'] != null) {
+                          selectedLatLng = result['centerPoint'];
+                          print(
+                              '🎯 ใช้ centerPoint: ${selectedLatLng?.latitude}, ${selectedLatLng?.longitude}');
+                        } else if (result['lat'] != null &&
+                            result['lng'] != null) {
+                          selectedLatLng = LatLng(result['lat'], result['lng']);
+                          print(
+                              '🎯 ใช้ lat/lng: ${selectedLatLng.latitude}, ${selectedLatLng.longitude}');
                         }
 
-                        setState(() {
-                          plotName = name;
-                          locationLatLng = selectedLatLng;
-                          locationAddress = selectedAddress;
-                          polygonPoints = drawingPoints;
-                        });
-
-                        print("🟢 ===== ตั้งชื่อแปลงแล้ว (Empty State) =====");
-                        print("🟢 ชื่อแปลง: $name");
-                        print(
-                            "🟢 ตำแหน่ง: ${selectedLatLng!.latitude}, ${selectedLatLng.longitude}");
-                        print(
-                            "🟢 จำนวน polygon points: ${drawingPoints.length}");
-                        if (drawingPoints.isNotEmpty) {
-                          print("🟢 รายละเอียด polygon points:");
-                          for (int i = 0; i < drawingPoints.length; i++) {
+                        if (selectedLatLng != null) {
+                          final String selectedAddress = result['address'];
+                          List<LatLng> drawingPoints = [];
+                          if (result['drawingPoints'] != null) {
+                            drawingPoints = List.from(result['drawingPoints'])
+                                .map((p) =>
+                                    LatLng(p['latitude'], p['longitude']))
+                                .toList();
                             print(
-                                "🟢   จุดที่ ${i + 1}: lat=${drawingPoints[i].latitude}, lng=${drawingPoints[i].longitude}");
+                                '🎯 จำนวน drawing points: ${drawingPoints.length}');
+                            for (int i = 0; i < drawingPoints.length; i++) {
+                              print(
+                                  '🎯   จุดที่ ${i + 1}: lat=${drawingPoints[i].latitude}, lng=${drawingPoints[i].longitude}');
+                            }
+                          } else {
+                            print('🎯 ไม่มี drawing points');
                           }
-                        }
-                        print("🟢 ======================================");
 
-                        _showFirstPopup(context, name);
-                      },
-                    );
-                  } else {
-                    print("⚠️ ไม่พบตำแหน่งที่ถูกต้อง");
-                  }
-                } else {
-                  print("⚠️ ยกเลิกการเลือกตำแหน่ง หรือค่าที่ได้ไม่ครบ");
-                }
-              },
-              child: Column(
-                children: [
-                  Container(
-                    width: width * 0.2,
-                    height: height * 0.1,
-                    decoration: ShapeDecoration(
-                      color: Color(0xFF34D396),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(38),
+                          print(
+                              "📍 ได้ตำแหน่งจาก map: $selectedLatLng, $selectedAddress");
+                          if (drawingPoints.isNotEmpty) {
+                            print(
+                                "📍 มี polygon points: ${drawingPoints.length} จุด");
+                          }
+                          print('🎯 =========================================');
+
+                          // 👉 เปิด popup ตั้งชื่อแปลง
+                          PlotDialogs.showPlotNamePopup(
+                            context: context,
+                            plotNameController: _plotNameController,
+                            onNext: (name) {
+                              print(
+                                  "✅ onNext ของชื่อแปลงถูกเรียกแล้ว ด้วยค่า: $name");
+
+                              if (name.trim().isEmpty) {
+                                _showErrorDialog(context, 'กรุณากรอกชื่อแปลง');
+                                return;
+                              }
+
+                              setState(() {
+                                plotName = name;
+                                locationLatLng = selectedLatLng;
+                                locationAddress = selectedAddress;
+                                polygonPoints = drawingPoints;
+                              });
+
+                              print(
+                                  "🟢 ===== ตั้งชื่อแปลงแล้ว (Empty State) =====");
+                              print("🟢 ชื่อแปลง: $name");
+                              print(
+                                  "🟢 ตำแหน่ง: ${selectedLatLng!.latitude}, ${selectedLatLng.longitude}");
+                              print(
+                                  "🟢 จำนวน polygon points: ${drawingPoints.length}");
+                              if (drawingPoints.isNotEmpty) {
+                                print("🟢 รายละเอียด polygon points:");
+                                for (int i = 0; i < drawingPoints.length; i++) {
+                                  print(
+                                      "🟢   จุดที่ ${i + 1}: lat=${drawingPoints[i].latitude}, lng=${drawingPoints[i].longitude}");
+                                }
+                              }
+                              print(
+                                  "🟢 ======================================");
+
+                              _showFirstPopup(context, name);
+                            },
+                          );
+                        } else {
+                          print("⚠️ ไม่พบตำแหน่งที่ถูกต้อง");
+                        }
+                      } else {
+                        print("⚠️ ยกเลิกการเลือกตำแหน่ง หรือค่าที่ได้ไม่ครบ");
+                      }
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: width * 0.2,
+                          height: height * 0.1,
+                          decoration: ShapeDecoration(
+                            color: const Color(0xFF34D396),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(38),
+                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.add,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'กดเพื่อสร้างแปลง',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Color(0xFF25634B),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.agriculture,
+                        size: 64,
+                        color: Colors.grey,
                       ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 40,
+                      SizedBox(height: 16),
+                      Text(
+                        '${widget.farmerName ?? "ลูกไร่"} ยังไม่มีแปลงปลูก',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Color(0xFF25634B),
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'กดเพื่อสร้างแปลง',
-                    style: TextStyle(
-                      fontSize: width * 0.035,
-                      color: Color(0xFF25624B),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
           ),
-          _buildBottomButtons(width, height),
+          // ในโหมดดูข้อมูลจะไม่แสดงปุ่มล่าง
+          if (!widget.isViewMode) _buildBottomButtons(width, height),
         ],
       ),
     );
   }
 
-  // หน้าจอเมื่อมีข้อมูล (รูปที่ 1)
+  // หน้าจอเมื่อมีข้อมูล
   Widget _buildPlotList(double width, double height) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -480,16 +639,34 @@ class _Plot1ScreenState extends State<Plot1Screen> {
             left: 0,
             right: 0,
             bottom: height * 0.1,
-            child: ListView.builder(
-              itemCount: plotList.length,
-              itemBuilder: (context, index) {
-                final plot = plotList[index];
-                return _buildPlotCard(plot, width, height);
-              },
+            child: Column(
+              children: [
+                if (widget.isViewMode && widget.farmerName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      'แปลงปลูกของ ${widget.farmerName!}',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF25634B),
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: plotList.length,
+                    itemBuilder: (context, index) {
+                      final plot = plotList[index];
+                      return _buildPlotCard(plot, width, height);
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
-          // ปุ่มล่างสุด
-          _buildBottomButtons(width, height),
+          // ในโหมดดูข้อมูลจะไม่แสดงปุ่มล่าง
+          if (!widget.isViewMode) _buildBottomButtons(width, height),
         ],
       ),
     );
@@ -536,6 +713,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               soilType: plot['soilType'],
               plotPosition: plotPosition,
               polygonPoints: plotPolygon,
+              isWorkerMode: widget.isWorkerMode,
+              isViewMode: widget.isViewMode, // ส่งค่าโหมดดูข้อมูลไปด้วย
             ),
           ),
         );
@@ -645,8 +824,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                     ),
                   ),
             SizedBox(width: 12),
-            // ... (ส่วนข้อมูลแปลงเหมือนเดิม)
-            // ... (ไม่ต้องแก้ไขส่วนนี้)
+
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -664,89 +843,80 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                           ),
                         ),
                       ),
-                      // ปุ่มแก้ไขและลบ
-                      Row(
-                        children: [
-                          // ปุ่มแก้ไข
-                          GestureDetector(
-                            onTap: () {
-                              // ตั้งค่าข้อมูลเดิมก่อนแก้ไข
-                              setState(() {
-                                plotName = plot['plotName'] ?? '';
-                                selectedPlant = plot['plantType'] ?? '';
-                                selectedWater = plot['waterSource'] ?? '';
-                                selectedSoil = plot['soilType'] ?? '';
-                                _plotNameController.text = plotName;
+                      // ปุ่มแก้ไขและลบ - จะไม่แสดงในโหมดดูข้อมูล
+                      if (!widget.isWorkerMode && !widget.isViewMode)
+                        Row(
+                          children: [
+                            // ปุ่มแก้ไข
+                            GestureDetector(
+                              onTap: () {
+                                // ตั้งค่าข้อมูลเดิมก่อนแก้ไข
+                                setState(() {
+                                  plotName = plot['plotName'] ?? '';
+                                  selectedPlant = plot['plantType'] ?? '';
+                                  selectedWater = plot['waterSource'] ?? '';
+                                  selectedSoil = plot['soilType'] ?? '';
+                                  _plotNameController.text = plotName;
 
-                                // ตั้งค่า location และ polygon points
-                                if (plot['latitude'] != null &&
-                                    plot['longitude'] != null) {
-                                  locationLatLng = LatLng(
-                                    plot['latitude'] is double
-                                        ? plot['latitude']
-                                        : (plot['latitude'] as int).toDouble(),
-                                    plot['longitude'] is double
-                                        ? plot['longitude']
-                                        : (plot['longitude'] as int).toDouble(),
-                                  );
-                                  print(
-                                      '🔧 แก้ไขแปลง: ตั้งตำแหน่ง ${locationLatLng!.latitude}, ${locationLatLng!.longitude}');
-                                }
-
-                                if (plot['polygonPoints'] != null) {
-                                  polygonPoints = List.from(
-                                          plot['polygonPoints'])
-                                      .map((p) =>
-                                          LatLng(p['latitude'], p['longitude']))
-                                      .toList();
-                                  print(
-                                      '🔧 แก้ไขแปลง: ตั้ง polygon points ${polygonPoints.length} จุด');
-                                  for (int i = 0;
-                                      i < polygonPoints.length;
-                                      i++) {
-                                    print(
-                                        '🔧   จุดที่ ${i + 1}: lat=${polygonPoints[i].latitude}, lng=${polygonPoints[i].longitude}');
+                                  // ตั้งค่า location และ polygon points
+                                  if (plot['latitude'] != null &&
+                                      plot['longitude'] != null) {
+                                    locationLatLng = LatLng(
+                                      plot['latitude'] is double
+                                          ? plot['latitude']
+                                          : (plot['latitude'] as int)
+                                              .toDouble(),
+                                      plot['longitude'] is double
+                                          ? plot['longitude']
+                                          : (plot['longitude'] as int)
+                                              .toDouble(),
+                                    );
                                   }
-                                } else {
-                                  print('🔧 แก้ไขแปลง: ไม่มี polygon points');
-                                }
-                              });
-                              _showEditPlotNamePopup(context, plot);
-                            },
-                            child: Container(
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.edit,
-                                color: Colors.orange,
-                                size: width * 0.045,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          // ปุ่มลบ
-                          GestureDetector(
-                            onTap: () {
-                              _showDeleteConfirmDialog(context, plot);
-                            },
-                            child: Container(
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                                size: width * 0.045,
+
+                                  if (plot['polygonPoints'] != null) {
+                                    polygonPoints =
+                                        List.from(plot['polygonPoints'])
+                                            .map((p) => LatLng(
+                                                p['latitude'], p['longitude']))
+                                            .toList();
+                                  }
+                                });
+                                _showEditPlotNamePopup(context, plot);
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.edit,
+                                  color: Colors.orange,
+                                  size: width * 0.045,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                            SizedBox(width: 8),
+                            // ปุ่มลบ
+                            GestureDetector(
+                              onTap: () {
+                                _showDeleteConfirmDialog(context, plot);
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                  size: width * 0.045,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                   SizedBox(height: 4),
@@ -970,12 +1140,16 @@ class _Plot1ScreenState extends State<Plot1Screen> {
 
   // ปุ่มล่างสุด - ✅ แก้ไข layout ให้ใช้ Positioned ควบคุมตำแหน่งเอง
   Widget _buildBottomButtons(double width, double height) {
+    if (widget.isViewMode) {
+      return SizedBox.shrink(); // ไม่แสดงอะไรในโหมดดูข้อมูล
+    }
+
     return Stack(
       children: [
-        // Container พื้นหลัง
+        // Container ปุ่ม
         Positioned(
-          bottom: 0,
-          left: width * 0.03,
+          bottom: height * 0, // 2% จากด้านล่าง
+          left: width * 0.03, // 3% จากด้านซ้าย
           right: width * 0.03,
           child: Container(
             height: height * 0.07,
@@ -1027,13 +1201,23 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           ),
         ),
 
-        //ปุ่มล่างสุด ขวา
+        //ปุ่มล่างสุด ขวา - Profile Button
         Positioned(
           bottom: height * 0.01,
           right: width * 0.07,
           child: GestureDetector(
             onTap: () {
-              // TODO: ใส่ฟังก์ชันเมื่อกด
+              if (_currentUser == null && !_isLoading) {
+                fetchUserData().then((_) {
+                  if (_currentUser != null) {
+                    showProfileDialog(context, _currentUser!,
+                        refreshUser: fetchUserData);
+                  }
+                });
+              } else if (_currentUser != null) {
+                showProfileDialog(context, _currentUser!,
+                    refreshUser: fetchUserData);
+              }
             },
             child: Container(
               width: width * 0.12,
@@ -1049,10 +1233,19 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                     EdgeInsets.all(6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(38),
-                  child: Image.asset(
-                    'assets/โปรไฟล์.png',
-                    fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
-                  ),
+                  child: _isLoading
+                      ? Container(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Image.asset(
+                          'assets/โปรไฟล์.png',
+                          fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
+                        ),
                 ),
               ),
             ),
@@ -1647,7 +1840,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                               child: TextField(
                                 controller: _plotNameController,
                                 decoration: InputDecoration(
-                                  hintText: 'เช่น แปลงข้าวโพดหลังบ้าน',
+                                  hintText: 'เช่น ไร่อ้อย',
                                   hintStyle: TextStyle(
                                     color: Colors.grey[400],
                                     fontSize: width * 0.035,

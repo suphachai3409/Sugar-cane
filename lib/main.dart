@@ -34,6 +34,7 @@ class MyApp extends StatelessWidget {
       ),
       home: SplashScreen(),
       routes: {
+        '/login': (context) => LoginScreen(),
         '/menu1': (context) => Menu1Screen(userId: '',),
         '/menu2': (context) => Menu2Screen(userId: '',),
         '/menu3': (context) => Menu3Screen(userId: '',),
@@ -409,31 +410,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
-                  // ปุ่มไปที่หน้าข้อมูลสมาชิก (DataHuman)
+                  
                   SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      // ✅ ใช้ Navigator.pushNamed ตอนนี้ใช้ได้แล้ว เพราะมี routes แล้ว
-                      Navigator.pushNamed(context, '/datahuman');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF2D8C8A),
-                      foregroundColor: Colors.white,
-                      minimumSize: Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      'ไปที่หน้าข้อมูลสมาชิก (DataHuman)',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

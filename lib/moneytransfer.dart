@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'profile.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 void main() {
   runApp(moneytransferScreen(
@@ -34,12 +37,20 @@ class CashAdvanceRequest {
   final String phone;
   final String amount;
   final DateTime date;
+  final List<String> images;
+  final String? status; // เพิ่มฟิลด์สถานะ
+  final String? approvalImage; // รูปภาพการอนุมัติ
+  final DateTime? approvedAt; // วันที่อนุมัติ
 
   CashAdvanceRequest({
     required this.name,
     required this.phone,
     required this.amount,
     required this.date,
+    this.images = const [],
+    this.status,
+    this.approvalImage,
+    this.approvedAt,
   });
 }
 
@@ -64,17 +75,17 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   String? _phoneError;
   String? _amountError;
   String? _dateError;
-
+  List<dynamic> userRequests = [];
   List<CashAdvanceRequest> requests = [];
-  
   int? selectedRequestIndex;
-
   // เพิ่มตัวแปรสำหรับ profile
   final String apiUrl = 'http://10.0.2.2:3000/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
   String get userId => widget.userId;
+  final List<File> _selectedImages = []; // เก็บรูปภาพที่เลือก
+  final ImagePicker _picker = ImagePicker(); // สำหรับการเลือกรูปภาพ
 
   @override
   void initState() {
@@ -86,8 +97,13 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     _selectedDate = DateTime.now();
     _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
 
-    // เรียกใช้ฟังก์ชันดึงข้อมูลผู้ใช้
-    fetchUserData();
+    // เรียกใช้ฟังก์ชันดึงข้อมูลผู้ใช้และคำขอ
+    fetchUserData().then((_) {
+      // หลังจากดึงข้อมูลผู้ใช้เสร็จ ให้ดึงคำขอเบิกเงิน
+      if (_currentUser != null) {
+        fetchUserRequests();
+      }
+    });
   }
 
   @override
@@ -97,6 +113,69 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     _amountController.dispose();
     _dateController.dispose();
     super.dispose();
+  }
+
+// ฟังก์ชันเลือกรูปภาพจาก gallery
+  Future<void> _pickImages() async {
+    try {
+      final List<XFile>? pickedFiles = await _picker.pickMultiImage();
+      if (pickedFiles != null) {
+        setState(() {
+          _selectedImages
+              .addAll(pickedFiles.map((file) => File(file.path)).toList());
+        });
+      }
+    } catch (e) {
+      print('Error picking images: $e');
+    }
+  }
+
+// ฟังก์ชันถ่ายรูป
+  Future<void> _takePhoto() async {
+    try {
+      final XFile? pickedFile =
+          await _picker.pickImage(source: ImageSource.camera);
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImages.add(File(pickedFile.path));
+        });
+      }
+    } catch (e) {
+      print('Error taking photo: $e');
+    }
+  }
+
+// ฟังก์ชันลบรูปภาพ
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+// เพิ่มฟังก์ชันสำหรับอัพโหลดรูปภาพ
+  Future<List<String>> _uploadImages(List<File> imageFiles) async {
+    List<String> imageUrls = [];
+    var uri = Uri.parse('http://10.0.2.2:3000/api/upload');
+
+    for (var imageFile in imageFiles) {
+      var request = http.MultipartRequest('POST', uri);
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          imageFile.path,
+          filename: 'cash_advance_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        ),
+      );
+
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        var responseData = await response.stream.bytesToString();
+        var jsonResponse = jsonDecode(responseData);
+        imageUrls.add(jsonResponse['imageUrl']);
+      }
+    }
+
+    return imageUrls;
   }
 
   // ฟังก์ชันดึงข้อมูลผู้ใช้
@@ -121,6 +200,12 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
           } else {
             _currentUser = _users.isNotEmpty ? _users.first : null;
           }
+        });
+
+        // ดึงข้อมูลคำขอเบิกเงินหลังจากดึงข้อมูลผู้ใช้เสร็จ
+        await fetchUserRequests();
+
+        setState(() {
           _isLoading = false;
         });
       } else {
@@ -137,230 +222,103 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     }
   }
 
-  // ฟังก์ชันแสดง profile dialog
-  void _showProfileDialog() {
-    if (_currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('ไม่พบข้อมูลผู้ใช้'),
-          backgroundColor: Colors.red.shade400,
-        ),
-      );
-      return;
+  Future<String?> _getOwnerId() async {
+    try {
+      print('🔍 Fetching ownerId for worker: ${_currentUser!['_id']}');
+
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:3000/api/plots/owner/${_currentUser!['_id']}'),
+        headers: {'user-id': _currentUser!['_id']},
+      ).timeout(Duration(seconds: 10));
+
+      print('📥 Owner API response: ${response.statusCode}');
+      print('📥 Owner API body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          print('✅ Found ownerId: ${data['ownerId']}');
+          return data['ownerId'];
+        }
+      }
+
+      print('❌ Failed to get ownerId, status: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      print('❌ Error fetching ownerId: $e');
+      return null;
     }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF34D396).withOpacity(0.1),
-                  Colors.white,
-                ],
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF34D396),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          size: 35,
-                          color: Color(0xFF34D396),
-                        ),
-                      ),
-                      SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'โปรไฟล์ของฉัน',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'ข้อมูลส่วนตัว',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20),
-
-                // User Information
-                _buildInfoCard(
-                  icon: Icons.account_circle,
-                  title: 'ชื่อผู้ใช้',
-                  value: _currentUser!['username'] ?? 'ไม่มีข้อมูล',
-                  color: Colors.purple,
-                ),
-                SizedBox(height: 12),
-
-                _buildInfoCard(
-                  icon: Icons.person,
-                  title: 'ชื่อ',
-                  value: _currentUser!['name'] ?? 'ไม่มีข้อมูล',
-                  color: Color(0xFF25624B),
-                ),
-                SizedBox(height: 12),
-
-                _buildInfoCard(
-                  icon: Icons.email,
-                  title: 'อีเมล',
-                  value: _currentUser!['email'] ?? 'ไม่มีข้อมูล',
-                  color: Colors.orange,
-                ),
-                SizedBox(height: 12),
-
-                _buildInfoCard(
-                  icon: Icons.phone,
-                  title: 'เบอร์โทร',
-                  value: _currentUser!['number']?.toString() ?? 'ไม่มีข้อมูล',
-                  color: Colors.blue,
-                ),
-                SizedBox(height: 12),
-
-                _buildInfoCard(
-                  icon: Icons.menu_book,
-                  title: 'เมนู',
-                  value:
-                      'Menu ${_currentUser!['menu']?.toString() ?? 'ไม่ระบุ'}',
-                  color: Color(0xFF34D396),
-                ),
-
-                SizedBox(height: 25),
-
-                // Close Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF34D396),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      'ปิด',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+// ฟังก์ชันดึงข้อมูลคำขอเบิกเงิน
+  Future<void> fetchUserRequests() async {
+    if (_currentUser == null) return;
+
+    try {
+      print(
+          '🔍 Fetching cash advance requests for user: ${_currentUser!['_id']}');
+
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:3000/api/cash-advance/user-requests/${_currentUser!['_id']}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'user-id': _currentUser!['_id']
+        },
+      );
+
+      print('📥 Response status: ${response.statusCode}');
+      print('📥 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            requests = (data['requests'] as List).map((request) {
+              return CashAdvanceRequest(
+                name: request['name'],
+                phone: request['phone'],
+                amount: request['amount'],
+                date: DateTime.parse(request['date']),
+                images: List<String>.from(request['images'] ?? []),
+                status: request['status'],
+                approvalImage: request['approvalImage'],
+                approvedAt: request['approvedAt'] != null
+                    ? DateTime.parse(request['approvedAt'])
+                    : null,
+              );
+            }).toList();
+          });
+          print('✅ Loaded ${requests.length} cash advance requests');
+
+          // ตรวจสอบว่ามีคำขอ pending หรือไม่
+          final pendingCount =
+              requests.where((r) => r.status == 'pending').length;
+          if (pendingCount > 0) {
+            print('⚠️ มีคำขอ pending อยู่แล้ว: $pendingCount คำขอ');
+          }
+        }
+      } else {
+        print('❌ Error fetching requests: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error fetching requests: $e');
+    }
+  }
+
+  void _fillUserData() {
+    if (_currentUser != null) {
+      _nameController.text = _currentUser!['name'] ?? '';
+      _phoneController.text = _currentUser!['number']?.toString() ?? '';
+    }
   }
 
   void _addNewRequest() {
     selectedRequestIndex = null;
     _clearForm();
     _resetErrors();
+    _fillUserData();
     _showFormDialog();
   }
 
@@ -531,6 +489,95 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                             setDialogState(() {});
                           },
                         ),
+                        const SizedBox(height: 15),
+// ส่วนแสดงรูปภาพ
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'แนบรูปภาพ (ถ้ามี)',
+                              style: TextStyle(
+                                color: Color(0xFF30C39E),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: _pickImages,
+                                  icon:
+                                      const Icon(Icons.photo_library, size: 18),
+                                  label: const Text('เลือกจาก gallery'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF30C39E),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                ElevatedButton.icon(
+                                  onPressed: _takePhoto,
+                                  icon: const Icon(Icons.camera_alt, size: 18),
+                                  label: const Text('ถ่ายรูป'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF30C39E),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (_selectedImages.isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              const Text('รูปภาพที่เลือก:'),
+                              const SizedBox(height: 5),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: List.generate(_selectedImages.length,
+                                    (index) {
+                                  return Stack(
+                                    children: [
+                                      Container(
+                                        width: 80,
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          image: DecorationImage(
+                                            image: FileImage(
+                                                _selectedImages[index]),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 0,
+                                        right: 0,
+                                        child: GestureDetector(
+                                          onTap: () => _removeImage(index),
+                                          child: Container(
+                                            decoration: const BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.close,
+                                                color: Colors.white, size: 16),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 15),
                         const SizedBox(height: 30),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -661,25 +708,95 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     return isValid;
   }
 
-  void _saveRequestFromDialog() {
-    setState(() {
-      if (selectedRequestIndex != null) {
-        requests[selectedRequestIndex!] = CashAdvanceRequest(
-          name: _nameController.text,
-          phone: _phoneController.text,
-          amount: _amountController.text,
-          date: _selectedDate,
+  // ใน _saveRequestFromDialog() - ตรวจสอบคำขอ pending
+  Future<void> _saveRequestFromDialog() async {
+    // ตรวจสอบว่ามีคำขอ pending อยู่แล้วหรือไม่
+    final hasPendingRequest =
+        requests.any((request) => request.status == 'pending');
+    if (hasPendingRequest) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'มีคำขอเบิกเงินที่รอดำเนินการอยู่แล้ว ไม่สามารถส่งคำขอใหม่ได้'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // ดึง ownerId และส่งคำขอ...
+    try {
+      final ownerId = await _getOwnerId();
+      if (ownerId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ไม่พบข้อมูลเจ้าของ')),
         );
-      } else {
-        requests.add(CashAdvanceRequest(
-          name: _nameController.text,
-          phone: _phoneController.text,
-          amount: _amountController.text,
-          date: _selectedDate,
-        ));
+        return;
       }
-      selectedRequestIndex = null;
-    });
+
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:3000/api/cash-advance/check-relation/${_currentUser!['_id']}/$ownerId'),
+        headers: {'user-id': _currentUser!['_id']},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          // อัพโหลดรูปภาพและส่งคำขอ...
+          List<String> uploadedImageUrls = [];
+          if (_selectedImages.isNotEmpty) {
+            uploadedImageUrls = await _uploadImages(_selectedImages);
+          }
+
+          final requestResponse = await http.post(
+            Uri.parse('http://10.0.2.2:3000/api/cash-advance/request'),
+            headers: {
+              'Content-Type': 'application/json',
+              'user-id': _currentUser!['_id']
+            },
+            body: jsonEncode({
+              'userId': _currentUser!['_id'],
+              'ownerId': ownerId,
+              'name': _nameController.text,
+              'phone': _phoneController.text,
+              'amount': _amountController.text,
+              'date': _selectedDate.toIso8601String(),
+              'type': data['type'],
+              'images': uploadedImageUrls,
+              'status': 'pending',
+            }),
+          );
+
+          print('📤 Request API response: ${requestResponse.statusCode}');
+          print('📤 Request API body: ${requestResponse.body}');
+
+          if (requestResponse.statusCode == 200 ||
+              requestResponse.statusCode == 201) {
+            final requestData = jsonDecode(requestResponse.body);
+            if (requestData['success'] == true) {
+              // อัพเดต UI หลังส่งคำขอสำเร็จ
+              await fetchUserRequests(); // ดึงข้อมูลใหม่
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('ส่งคำขอเบิกเงินเรียบร้อย'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('❌ Exception: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('เกิดข้อผิดพลาด: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _resetErrors() {
@@ -690,6 +807,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   }
 
   void _showRequestDetails(int index) {
+    if (index < 0 || index >= requests.length) return;
+
     setState(() {
       selectedRequestIndex = index;
     });
@@ -741,6 +860,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     _amountController.clear();
     _selectedDate = DateTime.now();
     _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
+    _selectedImages.clear(); // ล้างรูปภาพที่เลือก
   }
 
   void _goBack() {
@@ -799,11 +919,63 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     }
   }
 
+  // ใน _buildBody() - แสดงปุ่มเพิ่มการขอเบิกเฉพาะเมื่อไม่มีคำขอ pending
   Widget _buildBody(double width, double height) {
+    final pendingRequests =
+        requests.where((r) => r.status == 'pending').toList();
+
     if (requests.isEmpty) {
       return _buildEmptyState(width, height);
     } else {
-      return _buildRequestList(width, height);
+      return Padding(
+        padding: const EdgeInsets.all(10),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom:
+                  pendingRequests.isEmpty ? height * 0.1 : 0, // ปรับตามสถานะ
+              child: SingleChildScrollView(
+                child: _buildRequestList(),
+              ),
+            ),
+            if (pendingRequests.isEmpty) // แสดงปุ่มเฉพาะเมื่อไม่มีคำขอ pending
+              Positioned(
+                bottom: -8,
+                left: 60,
+                right: 60,
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 60,
+                    child: ElevatedButton.icon(
+                      onPressed: _addNewRequest,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text(
+                        'เพิ่มการขอเบิก',
+                        style: TextStyle(
+                          color: Color(0xFFFFFFFF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF34D396),
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
     }
   }
 
@@ -851,62 +1023,62 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     );
   }
 
-  Widget _buildRequestList(double width, double height) {
-    return Padding(
-      padding: const EdgeInsets.all(10),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: height * 0.1, // ปรับให้มีพื้นที่ด้านล่างสำหรับปุ่ม
-            child: ListView.builder(
-              itemCount: requests.length,
-              itemBuilder: (context, index) {
-                final request = requests[index];
-                return _buildRequestCard(request, index, width, height);
-              },
-            ),
-          ),
-          Positioned(
-            bottom: -8, // กำหนดให้ปุ่มอยู่ที่ด้านล่าง
-            left: 60,
-            right: 60,
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: SizedBox(
-                width: double.infinity, // ทำให้ปุ่มมีความกว้างเต็มที่
-                height: 60,
-                child: ElevatedButton.icon(
-                  onPressed: _addNewRequest,
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text(
-                    'เพิ่มการขอเบิก',
-                    style: TextStyle(
-                      color: Color(0xFFFFFFFF),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF34D396),
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                ),
+  // ใน moneytransfer.dart - แสดงคำขอ pending
+  Widget _buildRequestList() {
+    final pendingRequests =
+        requests.where((r) => r.status == 'pending').toList();
+    final completedRequests =
+        requests.where((r) => r.status != 'pending').toList();
+
+    return Column(
+      children: [
+        if (pendingRequests.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'คำขอที่รอดำเนินการ',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Color(0xFF25634B),
               ),
             ),
           ),
+          ...pendingRequests.asMap().entries.map((entry) {
+            return _buildRequestCard(entry.value, entry.key);
+          }).toList(),
         ],
-      ),
+        if (completedRequests.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'ประวัติคำขอ',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Color(0xFF25634B),
+              ),
+            ),
+          ),
+          ...completedRequests.asMap().entries.map((entry) {
+            return _buildRequestCard(
+                entry.value, entry.key + pendingRequests.length);
+          }).toList(),
+        ],
+        if (requests.isEmpty) ...[
+          SizedBox(height: 100),
+          Icon(Icons.request_page, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'ยังไม่มีคำขอเบิกเงิน',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ],
     );
   }
 
-  Widget _buildRequestCard(
-      CashAdvanceRequest request, int index, double width, double height) {
+  Widget _buildRequestCard(CashAdvanceRequest request, int index) {
     final formattedDate = DateFormat('dd/MM/yyyy').format(request.date);
 
     return Container(
@@ -954,12 +1126,57 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                // แสดงสถานะ
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(request.status),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _getStatusText(request.status),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+// ฟังก์ชันช่วยเหลือสำหรับสีสถานะ
+  Color _getStatusColor(String? status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange;
+      case 'approved':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+// ฟังก์ชันช่วยเหลือสำหรับข้อความสถานะ
+  String _getStatusText(String? status) {
+    switch (status) {
+      case 'pending':
+        return 'รอดำเนินการ';
+      case 'approved':
+        return 'อนุมัติแล้ว';
+      case 'rejected':
+        return 'ปฏิเสธ';
+      default:
+        return 'ไม่ทราบสถานะ';
+    }
   }
 
   Widget _buildRequestDetails() {
@@ -1004,6 +1221,11 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // ✅ ใส่การแสดงสถานะตรงนี้ - ใต้ข้อมูลพื้นฐานและก่อนจำนวนเงิน
+                _buildDetailRow('สถานะ', _getStatusText(request.status)),
+                const SizedBox(height: 15),
+
                 const Text(
                   'จำนวนเงินที่ต้องการเบิก',
                   style: TextStyle(
@@ -1037,6 +1259,69 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     color: Color(0xFF25634B),
                   ),
                 ),
+
+                // แสดงรูปภาพที่แนบมา (ถ้ามี)
+                if (request.images.isNotEmpty) ...[
+                  const SizedBox(height: 15),
+                  const Text(
+                    'รูปภาพที่แนบมา:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF25634B),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  SizedBox(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: request.images.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          width: 100,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: NetworkImage(
+                                  'http://10.0.2.2:3000/uploads/${request.images[index]}'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+
+                // แสดงรูปภาพการอนุมัติ (ถ้ามี)
+                if (request.approvalImage != null) ...[
+                  const SizedBox(height: 15),
+                  const Text(
+                    'รูปภาพการอนุมัติ:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF25634B),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Image.network(
+                    'http://10.0.2.2:3000/uploads/${request.approvalImage}',
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ],
+
+                // แสดงวันที่อนุมัติ (ถ้ามี)
+                if (request.approvedAt != null) ...[
+                  const SizedBox(height: 15),
+                  _buildDetailRow(
+                      'อนุมัติเมื่อ',
+                      DateFormat('dd/MM/yyyy HH:mm')
+                          .format(request.approvedAt!)),
+                ],
+
                 const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1101,16 +1386,14 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          _goBack();
-                        },
+                        onPressed: _goBack,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF34D396),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        child: const Text('ยืนยัน',
+                        child: const Text('ปิด',
                             style: TextStyle(
                               color: Color(0xFFFFFFFF),
                               fontSize: 16,
@@ -1124,6 +1407,31 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+// ฟังก์ชันแสดงแถวรายละเอียด
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              "$label:",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF25634B),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(value),
+          ),
+        ],
       ),
     );
   }
@@ -1194,7 +1502,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                 ),
               ),
 
-              // ปุ่มขวา
+              //ปุ่มล่างสุด ขวา - Profile Button
               Positioned(
                 bottom: height * 0.01,
                 right: width * 0.07,
@@ -1203,11 +1511,13 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     if (_currentUser == null && !_isLoading) {
                       fetchUserData().then((_) {
                         if (_currentUser != null) {
-                          _showProfileDialog();
+                          showProfileDialog(context, _currentUser!,
+                              refreshUser: fetchUserData);
                         }
                       });
                     } else if (_currentUser != null) {
-                      _showProfileDialog();
+                      showProfileDialog(context, _currentUser!,
+                          refreshUser: fetchUserData);
                     }
                   },
                   child: Container(

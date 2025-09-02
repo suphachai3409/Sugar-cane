@@ -1,0 +1,160 @@
+# List of SDK dependencies of this app, this information is also included in an encrypted form in the APK.
+# For more information visit: https://d.android.com/r/tools/dependency-metadata
+
+library {
+  maven_library {
+    groupId: "androidx.multidex"
+    artifactId: "multidex"
+    version: "2.0.1"
+  }
+  digests {
+    sha256: "B\3352\377\237\227\370Wq\270* \000:\215p\366\212\267\264\2722\211d1,\340s&\223\333\t"
+  }
+  repo_index {
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlin"
+    artifactId: "kotlin-stdlib-jdk8"
+    version: "1.9.24"
+  }
+  digests {
+    sha256: "[[\277\263\341\030K^\0231|=B#\177\242J\335D;.w\201\226\036\3523M\2616\255\261"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlin"
+    artifactId: "kotlin-stdlib"
+    version: "1.9.24"
+  }
+  digests {
+    sha256: "\205\213\220&\226\332\234\365\205\253\235\230\377\301\302q\"i\202\203T\337\351\020~7\021\260\204\243dh"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains"
+    artifactId: "annotations"
+    version: "13.0"
+  }
+  digests {
+    sha256: "\254\342\241\r\310\342\325\3754\222^\312\300>I\210\262\300\370Qe\f\224\270\316\364\233\241\275\021\024x"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlin"
+    artifactId: "kotlin-stdlib-jdk7"
+    version: "1.9.24"
+  }
+  digests {
+    sha256: "\266i\233\205\v\240x\237.\220By\315\213\334{\352\2210\377\321W\315\272\000\037\307B]\212G\267"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "io.flutter"
+    artifactId: "armeabi_v7a_release"
+    version: "1.0.0-a18df97ca57a249df5d8d68cd0820600223ce262"
+  }
+  digests {
+    sha256: "gIC\224LP\360\263\277\322\022\231%mb=\035\bv\2430\317\311~\265@\367\367\204\003\237\263"
+  }
+  repo_index {
+    value: 4
+  }
+}
+library {
+  maven_library {
+    groupId: "io.flutter"
+    artifactId: "arm64_v8a_release"
+    version: "1.0.0-a18df97ca57a249df5d8d68cd0820600223ce262"
+  }
+  digests {
+    sha256: "F\367G*d\224\232\3273\270\311\243?\031\245~\360|o:\347\250h\001\354\353\004\2351\352\234\f"
+  }
+  repo_index {
+    value: 4
+  }
+}
+library {
+  maven_library {
+    groupId: "io.flutter"
+    artifactId: "x86_64_release"
+    version: "1.0.0-a18df97ca57a249df5d8d68cd0820600223ce262"
+  }
+  digests {
+    sha256: "\206\307V\f\251\246\254%b1\033!\233F\312\343\031\030\324\2672\035\225\234\202\b\265\366R\350\367\364"
+  }
+  repo_index {
+    value: 4
+  }
+}
+library {
+  digests {
+    sha256: ":l\347:\207\350\360\352\227\006\036=\272\342\3642\246fv\372\213\221\254\352\273\016\306\374\362\306\332\304"
+  }
+}
+library_dependencies {
+  library_index: 1
+  library_dep_index: 2
+  library_dep_index: 4
+}
+library_dependencies {
+  library_index: 2
+  library_dep_index: 3
+  library_dep_index: 4
+  library_dep_index: 1
+}
+library_dependencies {
+  library_index: 4
+  library_dep_index: 2
+}
+module_dependencies {
+  module_name: "base"
+  dependency_index: 0
+  dependency_index: 1
+  dependency_index: 5
+  dependency_index: 6
+  dependency_index: 7
+  dependency_index: 8
+}
+repositories {
+  maven_repo {
+    url: "https://dl.google.com/dl/android/maven2/"
+  }
+}
+repositories {
+  maven_repo {
+    url: "https://repo.maven.apache.org/maven2/"
+  }
+}
+repositories {
+  maven_repo {
+    url: "https://dl.google.com/dl/android/maven2/"
+  }
+}
+repositories {
+  maven_repo {
+    url: "https://repo.maven.apache.org/maven2/"
+  }
+}
+repositories {
+  maven_repo {
+    url: "https://storage.googleapis.com/download.flutter.io"
+  }
+}

@@ -7,6 +7,8 @@ import 'dart:convert'; // เพิ่ม import สำหรับ jsonDecode
 import 'package:http/http.dart' as http; // เพิ่ม import สำหรับ http
 import 'equipment.dart';
 import 'moneytransfer.dart';
+import 'profile.dart';
+import 'workerscreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +49,6 @@ class Menu2Screen extends StatefulWidget {
 }
 
 class _Menu2ScreenState extends State<Menu2Screen> {
-  // แก้ชื่อ class
   final String apiUrl = 'http://10.0.2.2:3000/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
@@ -71,6 +72,7 @@ class _Menu2ScreenState extends State<Menu2Screen> {
         final List<dynamic> jsonData = jsonDecode(response.body);
         setState(() {
           _users = jsonData.cast<Map<String, dynamic>>();
+          // ถ้ามี userId ให้หาข้อมูลผู้ใช้นั้น ถ้าไม่มีให้ใช้คนแรก
           if (widget.userId.isNotEmpty) {
             _currentUser = _users.firstWhere(
               (user) => user['_id'] == widget.userId,
@@ -95,213 +97,27 @@ class _Menu2ScreenState extends State<Menu2Screen> {
     }
   }
 
-  void _showProfileDialog() {
-    if (_currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('ไม่พบข้อมูลผู้ใช้'),
-          backgroundColor: Colors.red.shade400,
-        ),
+// ฟังก์ชันดึงคำขอเบิกเงิน
+  Future<List<dynamic>> fetchCashAdvanceRequests(String type) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:3000/api/cash-advance/requests/${widget.userId}/$type'),
       );
-      return;
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // กรองเฉพาะคำขอที่ยังไม่ได้รับการอนุมัติ
+        final pendingRequests = (data['requests'] as List)
+            .where((request) => request['status'] == 'pending')
+            .toList();
+        return pendingRequests;
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching cash advance requests: $e');
+      return [];
     }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF34D396).withOpacity(0.1),
-                  Colors.white,
-                ],
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF34D396),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          size: 35,
-                          color: Color(0xFF34D396),
-                        ),
-                      ),
-                      SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'โปรไฟล์ของฉัน',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'ข้อมูลส่วนตัว',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20),
-                _buildInfoCard(
-                  icon: Icons.account_circle,
-                  title: 'ชื่อผู้ใช้',
-                  value: _currentUser!['username'] ?? 'ไม่มีข้อมูล',
-                  color: Colors.purple,
-                ),
-                SizedBox(height: 12),
-                _buildInfoCard(
-                  icon: Icons.person,
-                  title: 'ชื่อ',
-                  value: _currentUser!['name'] ?? 'ไม่มีข้อมูล',
-                  color: Color(0xFF25624B),
-                ),
-                SizedBox(height: 12),
-                _buildInfoCard(
-                  icon: Icons.email,
-                  title: 'อีเมล',
-                  value: _currentUser!['email'] ?? 'ไม่มีข้อมูล',
-                  color: Colors.orange,
-                ),
-                SizedBox(height: 12),
-                _buildInfoCard(
-                  icon: Icons.phone,
-                  title: 'เบอร์โทร',
-                  value: _currentUser!['number']?.toString() ?? 'ไม่มีข้อมูล',
-                  color: Colors.blue,
-                ),
-                SizedBox(height: 12),
-                _buildInfoCard(
-                  icon: Icons.menu_book,
-                  title: 'เมนู',
-                  value:
-                      'Menu ${_currentUser!['menu']?.toString() ?? 'ไม่ระบุ'}',
-                  color: Color(0xFF34D396),
-                ),
-                SizedBox(height: 25),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF34D396),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      'ปิด',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -339,8 +155,14 @@ class _Menu2ScreenState extends State<Menu2Screen> {
             // Container ฟ้า
             Positioned(
               top: height * 0.02,
-              left: width * 0.055,
-              child: const WeatherWidget(),
+              left: 0,
+              right: 0,
+              child: Container(
+                width: width * 0.9, // กำหนดความกว้างสูงสุด 90% ของหน้าจอ
+                child: Center(
+                  child: WeatherWidget(),
+                ),
+              ),
             ),
 
             // Container ปุ่มขาว
@@ -453,7 +275,8 @@ class _Menu2ScreenState extends State<Menu2Screen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => Plot1Screen(userId: '')),
+                      builder: (context) => WorkerScreen(userId: widget.userId),
+                    ),
                   );
                 },
                 child: Container(
@@ -472,36 +295,67 @@ class _Menu2ScreenState extends State<Menu2Screen> {
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(19),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Image.asset(
-                            'assets/worker.jpg',
-                            fit: BoxFit.cover,
-                            width: 149,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            'คนงาน',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(19),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Image.asset(
+                                'assets/worker.jpg',
+                                fit: BoxFit.cover,
+                                width: 149,
+                              ),
                             ),
-                          ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'คนงาน',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      // Badge แสดงจำนวนคำขอเบิกเงินของคนงาน
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: FutureBuilder(
+                          future: fetchCashAdvanceRequests('worker'),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                              return Container(
+                                padding: EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  snapshot.data!.length.toString(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              );
+                            }
+                            return SizedBox();
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-
             // อุปกรณ์
             Positioned(
               top: height * 0.57,
@@ -509,9 +363,10 @@ class _Menu2ScreenState extends State<Menu2Screen> {
               child: GestureDetector(
                 onTap: () {
                   Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => EquipmentScreen(userId: widget.userId))
-                  );
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              EquipmentScreen(userId: widget.userId)));
                 },
                 child: Container(
                   height: height * 0.165,
@@ -567,9 +422,10 @@ class _Menu2ScreenState extends State<Menu2Screen> {
                 // ในส่วนที่เรียกใช้ moneytransferScreen
                 onTap: () {
                   Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => moneytransferScreen(userId: widget.userId))
-                  );
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              moneytransferScreen(userId: widget.userId)));
                 },
                 child: Container(
                   height: height * 0.165,
@@ -648,7 +504,7 @@ class _Menu2ScreenState extends State<Menu2Screen> {
               ),
             ),
 
-            // ปุ่มล่างขวา - Profile Button
+            //ปุ่มล่างสุด ขวา - Profile Button
             Positioned(
               bottom: height * 0.01,
               right: width * 0.07,
@@ -657,11 +513,13 @@ class _Menu2ScreenState extends State<Menu2Screen> {
                   if (_currentUser == null && !_isLoading) {
                     fetchUserData().then((_) {
                       if (_currentUser != null) {
-                        _showProfileDialog();
+                        showProfileDialog(context, _currentUser!,
+                            refreshUser: fetchUserData);
                       }
                     });
                   } else if (_currentUser != null) {
-                    _showProfileDialog();
+                    showProfileDialog(context, _currentUser!,
+                        refreshUser: fetchUserData);
                   }
                 },
                 child: Container(
@@ -674,7 +532,8 @@ class _Menu2ScreenState extends State<Menu2Screen> {
                     ),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(6),
+                    padding: EdgeInsets.all(
+                        6), // เพิ่มระยะห่างจากขอบ (ลองปรับค่านี้ได้)
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(38),
                       child: _isLoading
@@ -688,7 +547,7 @@ class _Menu2ScreenState extends State<Menu2Screen> {
                             )
                           : Image.asset(
                               'assets/โปรไฟล์.png',
-                              fit: BoxFit.contain,
+                              fit: BoxFit.contain, // แสดงภาพโดยไม่เบียดจนเต็ม
                             ),
                     ),
                   ),
