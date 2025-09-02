@@ -11,7 +11,8 @@ import 'sugarcanedata.dart';
 
 class Plot1Screen extends StatefulWidget {
   final String userId;
-  Plot1Screen({required this.userId});
+  final String? ownerId; // เพิ่ม ownerId
+  Plot1Screen({required this.userId, this.ownerId});
   final TextEditingController _plotNameController = TextEditingController();
   @override
   _Plot1ScreenState createState() => _Plot1ScreenState();
@@ -39,9 +40,11 @@ class _Plot1ScreenState extends State<Plot1Screen> {
   // ดึงข้อมูลแปลงปลูกจาก database
   Future<void> _loadPlotData() async {
     try {
+      // ใช้ endpoint ใหม่สำหรับดึงแปลงของเจ้าของ
+      final String targetId = widget.ownerId ?? widget.userId;
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/plots/${widget.userId}'), // ✅ แก้ไข URL ให้ตรงกับ backend
+            'http://10.0.2.2:3000/api/plots/owner/$targetId'), // ใช้ endpoint ใหม่
         headers: {"Content-Type": "application/json"},
       );
 
@@ -104,6 +107,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       "soilType": selectedSoil,
       "latitude": locationLatLng!.latitude,
       "longitude": locationLatLng!.longitude,
+      "ownerId": widget.ownerId ?? widget.userId, // เพิ่ม ownerId
       if (polygonPoints.isNotEmpty)
         "polygonPoints": polygonPoints
             .map((p) => {"latitude": p.latitude, "longitude": p.longitude})
@@ -1115,6 +1119,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "userId": widget.userId,
+        "ownerId": widget.ownerId ?? widget.userId, // ใช้ ownerId ถ้ามี ถ้าไม่มีใช้ userId
         "plotName": plotName,
         "plantType": selectedPlant,
         "waterSource": selectedWater,

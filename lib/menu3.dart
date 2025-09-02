@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'plot1.dart';
+import 'plot3.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'weather_widget.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -158,13 +159,32 @@ class _Menu3ScreenState extends State<Menu3Screen> {
               top: height * 0.38,
               left: width * 0.06,
               child: GestureDetector(
-                onTap: () {
+                onTap: () async {
+                  // ดึง ownerId ของคนงานก่อน
+                  String? ownerId;
+                  try {
+                    final response = await http.get(
+                      Uri.parse('http://10.0.2.2:3000/api/profile/worker-info/${widget.userId}'),
+                      headers: {"Content-Type": "application/json"},
+                    );
+
+                    if (response.statusCode == 200) {
+                      final data = jsonDecode(response.body);
+                      if (data['success'] == true && data['worker'] != null) {
+                        ownerId = data['worker']['ownerId'];
+                        print('🔍 DEBUG: ดึง ownerId สำเร็จ: $ownerId');
+                      }
+                    }
+                  } catch (e) {
+                    print('❌ Error getting ownerId: $e');
+                  }
+
                   // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            Plot1Screen(userId: widget.userId)),
+                            Plot3Screen(userId: widget.userId, ownerId: ownerId)),
                   );
                 },
                 child: Container(
