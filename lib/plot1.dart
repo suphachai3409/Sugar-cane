@@ -12,13 +12,18 @@ class Plot1Screen extends StatefulWidget {
   final bool isWorkerMode;
   final bool isViewMode;
   final String? farmerName;
+  final String? ownerId; // เพิ่ม ownerId
+  final TextEditingController _plotNameController = TextEditingController();
+
+  // แก้ไข Constructor ให้ถูกต้อง
   Plot1Screen({
     required this.userId,
     this.isWorkerMode = false,
     this.isViewMode = false,
     this.farmerName,
+    this.ownerId,
   });
-  final TextEditingController _plotNameController = TextEditingController();
+
   @override
   _Plot1ScreenState createState() => _Plot1ScreenState();
 }
@@ -111,31 +116,16 @@ class _Plot1ScreenState extends State<Plot1Screen> {
     try {
       String targetUserId;
 
-      if (widget.isWorkerMode) {
-        // โหมดคนงาน: ใช้ ownerId จากข้อมูล worker
-        if (_ownerId != null) {
-          targetUserId = _ownerId!;
-          print('👷 Worker mode - Using ownerId: $targetUserId');
-        } else {
-          // ถ้ายังไม่มี ownerId ให้ดึงใหม่
-          await _fetchOwnerData();
-          if (_ownerId != null) {
-            targetUserId = _ownerId!;
-            print('👷 Worker mode - Fetched ownerId: $targetUserId');
-          } else {
-            setState(() {
-              isLoading = false;
-            });
-            return;
-          }
-        }
+      // ใช้ ownerId ถ้ามี (โหมดคนงาน) ไม่ก็ใช้ userId (โหมดเจ้าของ)
+      if (widget.isWorkerMode && widget.ownerId != null) {
+        targetUserId = widget.ownerId!;
+        print('👷 Worker mode - Using ownerId: $targetUserId');
       } else {
-        // โหมดเจ้าของหรือลูกไร่: ใช้ userId ปกติ
         targetUserId = widget.userId;
-        print('👨‍🌾 Owner/Farmer mode - Using userId: $targetUserId');
+        print('👨‍🌾 Normal mode - Using userId: $targetUserId');
       }
 
-      // ✅ เรียก API ที่ถูกต้อง: ดึงแปลงปลูกโดยใช้ targetUserId
+      // ใช้ endpoint สำหรับดึงแปลงของ user
       final response = await http.get(
         Uri.parse('http://10.0.2.2:3000/api/plots/$targetUserId'),
         headers: {"Content-Type": "application/json"},
@@ -221,6 +211,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       "soilType": selectedSoil,
       "latitude": locationLatLng!.latitude,
       "longitude": locationLatLng!.longitude,
+      "ownerId": widget.ownerId ?? widget.userId, // เพิ่ม ownerId
       if (polygonPoints.isNotEmpty)
         "polygonPoints": polygonPoints
             .map((p) => {"latitude": p.latitude, "longitude": p.longitude})
@@ -292,25 +283,20 @@ class _Plot1ScreenState extends State<Plot1Screen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: widget.isViewMode && widget.farmerName != null
-            ? Text('แปลงปลูกของ ${widget.farmerName!}')
-            : const Text('แปลงปลูก',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Color(0xFF25634B),
-                  fontWeight: FontWeight.w800,
-                )),
+        title: const Text('แปลงปลูก',
+            style: TextStyle(
+              fontSize: 20,
+              color: Color(0xFF25634B),
+              fontWeight: FontWeight.w800,
+            )),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        // แสดงปุ่มเพิ่มแปลงด้านบนเมื่อมีข้อมูลแล้ว และไม่ใช่โหมดดูข้อมูล
-        actions: plotList.isNotEmpty &&
-                !widget.isWorkerMode &&
-                _ownerId == null &&
-                !widget.isViewMode // ✅ ตรวจสอบว่าไม่ใช่โหมดดูข้อมูล
+        // ✅ แสดงปุ่มเพิ่มแปลงเฉพาะเมื่อไม่ใช่โหมดคนงาน
+        actions: !widget.isWorkerMode && plotList.isNotEmpty
             ? [
                 Padding(
                   padding: EdgeInsets.only(right: 16.0),
@@ -427,7 +413,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                   ),
                 ),
               ]
-            : null,
+            : null, // ✅ ซ่อนปุ่มเมื่อเป็นโหมดคนงาน
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
@@ -458,7 +444,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // ในโหมดดูข้อมูล จะไม่แสดงปุ่มเพิ่มแปลง
-                if (!widget.isViewMode)
+                if (!widget.isViewMode && !widget.isWorkerMode)
                   GestureDetector(
                     onTap: () async {
                       print("📌 เริ่มไปหน้า MapSearchScreen");
@@ -715,6 +701,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               polygonPoints: plotPolygon,
               isWorkerMode: widget.isWorkerMode,
               isViewMode: widget.isViewMode, // ส่งค่าโหมดดูข้อมูลไปด้วย
+              ownerId: widget.userId,
             ),
           ),
         );
@@ -1308,6 +1295,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "userId": widget.userId,
+        "ownerId": widget.ownerId ??
+            widget.userId, // ใช้ ownerId ถ้ามี ถ้าไม่มีใช้ userId
         "plotName": plotName,
         "plantType": selectedPlant,
         "waterSource": selectedWater,

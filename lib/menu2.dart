@@ -207,64 +207,65 @@ class _Menu2ScreenState extends State<Menu2Screen> {
               ),
             ),
 
-            // แปลงไร่
-            Positioned(
-              top: height * 0.36,
-              left: width * 0.06,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            Plot1Screen(userId: widget.userId)),
-                  );
-                },
-                child: Container(
-                  height: height * 0.165,
-                  width: width * 0.36,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(19),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(19),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Image.asset(
-                            'assets/kid.png',
-                            fit: BoxFit.cover,
-                            width: 149,
+            //แปลงไร่
+                  Positioned(
+                    top: height * 0.36,
+                    left: width * 0.06,
+                    child: GestureDetector(
+                      onTap: () {
+                        // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => Plot1Screen(
+                                  userId: widget.userId)), // ไปหน้า Plot1
+                        );
+                      },
+                      child: Container(
+                        height: height * 0.165,
+                        width: width * 0.36,
+                        decoration: ShapeDecoration(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(19),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            'แปลงปลูก',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                          shadows: [
+                            BoxShadow(
+                              color: Color(0x3F000000),
+                              blurRadius: 4,
+                              offset: Offset(0, 4),
                             ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(19),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Image.asset(
+                                  'assets/kid.png',
+                                  fit: BoxFit.cover,
+                                  width: 149,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  'แปลงปลูก',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
 
             // คนงาน
             Positioned(

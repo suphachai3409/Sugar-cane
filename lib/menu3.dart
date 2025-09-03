@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'plot1.dart';
+import 'plot3.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'weather_widget.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -9,7 +9,6 @@ import 'equipment.dart';
 import 'moneytransfer.dart';
 import 'profile.dart';
 import 'WorkerTasksScreen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -255,35 +254,39 @@ class _Menu3ScreenState extends State<Menu3Screen> {
               ),
             ),
 
-            //แปลงไร่
+            // แปลงปลูก (ซ้ายบน)
             Positioned(
               top: height * 0.36,
               left: width * 0.06,
               child: GestureDetector(
-                onTap: () {
-                  print('🧭 Navigating to Plot1Screen:');
-                  print('   - current widget.userId: ${widget.userId}');
-                  print('   - _ownerId: $_ownerId');
-                  if (_ownerId != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Plot1Screen(
-                          userId: widget
-                              .userId, // ✅ ต้องส่ง userId ของคนงาน (6891b28d4e22c3470ee055b8)
-                          isWorkerMode: true,
-                        ),
-                      ),
+                onTap: () async {
+                  // ดึง ownerId ของคนงานก่อน
+                  String? ownerId;
+                  try {
+                    final response = await http.get(
+                      Uri.parse(
+                          'http://10.0.2.2:3000/api/profile/worker-info/${widget.userId}'),
+                      headers: {"Content-Type": "application/json"},
                     );
-                  } else {
-                    _fetchOwnerData();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('กำลังโหลดข้อมูลแปลงปลูก...'),
-                        backgroundColor: Colors.blue,
-                      ),
-                    );
+
+                    if (response.statusCode == 200) {
+                      final data = jsonDecode(response.body);
+                      if (data['success'] == true && data['worker'] != null) {
+                        ownerId = data['worker']['ownerId'];
+                        print('🔍 DEBUG: ดึง ownerId สำเร็จ: $ownerId');
+                      }
+                    }
+                  } catch (e) {
+                    print('❌ Error getting ownerId: $e');
                   }
+
+                  // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => Plot3Screen(
+                            userId: widget.userId, ownerId: ownerId)),
+                  );
                 },
                 child: Container(
                   height: height * 0.165,
@@ -366,7 +369,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
               ),
             ),
 
-            // แก้ไขส่วนของปุ่มรับงาน
+            // รับงาน (ขวาบน)
             Positioned(
               top: height * 0.36,
               right: width * 0.06,
@@ -462,7 +465,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
               ),
             ),
 
-            // อุปกรณ์
+            // อุปกรณ์ (ซ้ายล่าง)
             Positioned(
               top: height * 0.57,
               left: width * 0.06,
@@ -521,7 +524,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
               ),
             ),
 
-            //เบิกเงินทุน
+            //เบิกเงินทุน (ขวาล่าง)
             Positioned(
               top: height * 0.57,
               right: width * 0.06,

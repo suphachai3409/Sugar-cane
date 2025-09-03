@@ -348,6 +348,8 @@ class sugarcanedata extends StatelessWidget {
   final List<LatLng>? polygonPoints;
   final bool isWorkerMode; // เพิ่มพารามิเตอร์นี้
   final bool isViewMode;
+  final String ownerId;
+
   const sugarcanedata({
     Key? key,
     required this.plotId,
@@ -360,6 +362,7 @@ class sugarcanedata extends StatelessWidget {
     this.polygonPoints,
     this.isWorkerMode = false, // กำหนดค่าเริ่มต้น
     this.isViewMode = false,
+    required this.ownerId,
   }) : super(key: key);
 
   @override
@@ -377,6 +380,7 @@ class sugarcanedata extends StatelessWidget {
           soilType: soilType,
           plotPosition: plotPosition,
           polygonPoints: polygonPoints,
+          ownerId: ownerId,
         ),
       ),
     );
@@ -503,7 +507,7 @@ class HomeScreen extends StatefulWidget {
   final String? soilType;
   final LatLng? plotPosition;
   final List<LatLng>? polygonPoints;
-
+  final String ownerId;
   const HomeScreen({
     Key? key,
     required this.plotId,
@@ -514,6 +518,7 @@ class HomeScreen extends StatefulWidget {
     this.soilType,
     this.plotPosition,
     this.polygonPoints,
+    required this.ownerId, 
   }) : super(key: key);
 
   @override
@@ -543,10 +548,10 @@ class _HomeScreenState extends State<HomeScreen> {
         final List<dynamic> jsonData = jsonDecode(response.body);
         setState(() {
           _users = jsonData.cast<Map<String, dynamic>>();
-          // ใช้ userId ที่รับมาจาก widget
-          if (userId.isNotEmpty) {
+          // ใช้ ownerId แทน userId ของลูกไร่
+          if (widget.ownerId.isNotEmpty) {
             _currentUser = _users.firstWhere(
-              (user) => user['_id'] == userId,
+              (user) => user['_id'] == widget.ownerId,
               orElse: () => _users.isNotEmpty ? _users.first : {},
             );
           } else {
@@ -1448,6 +1453,7 @@ class _HomeScreenState extends State<HomeScreen> {
               bottom: height * 0.01,
               right: width * 0.07,
               child: GestureDetector(
+                // ในปุ่มโปรไฟล์ ให้ใช้ ownerId
                 onTap: () {
                   if (_currentUser == null && !_isLoading) {
                     fetchUserData().then((_) {

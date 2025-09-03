@@ -1,80 +1,44 @@
+// farmerscreen.dart - ส่วนที่แก้ไข
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'profile.dart';
-import 'WorkerTasksScreen.dart';
-import 'cash_advance_requests_screen.dart';
+import 'plot2.dart';
+import 'cash_advance_requests_screen.dart'; // ✅ เพิ่ม import
 
-class WorkerScreen extends StatefulWidget {
+class FarmerSreen extends StatefulWidget {
   final String userId;
 
-  const WorkerScreen({Key? key, required this.userId}) : super(key: key);
+  const FarmerSreen({Key? key, required this.userId}) : super(key: key);
 
   @override
-  _WorkerScreenState createState() => _WorkerScreenState();
+  _FarmerSreenState createState() => _FarmerSreenState();
 }
 
-class _WorkerScreenState extends State<WorkerScreen> {
-  List<Map<String, dynamic>> workers = [];
+class _FarmerSreenState extends State<FarmerSreen> {
+  List<Map<String, dynamic>> farmers = [];
   bool isLoading = true;
   String? errorMessage;
-  Map<String, int> cashAdvanceCounts = {};
-  
+  Map<String, int> cashAdvanceCounts = {}; // ✅ เพิ่มตัวแปรนับคำขอเบิกเงิน
+
   // เพิ่มตัวแปรสำหรับ fetchUserData
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
-  bool _isLoadingUser = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    fetchWorkers();
-    _fetchCashAdvanceCounts();
-    fetchUserData();
+    fetchFarmers();
+    _fetchCashAdvanceCounts(); // ✅ เรียกฟังก์ชันนับคำขอเบิกเงิน
   }
 
-  Future<void> fetchUserData() async {
-    setState(() {
-      _isLoadingUser = true;
-    });
-
-    try {
-      final apiUrl = 'http://10.0.2.2:3000/pulluser';
-      final response = await http.get(Uri.parse(apiUrl));
-
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonData = jsonDecode(response.body);
-        setState(() {
-          _users = jsonData.cast<Map<String, dynamic>>();
-          if (widget.userId.isNotEmpty) {
-            _currentUser = _users.firstWhere(
-                  (user) => user['_id'] == widget.userId,
-              orElse: () => _users.isNotEmpty ? _users.first : {},
-            );
-          } else {
-            _currentUser = _users.isNotEmpty ? _users.first : null;
-          }
-          _isLoadingUser = false;
-        });
-      } else {
-        print('Error: ${response.statusCode}');
-        setState(() {
-          _isLoadingUser = false;
-        });
-      }
-    } catch (e) {
-      print('Error fetching data: $e');
-      setState(() {
-        _isLoadingUser = false;
-      });
-    }
-  }
-
+  // ✅ เพิ่มฟังก์ชันนับคำขอเบิกเงินสำหรับลูกไร่
   Future<void> _fetchCashAdvanceCounts() async {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/cash-advance/requests/${widget.userId}/worker'),
+            'http://10.0.2.2:3000/api/cash-advance/requests/${widget.userId}/farmer'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -84,8 +48,8 @@ class _WorkerScreenState extends State<WorkerScreen> {
 
         if (data['success'] == true && data['requests'] != null) {
           for (var request in data['requests']) {
-            String workerId = request['userId'];
-            counts[workerId] = (counts[workerId] ?? 0) + 1;
+            String farmerId = request['userId'];
+            counts[farmerId] = (counts[farmerId] ?? 0) + 1;
           }
         }
 
@@ -98,54 +62,70 @@ class _WorkerScreenState extends State<WorkerScreen> {
     }
   }
 
-  // ฟังก์ชันดูงานของคนงาน
-  void _viewWorkerTasks(String workerId, String workerName) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WorkerTasksScreen(
-          userId: workerId,
-          isOwnerView: true,
-          workerName: workerName,
-        ),
-      ),
-    );
-  }
-
-// ฟังก์ชันดูคำขอเบิกเงินของคนงาน
-  void _viewCashAdvanceRequests(String workerId, String workerName) {
+  // ✅ ฟังก์ชันดูคำขอเบิกเงินของลูกไร่
+  void _viewCashAdvanceRequests(String farmerId, String farmerName) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CashAdvanceRequestsScreen(
           userId: widget.userId,
-          type: 'worker',
-          targetUserId: workerId,
-          targetUserName: workerName,
+          type: 'farmer', // ✅ เปลี่ยนจาก 'worker' เป็น 'farmer'
+          targetUserId: farmerId,
+          targetUserName: farmerName,
         ),
       ),
     );
   }
 
-// ฟังก์ชันรีเฟรชข้อมูล
-  Future<void> _refreshData() async {
-    await Future.wait([
-      fetchWorkers(),
-      _fetchCashAdvanceCounts(),
-    ]);
+  Future<void> fetchUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final apiUrl = 'http://10.0.2.2:3000/pulluser';
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+        setState(() {
+          _users = jsonData.cast<Map<String, dynamic>>();
+          // ถ้ามี userId ให้หาข้อมูลผู้ใช้นั้น ถ้าไม่มีให้ใช้คนแรก
+          if (widget.userId.isNotEmpty) {
+            _currentUser = _users.firstWhere(
+              (user) => user['_id'] == widget.userId,
+              orElse: () => _users.isNotEmpty ? _users.first : {},
+            );
+          } else {
+            _currentUser = _users.isNotEmpty ? _users.first : null;
+          }
+          _isLoading = false;
+        });
+      } else {
+        print('Error: ${response.statusCode}');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
-  Future<void> fetchWorkers() async {
+  Future<void> fetchFarmers() async {
     try {
       setState(() {
         isLoading = true;
         errorMessage = null;
       });
 
-      print('🔄 กำลังดึงข้อมูลคนงานสำหรับ ownerId: ${widget.userId}');
+      print('🔄 กำลังดึงข้อมูลลูกไร่สำหรับ ownerId: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/profile/workers/${widget.userId}'),
+        Uri.parse('http://10.0.2.2:3000/api/profile/farmers/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.userId}',
@@ -159,10 +139,18 @@ class _WorkerScreenState extends State<WorkerScreen> {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
           setState(() {
-            workers = List<Map<String, dynamic>>.from(data['workers'] ?? []);
+            farmers = List<Map<String, dynamic>>.from(data['farmers'] ?? []);
             isLoading = false;
           });
-          print('✅ ดึงข้อมูลคนงานสำเร็จ: ${workers.length} คน');
+          print('✅ ดึงข้อมูลลูกไร่สำเร็จ: ${farmers.length} คน');
+          // เพิ่ม debug print เพื่อดูข้อมูล
+          for (int i = 0; i < farmers.length; i++) {
+            print('👤 ลูกไร่ที่ $i: ${farmers[i]}');
+            print(
+                '   - ชื่อ: ${farmers[i]['userId']?['name'] ?? farmers[i]['name']}');
+            print('   - อีเมล: ${farmers[i]['userId']?['email']}');
+            print('   - เบอร์โทร: ${farmers[i]['userId']?['number']}');
+          }
         } else {
           setState(() {
             errorMessage = data['message'] ?? 'ไม่สามารถดึงข้อมูลได้';
@@ -185,7 +173,14 @@ class _WorkerScreenState extends State<WorkerScreen> {
     }
   }
 
-  void _showWorkerDetailDialog(BuildContext context, Map<String, dynamic> worker, String workerId, String workerName, int requestCount) {
+  void _showFarmerDetailDialog(
+      BuildContext context, Map<String, dynamic> farmer) {
+    final farmerId = farmer['userId']?['_id'] ?? farmer['_id'];
+    final farmerName =
+        farmer['userId']?['name'] ?? farmer['name'] ?? 'ไม่มีชื่อ';
+    final requestCount =
+        cashAdvanceCounts[farmerId] ?? 0; // ✅ จำนวนคำขอเบิกเงิน
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -199,7 +194,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'รายละเอียดคนงาน',
+                  'รายละเอียดลูกไร่',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -208,7 +203,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                 ),
                 SizedBox(height: 16),
                 Text(
-                  workerName,
+                  farmerName,
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.grey[700],
@@ -232,19 +227,30 @@ class _WorkerScreenState extends State<WorkerScreen> {
                           color: Colors.transparent,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
-                            onTap: () => _viewWorkerTasks(workerId, workerName),
+                            onTap: () {
+                              Navigator.of(context).pop(); // ปิด Dialog
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => Plot2Screen(
+                                    userId: widget.userId,
+                                    farmer: farmer,
+                                  ),
+                                ),
+                              );
+                            },
                             child: Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    Icons.work_outline,
+                                    Icons.agriculture,
                                     color: Color(0xFF34D396),
                                     size: 32,
                                   ),
                                   SizedBox(height: 8),
                                   Text(
-                                    'งานที่รับ',
+                                    'ดูแปลงปลูก',
                                     style: TextStyle(
                                       color: Color(0xFF34D396),
                                       fontWeight: FontWeight.w600,
@@ -259,6 +265,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                       ),
                     ),
                     SizedBox(width: 16),
+                    // ✅ แทนที่เงินลงทุนด้วยคำขอเบิกเงิน
                     Expanded(
                       child: Stack(
                         children: [
@@ -276,7 +283,8 @@ class _WorkerScreenState extends State<WorkerScreen> {
                               color: Colors.transparent,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
-                                onTap: () => _viewCashAdvanceRequests(workerId, workerName),
+                                onTap: () => _viewCashAdvanceRequests(
+                                    farmerId, farmerName),
                                 child: Center(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -418,7 +426,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                 right: width * 0.07,
                 child: GestureDetector(
                   onTap: () {
-                    if (_currentUser == null && !_isLoadingUser) {
+                    if (_currentUser == null && !_isLoading) {
                       fetchUserData().then((_) {
                         if (_currentUser != null) {
                           showProfileDialog(context, _currentUser!,
@@ -443,7 +451,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                       padding: EdgeInsets.all(6),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(38),
-                        child: _isLoadingUser
+                        child: _isLoading
                             ? Container(
                                 padding: EdgeInsets.all(8),
                                 child: CircularProgressIndicator(
@@ -483,7 +491,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'คนงาน',
+          'ลูกไร่',
           style: TextStyle(
             color: Color(0xFF25634B),
             fontWeight: FontWeight.bold,
@@ -494,7 +502,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: Color(0xFF25634B)),
-            onPressed: fetchWorkers,
+            onPressed: fetchFarmers,
           ),
         ],
       ),
@@ -506,11 +514,12 @@ class _WorkerScreenState extends State<WorkerScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
                       ),
                       SizedBox(height: 16),
                       Text(
-                        'กำลังโหลดข้อมูลคนงาน...',
+                        'กำลังโหลดข้อมูลลูกไร่...',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 16,
@@ -548,7 +557,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                           ),
                           SizedBox(height: 16),
                           ElevatedButton(
-                            onPressed: fetchWorkers,
+                            onPressed: fetchFarmers,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Color(0xFF34D396),
                               foregroundColor: Colors.white,
@@ -558,7 +567,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                         ],
                       ),
                     )
-                  : workers.isEmpty
+                  : farmers.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -570,7 +579,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                               ),
                               SizedBox(height: 16),
                               Text(
-                                'ยังไม่มีคนงาน',
+                                'ยังไม่มีลูกไร่',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -579,7 +588,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                               ),
                               SizedBox(height: 8),
                               Text(
-                                'สร้างรหัสความสัมพันธ์เพื่อเพิ่มคนงาน',
+                                'สร้างรหัสความสัมพันธ์เพื่อเพิ่มลูกไร่',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.grey[500],
@@ -601,13 +610,9 @@ class _WorkerScreenState extends State<WorkerScreen> {
                         )
                       : ListView.builder(
                           padding: EdgeInsets.all(16),
-                          itemCount: workers.length,
+                          itemCount: farmers.length,
                           itemBuilder: (context, index) {
-                            final worker = workers[index];
-                            final workerId = worker['userId']?['_id'] ?? worker['_id'];
-                            final workerName = worker['userId']?['name'] ?? worker['name'] ?? 'ไม่มีชื่อ';
-                            final requestCount = cashAdvanceCounts[workerId] ?? 0;
-
+                            final farmer = farmers[index];
                             return Container(
                               margin: EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
@@ -631,13 +636,19 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                     color: Color(0xFF34D396).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(30),
                                   ),
-                                  child: worker['userId']?['profileImage'] != null && worker['userId']['profileImage'].toString().isNotEmpty
+                                  child: farmer['userId']?['profileImage'] !=
+                                              null &&
+                                          farmer['userId']['profileImage']
+                                              .toString()
+                                              .isNotEmpty
                                       ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(30),
+                                          borderRadius:
+                                              BorderRadius.circular(30),
                                           child: Image.network(
-                                            'http://10.0.2.2:3000/uploads/${worker['userId']['profileImage']}',
+                                            'http://10.0.2.2:3000/uploads/${farmer['userId']['profileImage']}',
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) {
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
                                               return Icon(
                                                 Icons.engineering,
                                                 color: Color(0xFF34D396),
@@ -653,7 +664,9 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                         ),
                                 ),
                                 title: Text(
-                                  workerName,
+                                  farmer['userId']?['name'] ??
+                                      farmer['name'] ??
+                                      'ไม่มีชื่อ',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
@@ -665,16 +678,16 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                   children: [
                                     SizedBox(height: 4),
                                     Text(
-                                      'เบอร์โทร: ${worker['userId']?['number'] ?? 'ไม่มีข้อมูล'}',
+                                      'เบอร์โทร: ${farmer['userId']?['number'] ?? 'ไม่มีข้อมูล'}',
                                       style: TextStyle(
                                         color: Colors.grey[600],
                                         fontSize: 14,
                                       ),
                                     ),
-                                    if (worker['userId']?['email'] != null) ...[
+                                    if (farmer['userId']?['email'] != null) ...[
                                       SizedBox(height: 2),
                                       Text(
-                                        'อีเมล: ${worker['userId']['email']}',
+                                        'อีเมล: ${farmer['userId']['email']}',
                                         style: TextStyle(
                                           color: Colors.grey[600],
                                           fontSize: 14,
@@ -689,7 +702,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                   size: 16,
                                 ),
                                 onTap: () {
-                                  _showWorkerDetailDialog(context, worker, workerId, workerName, requestCount);
+                                  _showFarmerDetailDialog(context, farmer);
                                 },
                               ),
                             );
@@ -698,7 +711,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
 
           // Bottom Navigation Bar
           Positioned(
-            bottom: 0,
+            bottom: 1,
             left: 0,
             right: 0,
             child: _buildBottomNavigationBar(),

@@ -9,7 +9,7 @@ import 'dart:io';
 import 'profile.dart';
 import 'workerscreen.dart'; // Added import for WorkerScreen
 import 'equipment.dart';
-import 'farmers_management_screen.dart';
+import 'farmerscreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -316,8 +316,7 @@ class _Menu1ScreenState extends State<Menu1Screen> {
                               top: 8,
                               right: 8,
                               child: FutureBuilder(
-                                future: fetchCashAdvanceRequests(
-                                    'worker'), // หรือ 'farmer'
+                                future: fetchCashAdvanceRequests('worker'),
                                 builder: (context, snapshot) {
                                   if (snapshot.hasData &&
                                       snapshot.data!.isNotEmpty) {
@@ -357,7 +356,7 @@ class _Menu1ScreenState extends State<Menu1Screen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                FarmersManagementScreen(userId: widget.userId),
+                                FarmerSreen(userId: widget.userId),
                           ),
                         );
                       },
@@ -410,8 +409,7 @@ class _Menu1ScreenState extends State<Menu1Screen> {
                               top: 8,
                               right: 8,
                               child: FutureBuilder(
-                                future: fetchCashAdvanceRequests(
-                                    'farmer'),
+                                future: fetchCashAdvanceRequests('farmer'),
                                 builder: (context, snapshot) {
                                   if (snapshot.hasData &&
                                       snapshot.data!.isNotEmpty) {
@@ -498,6 +496,67 @@ class _Menu1ScreenState extends State<Menu1Screen> {
                       ),
                     ),
                   ),
+
+                  //ลูกไร่
+                  Positioned(
+                    top: height * 0.57,
+                    left: width * 0.06,
+                    child: GestureDetector(
+                      onTap: () {
+                        // ตรวจสอบว่า Navigator.push ใช้ context ที่ถูกต้อง
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  FarmerSreen(userId: widget.userId)),
+                        );
+                      },
+                      child: Container(
+                        height: height * 0.165,
+                        width: width * 0.36,
+                        decoration: ShapeDecoration(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(19),
+                          ),
+                          shadows: [
+                            BoxShadow(
+                              color: Color(0x3F000000),
+                              blurRadius: 4,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(19),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Image.asset(
+                                  'assets/human1.png',
+                                  fit: BoxFit.cover,
+                                  width: 149,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  'ลูกไร่',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   // Container ปุ่ม
                   Positioned(
                     bottom: height * 0, // 2% จากด้านล่าง

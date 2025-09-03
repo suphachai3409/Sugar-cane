@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
     {VoidCallback? refreshUser}) async {
   void showEditProfileDialog() {
@@ -235,23 +234,32 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Stack(
-          // ใช้ Stack เพื่อวางปุ่ม X เหนือเนื้อหาอื่นๆ
-          children: [
-            Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF34D396).withOpacity(0.1),
-                    Colors.white,
-                  ],
+        child: Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF34D396).withOpacity(0.1),
+                Colors.white,
+              ],
+            ),
+          ),
+          child: Stack(
+            children: [
+              // ปุ่มปิด (X) บนขวา
+              Positioned(
+                top: 10,
+                right: 10,
+                child: IconButton(
+                  icon: Icon(Icons.close, color: Colors.grey),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
-              child: Column(
+
+              Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
@@ -344,110 +352,104 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                   Row(
                     children: [
                       Expanded(
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.of(context).pop();
-                            showEditProfileDialog();
+                            _logout(context);
                           },
+                          icon: Icon(Icons.exit_to_app, size: 20),
+                          label: Text('ออกจากระบบ'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.amber,
+                            backgroundColor: Colors.red[700],
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 15),
+                            padding: EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 8),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                          child: Text(
-                            'แก้ไขข้อมูล',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            elevation: 2,
+                            shadowColor: Colors.red.withOpacity(0.4),
                           ),
                         ),
                       ),
                       SizedBox(width: 10),
                       Expanded(
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            showEditProfileDialog();
+                          },
+                          icon: Icon(Icons.edit, size: 20),
+                          label: Text('แก้ไขข้อมูล'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.amber[700],
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                            shadowColor: Colors.amber.withOpacity(0.4),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.of(context).pop();
                             showRelationDialog(context, user);
                           },
+                          icon: Icon(Icons.people, size: 20),
+                          label: Text('ความสัมพันธ์'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
+                            backgroundColor: Colors.blue[700],
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 15),
+                            padding: EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 8),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                          child: Text(
-                            'ความสัมพันธ์',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            elevation: 2,
+                            shadowColor: Colors.blue.withOpacity(0.4),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      _logout(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 255, 0, 0),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      minimumSize: Size(double.infinity, 50),
-                    ),
-                    child: Text(
-                      'ออกจากระบบ',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
                   SizedBox(height: 15),
                 ],
               ),
-            ),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Material(
-                shape: CircleBorder(),
-                color: Colors.white.withOpacity(0.9),
-                elevation: 2,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      size: 20,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     },
+  );
+}
+
+// ฟังก์ชันออกจากระบบ
+void _logout(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('ออกจากระบบ'),
+      content: Text('คุณต้องการออกจากระบบหรือไม่?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('ยกเลิก'),
+        ),
+        TextButton(
+          onPressed: () {
+            // ล้างข้อมูลการล็อกอินและนำผู้ใช้กลับไปที่หน้าล็อกอิน
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            // หรือ Navigator.pushReplacementNamed(context, '/login');
+          },
+          child: Text('ออกจากระบบ', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ),
   );
 }
 
@@ -472,188 +474,66 @@ void showRelationDialog(context, user) {
               ],
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Stack(
             children: [
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Color(0xFF34D396),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(width: 15),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'เชื่อมความสัมพันธ์',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'สร้างหรือเชื่อมต่อรหัสความสัมพันธ์',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              // ปุ่มปิด (X) บนขวา
+              Positioned(
+                top: 10,
+                right: 10,
+                child: IconButton(
+                  icon: Icon(Icons.close, color: Colors.grey),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
-              SizedBox(height: 25),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+
+              Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Show dialog ย่อย เลือกสร้างของคนงาน/ลูกไร่
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return Dialog(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Container(
-                                padding: EdgeInsets.all(24),
-                                decoration: BoxDecoration(
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF34D396),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'เชื่อมความสัมพันธ์',
+                                style: TextStyle(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.group_add,
-                                        color: Color(0xFF34D396), size: 40),
-                                    SizedBox(height: 10),
-                                    Text(
-                                      'เลือกประเภทการสร้างรหัส',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20),
-                                    ),
-                                    SizedBox(height: 24),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: ElevatedButton(
-                                            onPressed: () async {
-                                              print('🔄 กดปุ่มสร้างรหัสคนงาน');
-                                              print(
-                                                  '👤 user ID: ${user['_id']}');
-                                              Navigator.of(context).pop();
-                                              await _generateRelationCode(
-                                                  context,
-                                                  'worker',
-                                                  user['_id']);
-                                            },
-                                            child: Text('คนงาน'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  Color(0xFF34D396),
-                                              foregroundColor: Colors.white,
-                                              padding: EdgeInsets.symmetric(
-                                                  vertical: 14),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(width: 12),
-                                        Expanded(
-                                          child: ElevatedButton(
-                                            onPressed: () async {
-                                              print('🔄 กดปุ่มสร้างรหัสลูกไร่');
-                                              print(
-                                                  '👤 user ID: ${user['_id']}');
-                                              Navigator.of(context).pop();
-                                              await _generateRelationCode(
-                                                  context,
-                                                  'farmer',
-                                                  user['_id']);
-                                            },
-                                            child: Text('ลูกไร่'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.amber,
-                                              foregroundColor: Colors.white,
-                                              padding: EdgeInsets.symmetric(
-                                                  vertical: 14),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 20),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                        foregroundColor: Colors.white,
-                                        padding:
-                                            EdgeInsets.symmetric(vertical: 14),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      child: Text('ปิด',
-                                          style: TextStyle(fontSize: 16)),
-                                    ),
-                                  ],
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            );
-                          },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF34D396),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                              Text(
+                                'สร้างหรือเชื่อมต่อรหัสความสัมพันธ์',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'สร้างการเชื่อมต่อ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      ],
                     ),
                   ),
-                  SizedBox(width: 15),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Show dialog สำหรับกรอกรหัส พร้อมเลือกประเภท
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            TextEditingController codeController =
-                                TextEditingController();
-                            String selectedType = 'worker'; // default
-                            return StatefulBuilder(
-                              builder: (context, setState) {
+                  SizedBox(height: 25),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Show dialog ย่อย เลือกสร้างของคนงาน/ลูกไร่
+                            showDialog(
+                              context: context,
+                              builder: (context) {
                                 return Dialog(
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
@@ -664,110 +544,123 @@ void showRelationDialog(context, user) {
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
+                                    child: Stack(
                                       children: [
-                                        Icon(Icons.vpn_key,
-                                            color: Color(0xFF34D396), size: 40),
-                                        SizedBox(height: 10),
-                                        Text(
-                                          'กรอกรหัสการเชื่อม',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 20),
-                                        ),
-                                        SizedBox(height: 16),
-                                        // ปุ่มเลือกประเภท
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            ChoiceChip(
-                                              label: Text('คนงาน'),
-                                              selected:
-                                                  selectedType == 'worker',
-                                              onSelected: (val) {
-                                                setState(() =>
-                                                    selectedType = 'worker');
-                                              },
-                                              selectedColor: Color(0xFF34D396),
-                                            ),
-                                            SizedBox(width: 12),
-                                            ChoiceChip(
-                                              label: Text('ลูกไร่'),
-                                              selected:
-                                                  selectedType == 'farmer',
-                                              onSelected: (val) {
-                                                setState(() =>
-                                                    selectedType = 'farmer');
-                                              },
-                                              selectedColor: Colors.amber,
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(height: 16),
-                                        TextField(
-                                          controller: codeController,
-                                          decoration: InputDecoration(
-                                            labelText: 'รหัสการเชื่อม',
-                                            border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12)),
-                                            filled: true,
-                                            fillColor: Colors.grey[100],
+                                        // ปุ่มปิด (X) บนขวา
+                                        Positioned(
+                                          top: 10,
+                                          right: 10,
+                                          child: IconButton(
+                                            icon: Icon(Icons.close,
+                                                color: Colors.grey),
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(),
                                           ),
                                         ),
-                                        SizedBox(height: 24),
-                                        Row(
+
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Expanded(
-                                              child: ElevatedButton(
-                                                onPressed: () async {
-                                                  Navigator.of(context).pop();
-                                                  await connectRelationCode(
-                                                      context,
-                                                      codeController.text,
-                                                      selectedType,
-                                                      user);
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      Color(0xFF34D396),
-                                                  foregroundColor: Colors.white,
-                                                  padding: EdgeInsets.symmetric(
-                                                      vertical: 14),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            12),
-                                                  ),
-                                                ),
-                                                child: Text('เชื่อมต่อ',
-                                                    style: TextStyle(
-                                                        fontSize: 16)),
-                                              ),
+                                            Icon(Icons.group_add,
+                                                color: Color(0xFF34D396),
+                                                size: 40),
+                                            SizedBox(height: 10),
+                                            Text(
+                                              'เลือกประเภทการสร้างรหัส',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20),
                                             ),
-                                            SizedBox(width: 12),
-                                            Expanded(
-                                              child: ElevatedButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                  foregroundColor: Colors.white,
-                                                  padding: EdgeInsets.symmetric(
-                                                      vertical: 14),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            12),
+                                            SizedBox(height: 24),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: ElevatedButton(
+                                                    onPressed: () async {
+                                                      print(
+                                                          '🔄 กดปุ่มสร้างรหัสคนงาน');
+                                                      print(
+                                                          '👤 user ID: ${user['_id']}');
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                      await _generateRelationCode(
+                                                          context,
+                                                          'worker',
+                                                          user['_id']);
+                                                    },
+                                                    child: Text('คนงาน'),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          Color(0xFF34D396),
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 14),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12),
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
-                                                child: Text('ปิด',
-                                                    style: TextStyle(
-                                                        fontSize: 16)),
+                                                SizedBox(width: 12),
+                                                Expanded(
+                                                  child: ElevatedButton(
+                                                    onPressed: () async {
+                                                      print(
+                                                          '🔄 กดปุ่มสร้างรหัสลูกไร่');
+                                                      print(
+                                                          '👤 user ID: ${user['_id']}');
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                      await _generateRelationCode(
+                                                          context,
+                                                          'farmer',
+                                                          user['_id']);
+                                                    },
+                                                    child: Text('ลูกไร่'),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          Colors.amber,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 14),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 20),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.red,
+                                                foregroundColor: Colors.white,
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 14),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
                                               ),
+                                              child: Text('ปิด',
+                                                  style:
+                                                      TextStyle(fontSize: 16)),
                                             ),
                                           ],
                                         ),
@@ -778,51 +671,245 @@ void showRelationDialog(context, user) {
                               },
                             );
                           },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF34D396),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF34D396),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            'สร้างการเชื่อมต่อ',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                      child: Text(
-                        'กรอกรหัสการเชื่อม',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      SizedBox(width: 15),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Show dialog สำหรับกรอกรหัส พร้อมเลือกประเภท
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                TextEditingController codeController =
+                                    TextEditingController();
+                                String selectedType = 'worker'; // default
+                                return StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return Dialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Container(
+                                        padding: EdgeInsets.all(24),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                        child: Stack(
+                                          children: [
+                                            // ปุ่มปิด (X) บนขวา
+                                            Positioned(
+                                              top: 10,
+                                              right: 10,
+                                              child: IconButton(
+                                                icon: Icon(Icons.close,
+                                                    color: Colors.grey),
+                                                onPressed: () =>
+                                                    Navigator.of(context).pop(),
+                                              ),
+                                            ),
+
+                                            Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.vpn_key,
+                                                    color: Color(0xFF34D396),
+                                                    size: 40),
+                                                SizedBox(height: 10),
+                                                Text(
+                                                  'กรอกรหัสการเชื่อม',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 20),
+                                                ),
+                                                SizedBox(height: 16),
+                                                // ปุ่มเลือกประเภท
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    ChoiceChip(
+                                                      label: Text('คนงาน'),
+                                                      selected: selectedType ==
+                                                          'worker',
+                                                      onSelected: (val) {
+                                                        setState(() =>
+                                                            selectedType =
+                                                                'worker');
+                                                      },
+                                                      selectedColor:
+                                                          Color(0xFF34D396),
+                                                    ),
+                                                    SizedBox(width: 12),
+                                                    ChoiceChip(
+                                                      label: Text('ลูกไร่'),
+                                                      selected: selectedType ==
+                                                          'farmer',
+                                                      onSelected: (val) {
+                                                        setState(() =>
+                                                            selectedType =
+                                                                'farmer');
+                                                      },
+                                                      selectedColor:
+                                                          Colors.amber,
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 16),
+                                                TextField(
+                                                  controller: codeController,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'รหัสการเชื่อม',
+                                                    border: OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12)),
+                                                    filled: true,
+                                                    fillColor: Colors.grey[100],
+                                                  ),
+                                                ),
+                                                SizedBox(height: 24),
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: ElevatedButton(
+                                                        onPressed: () async {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                          await connectRelationCode(
+                                                              context,
+                                                              codeController
+                                                                  .text,
+                                                              selectedType,
+                                                              user);
+                                                        },
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                          backgroundColor:
+                                                              Color(0xFF34D396),
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                                  vertical: 14),
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        12),
+                                                          ),
+                                                        ),
+                                                        child: Text('เชื่อมต่อ',
+                                                            style: TextStyle(
+                                                                fontSize: 16)),
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: 12),
+                                                    Expanded(
+                                                      child: ElevatedButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                          backgroundColor:
+                                                              Colors.red,
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                                  vertical: 14),
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        12),
+                                                          ),
+                                                        ),
+                                                        child: Text('ปิด',
+                                                            style: TextStyle(
+                                                                fontSize: 16)),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF34D396),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            'กรอกรหัสการเชื่อม',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-              SizedBox(height: 25),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                  SizedBox(height: 25),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            'ปิด',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                      child: Text(
-                        'ปิด',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -990,37 +1077,6 @@ void connectWithCode(BuildContext context, String code) {
       ],
     ),
   );
-}
-
-Future<void> _logout(BuildContext context) async {
-  try {
-    // 1. ลบข้อมูลการล็อกอิน (ถ้ามี)
-    // final prefs = await SharedPreferences.getInstance();
-    // await prefs.remove('auth_token');
-
-    // 2. นำทางไปยังหน้าล็อกอิน
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      '/login',
-      (route) => false,
-    );
-
-    // 3. แสดงข้อความแจ้งเตือน
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('ออกจากระบบสำเร็จ'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  } catch (e) {
-    print('Error during logout: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('เกิดข้อผิดพลาดในการออกจากระบบ'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
 }
 
 Widget _buildInfoCard({

@@ -265,8 +265,6 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
   }
 
   List<File> _convertToFileList(List<dynamic> imageData) {
-    if (imageData == null) return [];
-
     return imageData
         .where((item) => item != null)
         .map((item) {
@@ -901,8 +899,8 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
         title: widget.isOwnerView && widget.workerName != null
             ? Text('งานของ ${widget.workerName!}')
             : Text('งานที่ได้รับมอบหมาย'),
-        backgroundColor: Color(0xFF34D396),
-        foregroundColor: Colors.white,
+        
+        foregroundColor: Color(0xFF25634B),
         actions: [
           if (!widget.isOwnerView) // เซ็นการกระทำรีเฟรชเฉพาะโหมดคนงาน
             IconButton(
