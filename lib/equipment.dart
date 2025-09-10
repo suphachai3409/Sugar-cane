@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'profile.dart';
 import 'menu1.dart';
 import 'menu2.dart';
@@ -77,10 +79,45 @@ class FullScreenImageViewer extends StatelessWidget {
                 minScale: 0.5,
                 maxScale: 4.0,
                 child: Center(
-                  child: Image.file(
-                    File(imagePaths[index]),
-                    fit: BoxFit.contain,
-                  ),
+                  child: imagePaths[index].startsWith('http')
+                      ? Image.network(
+                          imagePaths[index],
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.broken_image, color: Colors.grey, size: 60),
+                                    SizedBox(height: 16),
+                                    Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : Image.file(
+                          File(imagePaths[index]),
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.broken_image, color: Colors.grey, size: 60),
+                                    SizedBox(height: 16),
+                                    Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
               );
             },
@@ -281,6 +318,12 @@ class _EquipmentAppState extends State<EquipmentApp> {
 
   Future<void> saveEquipmentRequest() async {
     if (_validateInputs()) {
+      // อัพโหลดรูปภาพไปยัง server ก่อน
+      List<String> uploadedImageUrls = [];
+      if (_selectedImagePaths.isNotEmpty) {
+        uploadedImageUrls = await _uploadImages(_selectedImagePaths);
+      }
+
       final request = {
         'userId': userId,
         'name': _currentUser?['name'] ?? '',
@@ -288,7 +331,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
         'equipmentName': _equipmentNameController.text,
         'description': _descriptionController.text,
         'date': _selectedDate.toIso8601String(),
-        'imagePaths': _selectedImagePaths,
+        'imagePaths': uploadedImageUrls, // ใช้ URL ที่อัพโหลดแล้ว
         'menu': _currentUser?['menu'] ?? 1,
       };
 
@@ -528,8 +571,10 @@ class _EquipmentAppState extends State<EquipmentApp> {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.camera);
       if (image != null) {
+        // Copy รูปภาพไปยัง directory ที่ถาวรกว่า
+        final String permanentPath = await _copyImageToPermanentLocation(image.path);
         setState(() {
-          _selectedImagePaths.add(image.path);
+          _selectedImagePaths.add(permanentPath);
         });
       }
     } catch (e) {
@@ -552,14 +597,82 @@ class _EquipmentAppState extends State<EquipmentApp> {
             ? images.sublist(0, remainingSlots)
             : images;
 
+        // Copy รูปภาพทั้งหมดไปยัง directory ที่ถาวรกว่า
+        final List<String> permanentPaths = [];
+        for (final image in selectedImages) {
+          final String permanentPath = await _copyImageToPermanentLocation(image.path);
+          permanentPaths.add(permanentPath);
+        }
+
         setState(() {
-          _selectedImagePaths
-              .addAll(selectedImages.map((e) => e.path).toList());
+          _selectedImagePaths.addAll(permanentPaths);
         });
       }
     } catch (e) {
       _showErrorDialog('ไม่สามารถเปิดแกลเลอรี่ได้');
     }
+  }
+
+  // ฟังก์ชัน copy รูปภาพไปยัง directory ที่ถาวรกว่า
+  Future<String> _copyImageToPermanentLocation(String sourcePath) async {
+    try {
+      // สร้าง directory สำหรับเก็บรูปภาพถาวร
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      final Directory imageDir = Directory(path.join(appDir.path, 'equipment_images'));
+      
+      // สร้าง directory ถ้ายังไม่มี
+      if (!await imageDir.exists()) {
+        await imageDir.create(recursive: true);
+      }
+      
+      // สร้างชื่อไฟล์ใหม่ที่ไม่ซ้ำ
+      final String fileName = 'equipment_${DateTime.now().millisecondsSinceEpoch}_${path.basename(sourcePath)}';
+      final String destinationPath = path.join(imageDir.path, fileName);
+      
+      // Copy ไฟล์
+      final File sourceFile = File(sourcePath);
+      await sourceFile.copy(destinationPath);
+      
+      print('📁 Copied image from $sourcePath to $destinationPath');
+      return destinationPath;
+    } catch (e) {
+      print('❌ Error copying image: $e');
+      // ถ้า copy ไม่ได้ ให้ใช้ path เดิม
+      return sourcePath;
+    }
+  }
+
+  // ฟังก์ชันอัพโหลดรูปภาพไปยัง server
+  Future<List<String>> _uploadImages(List<String> imagePaths) async {
+    List<String> imageUrls = [];
+    var uri = Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/upload');
+
+    for (var imagePath in imagePaths) {
+      try {
+        var request = http.MultipartRequest('POST', uri);
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            imagePath,
+            filename: 'equipment_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          ),
+        );
+
+        var response = await request.send();
+        if (response.statusCode == 200) {
+          var responseData = await response.stream.bytesToString();
+          var jsonResponse = jsonDecode(responseData);
+          imageUrls.add(jsonResponse['imageUrl']);
+          print('📤 Uploaded image: ${jsonResponse['imageUrl']}');
+        } else {
+          print('❌ Upload failed for $imagePath: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('❌ Error uploading $imagePath: $e');
+      }
+    }
+
+    return imageUrls;
   }
 
   void _showErrorDialog(String message) {
@@ -1094,13 +1207,35 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                           child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(12),
-                                            child: Image.file(
-                                              File(
-                                                  request.imagePaths[imgIndex]),
-                                              width: 60,
-                                              height: 60,
-                                              fit: BoxFit.cover,
-                                            ),
+                                            child: request.imagePaths[imgIndex].startsWith('http')
+                                                ? Image.network(
+                                                    request.imagePaths[imgIndex],
+                                                    width: 60,
+                                                    height: 60,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context, error, stackTrace) {
+                                                      return Container(
+                                                        width: 60,
+                                                        height: 60,
+                                                        color: Colors.grey[200],
+                                                        child: Icon(Icons.broken_image, color: Colors.grey),
+                                                      );
+                                                    },
+                                                  )
+                                                : Image.file(
+                                                    File(request.imagePaths[imgIndex]),
+                                                    width: 60,
+                                                    height: 60,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context, error, stackTrace) {
+                                                      return Container(
+                                                        width: 60,
+                                                        height: 60,
+                                                        color: Colors.grey[200],
+                                                        child: Icon(Icons.broken_image, color: Colors.grey),
+                                                      );
+                                                    },
+                                                  ),
                                           ),
                                         );
                                       },
@@ -1740,10 +1875,45 @@ class _EquipmentAppState extends State<EquipmentApp> {
                     return GestureDetector(
                       onTap: () =>
                           _showFullScreenImage(request.imagePaths, index),
-                      child: Image.file(
-                        File(request.imagePaths[index]),
-                        fit: BoxFit.cover,
-                      ),
+                      child: request.imagePaths[index].startsWith('http')
+                          ? Image.network(
+                              request.imagePaths[index],
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                                        SizedBox(height: 8),
+                                        Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Image.file(
+                              File(request.imagePaths[index]),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                                        SizedBox(height: 8),
+                                        Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                     );
                   },
                 ),

@@ -122,38 +122,49 @@ class FullScreenImage extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[800],
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.error,
-                                      color: Colors.white, size: 50),
-                                  SizedBox(height: 10),
-                                  Text(
-                                    'ไม่สามารถโหลดรูปภาพ',
-                                    style: TextStyle(color: Colors.white),
+                      child: Builder(
+                        builder: (context) {
+                          // ตรวจสอบว่า imageUrl เป็น full URL หรือไม่
+                          final fullImageUrl = imageUrl.startsWith('http') 
+                              ? imageUrl 
+                              : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
+                          print('🖼️ Loading full screen image: $fullImageUrl');
+                          
+                          return Image.network(
+                            fullImageUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              print('❌ Full screen image load error for $fullImageUrl: $error');
+                              return Container(
+                                color: Colors.grey[800],
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.error,
+                                          color: Colors.white, size: 50),
+                                      SizedBox(height: 10),
+                                      Text(
+                                        'ไม่สามารถโหลดรูปภาพ',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: Colors.grey[800],
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            ),
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: Colors.grey[800],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         },
                       ),
@@ -253,6 +264,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   String get userId => widget.userId;
   final List<File> _selectedImages = []; // เก็บรูปภาพที่เลือก
   final ImagePicker _picker = ImagePicker(); // สำหรับการเลือกรูปภาพ
+  bool _isInitialLoading = false; // สำหรับ loading dialog เริ่มต้น
 
   void _testApiDirectly() async {
     try {
@@ -286,6 +298,24 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     }
   }
 
+  // ฟังก์ชันแสดง loading dialog เริ่มต้น
+  void _showInitialLoadingDialog() {
+    if (!_isInitialLoading) {
+      setState(() {
+        _isInitialLoading = true;
+      });
+    }
+  }
+
+  // ฟังก์ชันซ่อน loading dialog เริ่มต้น
+  void _hideInitialLoadingDialog() {
+    if (_isInitialLoading) {
+      setState(() {
+        _isInitialLoading = false;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -298,12 +328,23 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     _selectedDate = DateTime.now();
     _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
 
+    // แสดง loading dialog เริ่มต้น
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showInitialLoadingDialog();
+    });
+
     // เรียกใช้ฟังก์ชันดึงข้อมูลผู้ใช้และคำขอ
     fetchUserData().then((_) {
       // หลังจากดึงข้อมูลผู้ใช้เสร็จ ให้ดึงคำขอเบิกเงิน
       if (_currentUser != null) {
-        fetchUserRequests();
+        fetchUserRequests().then((_) {
+          // ปิด loading dialog หลังจากโหลดข้อมูลเสร็จ
+          _hideInitialLoadingDialog();
+        });
         _fillUserData();
+      } else {
+        // ปิด loading dialog แม้ว่าจะไม่พบข้อมูลผู้ใช้
+        _hideInitialLoadingDialog();
       }
     });
   }
@@ -496,6 +537,21 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
               print('   phone: ${request['phone']}');
               print('   amount: ${request['amount']}');
               print('   status: ${request['status']}');
+              
+              // ✅ Debug ข้อมูลรูปภาพ
+              print('   images: ${request['images']}');
+              print('   images type: ${request['images']?.runtimeType}');
+              print('   images is null: ${request['images'] == null}');
+              print('   images is empty: ${request['images']?.isEmpty}');
+              if (request['images'] != null && request['images'] is List) {
+                print('   images length: ${(request['images'] as List).length}');
+                for (int i = 0; i < (request['images'] as List).length; i++) {
+                  print('     image[$i]: ${request['images'][i]}');
+                }
+              }
+              
+              print('   approvalImage: ${request['approvalImage']}');
+              print('   approvalImage type: ${request['approvalImage']?.runtimeType}');
               print('   ========================');
 
               return CashAdvanceRequest(
@@ -530,6 +586,12 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
             print('   id: ${request.id}');
             print('   purpose: "${request.purpose}"');
             print('   purpose is null: ${request.purpose == null}');
+            print('   images: ${request.images}');
+            print('   images length: ${request.images.length}');
+            print('   approvalImage: ${request.approvalImage}');
+            for (int j = 0; j < request.images.length; j++) {
+              print('     final image[$j]: ${request.images[j]}');
+            }
           }
         }
       } else {
@@ -549,7 +611,48 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     }
   }
 
-  void _addNewRequest() {
+  void _addNewRequest() async {
+    // แสดง loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'กำลังโหลดข้อมูลการเงิน...',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF25634B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // รอสักครู่เพื่อให้ loading dialog แสดง
+    await Future.delayed(Duration(milliseconds: 500));
+
+    // ปิด loading dialog
+    Navigator.of(context).pop();
+
     selectedRequestIndex = null;
     _clearForm();
     _resetErrors();
@@ -557,7 +660,48 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     _showFormDialog();
   }
 
-  void _editRequest(int index) {
+  void _editRequest(int index) async {
+    // แสดง loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'กำลังโหลดข้อมูลการเงิน...',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF25634B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // รอสักครู่เพื่อให้ loading dialog แสดง
+    await Future.delayed(Duration(milliseconds: 500));
+
+    // ปิด loading dialog
+    Navigator.of(context).pop();
+
     selectedRequestIndex = index;
     final request = requests[index];
     _nameController.text = request.name;
@@ -1018,6 +1162,43 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
       }
     }
 
+    // แสดง loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  selectedRequestIndex != null 
+                      ? 'กำลังบันทึกการแก้ไข...' 
+                      : 'กำลังส่งคำขอเบิกเงิน...',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF25634B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
     // ดึง ownerId และส่งคำขอ...
     try {
       final ownerId = await _getOwnerId();
@@ -1122,6 +1303,9 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      // ปิด loading dialog
+      Navigator.of(context).pop();
     }
   }
 
@@ -1178,6 +1362,41 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
         return;
       }
 
+      // แสดง loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'กำลังลบคำขอ...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF25634B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
       try {
         final response = await http.delete(
           Uri.parse(
@@ -1216,6 +1435,9 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
             backgroundColor: Colors.red,
           ),
         );
+      } finally {
+        // ปิด loading dialog
+        Navigator.of(context).pop();
       }
     }
   }
@@ -1255,22 +1477,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
         ),
       ),
       body: SafeArea(
-        child: Stack(
-          children: [
-            // Loading overlay
-            if (_isLoading)
-              Container(
-                color: Colors.black.withOpacity(0.3),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
-                  ),
-                ),
-              ),
-            _buildCurrentScreen(),
-          ],
-        ),
+        child: _buildCurrentScreen(),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
@@ -1279,6 +1486,29 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   Widget _buildCurrentScreen() {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
+
+    // แสดง loading dialog แทนเนื้อหาหลักเมื่อกำลังโหลดข้อมูลเริ่มต้น
+    if (_isInitialLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'กำลังโหลดข้อมูลการเงิน...',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     if (selectedRequestIndex != null) {
       return _buildRequestDetails();
@@ -1719,6 +1949,12 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         scrollDirection: Axis.horizontal,
                         itemCount: request.images.length,
                         itemBuilder: (context, index) {
+                          // ตรวจสอบว่า image เป็น full URL หรือไม่
+                          final imageUrl = request.images[index].startsWith('http') 
+                              ? request.images[index] 
+                              : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${request.images[index]}';
+                          print('🖼️ Loading image $index: $imageUrl');
+                          
                           return GestureDetector(
                             onTap: () {
                               Navigator.of(context).push(
@@ -1736,29 +1972,63 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(color: Colors.grey[300]!),
-                                image: DecorationImage(
-                                  image: NetworkImage(
-                                    'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${request.images[index]}',
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
                               ),
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    bottom: 4,
-                                    right: 4,
-                                    child: Container(
-                                      padding: EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.6),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(Icons.zoom_in,
-                                          color: Colors.white, size: 16),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Stack(
+                                  children: [
+                                    Image.network(
+                                      imageUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        print('❌ Image load error for $imageUrl: $error');
+                                        return Container(
+                                          color: Colors.grey[200],
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.broken_image, 
+                                                    color: Colors.grey, size: 30),
+                                                SizedBox(height: 4),
+                                                Text('โหลดไม่ได้', 
+                                                    style: TextStyle(
+                                                        fontSize: 10, 
+                                                        color: Colors.grey)),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Container(
+                                          color: Colors.grey[100],
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                  Color(0xFF34D396)),
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  ),
-                                ],
+                                    Positioned(
+                                      bottom: 4,
+                                      right: 4,
+                                      child: Container(
+                                        padding: EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(Icons.zoom_in,
+                                            color: Colors.white, size: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -1799,33 +2069,50 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         ),
                         child: Stack(
                           children: [
-                            Image.network(
-                              'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${request.approvalImage}',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.error,
-                                          color: Colors.grey, size: 40),
-                                      SizedBox(height: 8),
-                                      Text('ไม่สามารถโหลดรูปภาพ',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey)),
-                                    ],
-                                  ),
-                                );
-                              },
-                              loadingBuilder:
-                                  (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF34D396)),
-                                  ),
+                            Builder(
+                              builder: (context) {
+                                // ตรวจสอบว่า approvalImage เป็น full URL หรือไม่
+                                final approvalImageUrl = request.approvalImage!.startsWith('http') 
+                                    ? request.approvalImage! 
+                                    : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${request.approvalImage}';
+                                print('🖼️ Loading approval image: $approvalImageUrl');
+                                
+                                return Image.network(
+                                  approvalImageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    print('❌ Approval image load error for $approvalImageUrl: $error');
+                                    return Container(
+                                      color: Colors.grey[200],
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.broken_image,
+                                                color: Colors.grey, size: 40),
+                                            SizedBox(height: 8),
+                                            Text('ไม่สามารถโหลดรูปภาพ',
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey)),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      color: Colors.grey[100],
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                              Color(0xFF34D396)),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 );
                               },
                             ),

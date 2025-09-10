@@ -2777,6 +2777,39 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
     }
   }
 
+  // ฟังก์ชันอัพโหลดรูปภาพไปยัง server
+  Future<List<String>> _uploadImages(List<String> imagePaths) async {
+    List<String> imageUrls = [];
+    var uri = Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/upload');
+
+    for (var imagePath in imagePaths) {
+      try {
+        var request = http.MultipartRequest('POST', uri);
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            imagePath,
+            filename: 'sugarcane_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          ),
+        );
+
+        var response = await request.send();
+        if (response.statusCode == 200) {
+          var responseData = await response.stream.bytesToString();
+          var jsonResponse = jsonDecode(responseData);
+          imageUrls.add(jsonResponse['imageUrl']);
+          print('📤 Uploaded image: ${jsonResponse['imageUrl']}');
+        } else {
+          print('❌ Upload failed for $imagePath: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('❌ Error uploading $imagePath: $e');
+      }
+    }
+
+    return imageUrls;
+  }
+
   // ใน _HomeScreenState ของ sugarcanedata.dart
   Future<void> _saveData() async {
     if (_messageController.text.trim().isEmpty) {
@@ -2789,11 +2822,17 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // อัพโหลดรูปภาพไปยัง server ก่อน
+      List<String> uploadedImageUrls = [];
+      if (_images.isNotEmpty) {
+        uploadedImageUrls = await _uploadImages(_images.map((file) => file.path).toList());
+      }
+
       final requestData = {
         'topic': widget.topic,
         'date': _dateController.text,
         'message': _messageController.text,
-        'images': _images.map((file) => file.path).toList(),
+        'images': uploadedImageUrls, // ใช้ URL ที่อัพโหลดแล้ว
       };
 
       // ✅ บันทึก recommendation เสมอ
@@ -3449,10 +3488,27 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                                               child: Hero(
                                                 tag:
                                                     'image_${_images[index].path}',
-                                                child: Image.file(
-                                                  _images[index],
-                                                  fit: BoxFit.cover,
-                                                ),
+                                                child: _images[index].path.startsWith('http')
+                                                    ? Image.network(
+                                                        _images[index].path,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (context, error, stackTrace) {
+                                                          return Container(
+                                                            color: Colors.grey[200],
+                                                            child: Icon(Icons.broken_image, color: Colors.grey),
+                                                          );
+                                                        },
+                                                      )
+                                                    : Image.file(
+                                                        _images[index],
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (context, error, stackTrace) {
+                                                          return Container(
+                                                            color: Colors.grey[200],
+                                                            child: Icon(Icons.broken_image, color: Colors.grey),
+                                                          );
+                                                        },
+                                                      ),
                                               ),
                                             ),
                                             Positioned(
@@ -3644,8 +3700,28 @@ class ImageGalleryScreen extends StatelessWidget {
             child: Center(
               child: Hero(
                 tag: 'image_${images[index].path}',
-                child: Image.file(
-                  images[index],
+                child: images[index].path.startsWith('http')
+                    ? Image.network(
+                        images[index].path,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.broken_image, color: Colors.grey, size: 60),
+                                  SizedBox(height: 16),
+                                  Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : Image.file(
+                        images[index],
                   fit: BoxFit.contain,
                 ),
               ),
@@ -3695,10 +3771,27 @@ class ImageDetailScreen extends StatelessWidget {
                       },
                       child: Hero(
                         tag: 'image_${analysis.images[index].path}',
-                        child: Image.file(
-                          analysis.images[index],
-                          fit: BoxFit.cover,
-                        ),
+                        child: analysis.images[index].path.startsWith('http')
+                            ? Image.network(
+                                analysis.images[index].path,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: Icon(Icons.broken_image, color: Colors.grey),
+                                  );
+                                },
+                              )
+                            : Image.file(
+                                analysis.images[index],
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: Icon(Icons.broken_image, color: Colors.grey),
+                                  );
+                                },
+                              ),
                       ),
                     );
                   },
