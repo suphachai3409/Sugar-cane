@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'register_screen.dart';
-import 'package:http/http.dart' as http;  // สำหรับเชื่อมต่อกับ API
-import 'dart:convert';  // สำหรับแปลงข้อมูล JSON
+import 'package:http/http.dart' as http; // สำหรับเชื่อมต่อกับ API
+import 'dart:convert'; // สำหรับแปลงข้อมูล JSON
 import 'menu1.dart';
 import 'menu2.dart';
-import 'menu3.dart';    // Import menu1.dart
+import 'menu3.dart'; // Import menu1.dart
 import 'datahuman.dart'; // เพิ่มไฟล์ datahuman.dart ที่คุณเขียนไว้
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // ต้องเพิ่มบรรทัดนี้เพื่อให้ shared_preferences ใช้งานได้
+  WidgetsFlutterBinding
+      .ensureInitialized(); // ต้องเพิ่มบรรทัดนี้เพื่อให้ shared_preferences ใช้งานได้
   runApp(MyApp());
 }
 
@@ -35,9 +36,15 @@ class MyApp extends StatelessWidget {
       home: SplashScreen(),
       routes: {
         '/login': (context) => LoginScreen(),
-        '/menu1': (context) => Menu1Screen(userId: '',),
-        '/menu2': (context) => Menu2Screen(userId: '',),
-        '/menu3': (context) => Menu3Screen(userId: '',),
+        '/menu1': (context) => Menu1Screen(
+              userId: '',
+            ),
+        '/menu2': (context) => Menu2Screen(
+              userId: '',
+            ),
+        '/menu3': (context) => Menu3Screen(
+              userId: '',
+            ),
         '/register': (context) => RegisterScreen(), //
         '/datahuman': (context) => DataHumanScreen(), //
       },
@@ -102,8 +109,9 @@ class _SplashScreenState extends State<SplashScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: List.generate(
                                     5,
-                                        (index) => Container(
-                                      margin: EdgeInsets.symmetric(horizontal: 2),
+                                    (index) => Container(
+                                      margin:
+                                          EdgeInsets.symmetric(horizontal: 2),
                                       child: Icon(
                                         Icons.grass,
                                         size: 20,
@@ -147,6 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String? _errorMessage;
+  bool _isLoading = false;
 
   Future<void> _login() async {
     final username = _usernameController.text;
@@ -173,10 +182,16 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // เริ่ม loading
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
     try {
       // ส่งข้อมูลไปยังเซิร์ฟเวอร์เพื่อตรวจสอบ
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/login'),
+        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/login'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -192,36 +207,55 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final userMenu = data['user']['menu'];
-        final userId = data['user']['_id']; // ✅ เพิ่มตรงนี้ เพื่อดึง ObjectId จาก MongoDB
+        final userId =
+            data['user']['_id']; // ✅ เพิ่มตรงนี้ เพื่อดึง ObjectId จาก MongoDB
 
         // Debug
         print('Received menu: $userMenu');
         print('Received userId: $userId');
 
+        // หยุด loading ก่อนเปลี่ยนหน้า
+        setState(() {
+          _isLoading = false;
+        });
+
         if (userMenu == 1) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Menu1Screen(userId: userId)), // ✅ ส่ง userId ไป
+            MaterialPageRoute(
+                builder: (context) =>
+                    Menu1Screen(userId: userId)), // ✅ ส่ง userId ไป
           );
         } else if (userMenu == 2) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Menu2Screen(userId: userId)),
+            MaterialPageRoute(
+                builder: (context) => Menu2Screen(userId: userId)),
           );
         } else if (userMenu == 3) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Menu3Screen(userId: userId)),
+            MaterialPageRoute(
+                builder: (context) => Menu3Screen(userId: userId)),
           );
         } else {
-          print('Invalid menu value received: $userMenu');
+          _showErrorDialog('ไม่พบเมนูที่ถูกต้อง');
         }
       } else if (response.statusCode == 401) {
+        setState(() {
+          _isLoading = false;
+        });
         _showErrorDialog('Username หรือ Password ไม่ถูกต้อง');
       } else {
+        setState(() {
+          _isLoading = false;
+        });
         _showErrorDialog('เกิดข้อผิดพลาดในการล็อกอิน: ${response.statusCode}');
       }
     } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
       _showErrorDialog('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์: $error');
     }
   }
@@ -296,8 +330,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: List.generate(
                                       5,
-                                          (index) => Container(
-                                        margin: EdgeInsets.symmetric(horizontal: 1),
+                                      (index) => Container(
+                                        margin:
+                                            EdgeInsets.symmetric(horizontal: 1),
                                         child: Icon(
                                           Icons.grass,
                                           size: 14,
@@ -377,22 +412,44 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // ปุ่มเข้าสู่ระบบ
                   ElevatedButton(
-                    onPressed: _login,
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF34D396),
+                      backgroundColor: _isLoading ? Colors.grey : Color(0xFF34D396),
                       foregroundColor: Colors.white,
                       minimumSize: Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(
-                      'เข้าสู่ระบบ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'กำลังเข้าสู่ระบบ...',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            'เข้าสู่ระบบ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                   ),
                   SizedBox(height: 20),
 
@@ -410,7 +467,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(height: 20),
                 ],
               ),

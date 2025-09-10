@@ -49,7 +49,7 @@ class Menu2Screen extends StatefulWidget {
 }
 
 class _Menu2ScreenState extends State<Menu2Screen> {
-  final String apiUrl = 'http://10.0.2.2:3000/pulluser';
+  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -102,7 +102,7 @@ class _Menu2ScreenState extends State<Menu2Screen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/cash-advance/requests/${widget.userId}/$type'),
+            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
       );
 
       if (response.statusCode == 200) {
@@ -479,9 +479,14 @@ class _Menu2ScreenState extends State<Menu2Screen> {
               bottom: height * 0.01,
               left: width * 0.07,
               child: GestureDetector(
-                onTap: () {
-                  // TODO: ใส่ฟังก์ชันเมื่อกด
-                },
+                      onTap: () {
+                        // ย้อนกลับไปหน้า menu ตาม menu ของ user
+                        if (_currentUser != null) {
+                           if (_currentUser?['menu'] == 2) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu2Screen(userId: _currentUser?['_id'] ?? '')));
+                          }
+                        }
+                      },
                 child: Container(
                   width: width * 0.12,
                   height: height * 0.05,

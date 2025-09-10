@@ -5,6 +5,9 @@ import 'package:http/http.dart' as http;
 import 'plot_map_fullscreen.dart';
 import 'sugarcanedata.dart';
 import 'profile.dart';
+import 'menu1.dart';
+import 'menu2.dart';
+import 'menu3.dart';
 class Plot2Screen extends StatefulWidget {
   final String userId; // userId ของเจ้าของไร่
   final Map<String, dynamic> farmer; // ข้อมูลลูกไร่
@@ -17,7 +20,7 @@ class Plot2Screen extends StatefulWidget {
 }
 
 class _Plot2ScreenState extends State<Plot2Screen> {
-  final String apiUrl = 'http://10.0.2.2:3000/pulluser';
+  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> plotList = [];
   bool isLoading = true;
   LatLng? locationLatLng;
@@ -84,7 +87,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
 
       // ใช้ endpoint ใหม่สำหรับดึงแปลงของลูกไร่โดยตรง
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/plots/$farmerUserId'),
+        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$farmerUserId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -130,7 +133,25 @@ class _Plot2ScreenState extends State<Plot2Screen> {
         foregroundColor: Color(0xFF25634B),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'กำลังโหลดข้อมูลแปลงปลูก...',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            )
           : _buildBody(width, height),
     );
   }
@@ -470,7 +491,16 @@ class _Plot2ScreenState extends State<Plot2Screen> {
           left: width * 0.07,
           child: GestureDetector(
             onTap: () {
-              Navigator.pop(context);
+              // ย้อนกลับไปหน้า menu ตาม menu ของ user
+              if (_currentUser != null) {
+                if (_currentUser?['menu'] == 1) {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu1Screen(userId: _currentUser?['_id'] ?? '')));
+                } else if (_currentUser?['menu'] == 2) {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu2Screen(userId: _currentUser?['_id'] ?? '')));
+                } else if (_currentUser?['menu'] == 3) {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu3Screen(userId: _currentUser?['_id'] ?? '')));
+                }
+              }
             },
             child: Container(
               width: width * 0.12,

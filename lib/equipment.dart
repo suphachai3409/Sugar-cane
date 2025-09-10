@@ -6,6 +6,9 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'profile.dart';
+import 'menu1.dart';
+import 'menu2.dart';
+import 'menu3.dart';
 
 void main() {
   runApp(EquipmentScreen(userId: 'default_user_id'));
@@ -186,7 +189,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
   bool showForm = false;
   int? selectedRequestIndex;
 
-  final String apiUrl = 'http://10.0.2.2:3000/api/equipment';
+  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/equipment';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -219,7 +222,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
 
     try {
       final response =
-          await http.get(Uri.parse('http://10.0.2.2:3000/pulluser'));
+          await http.get(Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser'));
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = jsonDecode(response.body);
@@ -356,7 +359,27 @@ class _EquipmentAppState extends State<EquipmentApp> {
     } else if (showForm) {
       return _buildRequestsList(); // แสดงรายการอุปกรณ์
     } else {
-      if (requests.isEmpty) {
+      if (_isLoading) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'กำลังโหลดข้อมูลอุปกรณ์...',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        );
+      } else if (requests.isEmpty) {
         final width = MediaQuery.of(context).size.width;
         final height = MediaQuery.of(context).size.height;
         return _buildEmptyInitialScreen(
@@ -1917,9 +1940,18 @@ class _EquipmentAppState extends State<EquipmentApp> {
                 bottom: height * 0.01,
                 left: width * 0.07,
                 child: GestureDetector(
-                  onTap: () {
-                    // TODO: ใส่ฟังก์ชันเมื่อกด
-                  },
+                      onTap: () {
+                        // ย้อนกลับไปหน้า menu ตาม menu ของ user
+                        if (_currentUser != null) {
+                          if (_currentUser?['menu'] == 1) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu1Screen(userId: _currentUser?['_id'] ?? '')));
+                          } else if (_currentUser?['menu'] == 2) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu2Screen(userId: _currentUser?['_id'] ?? '')));
+                          } else if (_currentUser?['menu'] == 3) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu3Screen(userId: _currentUser?['_id'] ?? '')));
+                          }
+                        }
+                      },
                   child: Container(
                     width: width * 0.12,
                     height: height * 0.05,

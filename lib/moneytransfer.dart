@@ -6,6 +6,9 @@ import 'dart:convert';
 import 'profile.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'menu1.dart';
+import 'menu2.dart';
+import 'menu3.dart';
 
 void main() {
   runApp(moneytransferScreen(
@@ -120,7 +123,7 @@ class FullScreenImage extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.network(
-                        'http://10.0.2.2:3000/uploads/$imageUrl',
+                        'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl',
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
@@ -243,7 +246,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   List<CashAdvanceRequest> requests = [];
   int? selectedRequestIndex;
   // เพิ่มตัวแปรสำหรับ profile
-  final String apiUrl = 'http://10.0.2.2:3000/pulluser';
+  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -257,7 +260,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/cash-advance/user-requests/${_currentUser!['_id']}'),
+            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
         headers: {
           'Content-Type': 'application/json',
           'user-id': _currentUser!['_id']
@@ -355,7 +358,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 // เพิ่มฟังก์ชันสำหรับอัพโหลดรูปภาพ
   Future<List<String>> _uploadImages(List<File> imageFiles) async {
     List<String> imageUrls = [];
-    var uri = Uri.parse('http://10.0.2.2:3000/api/upload');
+    var uri = Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/upload');
 
     for (var imageFile in imageFiles) {
       var request = http.MultipartRequest('POST', uri);
@@ -426,9 +429,10 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
     try {
       print('🔍 Fetching ownerId for worker: ${_currentUser!['_id']}');
 
+      // ใช้ API ที่ถูกต้อง - หา ownerId จากแปลงปลูก
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/plots/owner/${_currentUser!['_id']}'),
+            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${_currentUser!['_id']}'),
         headers: {'user-id': _currentUser!['_id']},
       ).timeout(Duration(seconds: 10));
 
@@ -461,7 +465,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/cash-advance/user-requests/${_currentUser!['_id']}'),
+            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
         headers: {
           'Content-Type': 'application/json',
           'user-id': _currentUser!['_id']
@@ -1026,7 +1030,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/cash-advance/check-relation/${_currentUser!['_id']}/$ownerId'),
+            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/check-relation/${_currentUser!['_id']}/$ownerId'),
         headers: {'user-id': _currentUser!['_id']},
       );
 
@@ -1044,8 +1048,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
           print('📤 Sending purpose: $purposeText'); // Debug log
 
           final String apiUrl = selectedRequestIndex != null
-              ? 'http://10.0.2.2:3000/api/cash-advance/request/${requests[selectedRequestIndex!].id}'
-              : 'http://10.0.2.2:3000/api/cash-advance/request';
+              ? 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${requests[selectedRequestIndex!].id}'
+              : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request';
 
           final httpMethod =
               selectedRequestIndex != null ? http.put : http.post;
@@ -1177,7 +1181,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
       try {
         final response = await http.delete(
           Uri.parse(
-              'http://10.0.2.2:3000/api/cash-advance/request/${request.id}'),
+              'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${request.id}'),
           headers: {'user-id': _currentUser!['_id']},
         );
 
@@ -1734,7 +1738,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                 border: Border.all(color: Colors.grey[300]!),
                                 image: DecorationImage(
                                   image: NetworkImage(
-                                    'http://10.0.2.2:3000/uploads/${request.images[index]}',
+                                    'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${request.images[index]}',
                                   ),
                                   fit: BoxFit.cover,
                                 ),
@@ -1796,7 +1800,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         child: Stack(
                           children: [
                             Image.network(
-                              'http://10.0.2.2:3000/uploads/${request.approvalImage}',
+                              'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${request.approvalImage}',
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return Center(
@@ -2009,9 +2013,18 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                 bottom: height * 0.01, // 3% จากด้านล่าง
                 left: width * 0.07,
                 child: GestureDetector(
-                  onTap: () {
-                    // TODO: ใส่ฟังก์ชันเมื่อกด
-                  },
+                      onTap: () {
+                        // ย้อนกลับไปหน้า menu ตาม menu ของ user
+                        if (_currentUser != null) {
+                          if (_currentUser?['menu'] == 1) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu1Screen(userId: _currentUser?['_id'] ?? '')));
+                          } else if (_currentUser?['menu'] == 2) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu2Screen(userId: _currentUser?['_id'] ?? '')));
+                          } else if (_currentUser?['menu'] == 3) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu3Screen(userId: _currentUser?['_id'] ?? '')));
+                          }
+                        }
+                      },
                   child: Container(
                     width: width * 0.12,
                     height: height * 0.05,

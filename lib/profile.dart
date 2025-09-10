@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -71,7 +72,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                                     ? CircleAvatar(
                                         radius: 30,
                                         backgroundImage: NetworkImage(
-                                            'http://10.0.2.2:3000/uploads/${user['profileImage']}'),
+                                            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${user['profileImage']}'),
                                         backgroundColor: Colors.white,
                                       )
                                     : CircleAvatar(
@@ -171,32 +172,106 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              // อัปเดตข้อมูลและอัปโหลดรูปไป backend
-                              var uri = Uri.parse(
-                                  'http://10.0.2.2:3000/updateuser/${user['_id']}');
-                              var request = http.MultipartRequest('PUT', uri);
-                              request.fields['name'] = nameController.text;
-                              request.fields['email'] = emailController.text;
-                              request.fields['number'] = phoneController.text;
-                              if (tempSelectedImage != null) {
-                                request.files.add(
-                                    await http.MultipartFile.fromPath(
-                                        'profileImage',
-                                        tempSelectedImage!.path));
-                              }
-                              var response = await request.send();
-                              if (response.statusCode == 200) {
-                                print('อัปเดตข้อมูลสำเร็จ');
-                                if (refreshUser != null) refreshUser();
-                              } else {
-                                print('อัปเดตข้อมูลไม่สำเร็จ:  [31m [0m');
-                              }
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text('บันทึกข้อมูลสำเร็จ'),
-                                    backgroundColor: Colors.green),
+                              // แสดง loading dialog
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => AlertDialog(
+                                  content: Row(
+                                    children: [
+                                      CircularProgressIndicator(),
+                                      SizedBox(width: 20),
+                                      Text('กำลังบันทึกข้อมูล...'),
+                                    ],
+                                  ),
+                                ),
                               );
+                              
+                              try {
+                                print('🔄 กำลังอัพเดตข้อมูลผู้ใช้...');
+                                print('👤 User ID: ${user['_id']}');
+                                print('📝 Name: ${nameController.text}');
+                                print('📧 Email: ${emailController.text}');
+                                print('📞 Phone: ${phoneController.text}');
+                                print('🖼️ Has Image: ${tempSelectedImage != null}');
+                                
+                                // อัปเดตข้อมูลและอัปโหลดรูปไป backend
+                                var uri = Uri.parse(
+                                    'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/updateuser/${user['_id']}');
+                                var request = http.MultipartRequest('PUT', uri);
+                                request.fields['name'] = nameController.text;
+                                request.fields['email'] = emailController.text;
+                                request.fields['number'] = phoneController.text;
+                                
+                                if (tempSelectedImage != null) {
+                                  print('📤 อัพโหลดรูป: ${tempSelectedImage!.path}');
+                                  request.files.add(
+                                      await http.MultipartFile.fromPath(
+                                          'profileImage',
+                                          tempSelectedImage!.path));
+                                }
+                                
+                                var response = await request.send();
+                                print('📥 Response status: ${response.statusCode}');
+                                
+                                // ปิด loading dialog ก่อน
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                }
+                                
+                                if (response.statusCode == 200) {
+                                  print('✅ อัปเดตข้อมูลสำเร็จ');
+                                  if (refreshUser != null) refreshUser();
+                                  
+                                  // แสดง success dialog
+                                  if (context.mounted) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Row(
+                                          children: [
+                                            Icon(Icons.check_circle, color: Colors.green, size: 28),
+                                            SizedBox(width: 10),
+                                            Text('สำเร็จ'),
+                                          ],
+                                        ),
+                                        content: Text('บันทึกข้อมูลสำเร็จแล้ว'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop(); // ปิด success dialog
+                                              Navigator.of(context).pop(); // ปิด edit dialog
+                                            },
+                                            child: Text('ตกลง'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  print('❌ อัปเดตข้อมูลไม่สำเร็จ: ${response.statusCode}');
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('เกิดข้อผิดพลาดในการบันทึกข้อมูล'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                print('❌ Exception: $e');
+                                // ปิด loading dialog ก่อน
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('เกิดข้อผิดพลาด: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.amber,
@@ -270,13 +345,96 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                     ),
                     child: Row(
                       children: [
-                        (user['profileImage'] != null &&
-                                user['profileImage'].toString().isNotEmpty)
-                            ? CircleAvatar(
-                                radius: 30,
-                                backgroundImage: NetworkImage(
-                                    'http://10.0.2.2:3000/uploads/${user['profileImage']}'),
-                                backgroundColor: Colors.white,
+                        // Debug: แสดงข้อมูล user
+                        Builder(
+                          builder: (context) {
+                            print('🔍 DEBUG Profile Image:');
+                            print('   - user: $user');
+                            print('   - profileImage: ${user['profileImage']}');
+                            print('   - imageprofile: ${user['imageprofile']}');
+                            print('   - profileImage type: ${user['profileImage'].runtimeType}');
+                            print('   - imageprofile type: ${user['imageprofile'].runtimeType}');
+                            return SizedBox.shrink();
+                          },
+                        ),
+                        (() {
+                          // ตรวจสอบทั้ง profileImage และ imageprofile
+                          final profileImage = user['profileImage'] ?? user['imageprofile'];
+                          final hasImage = profileImage != null &&
+                              profileImage.toString().isNotEmpty;
+                          print('🔍 Profile image condition: $hasImage');
+                          print('🔍 Using image: $profileImage');
+                          return hasImage;
+                        })()
+                            ? ClipOval(
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Image.network(
+                                    (() {
+                                      final imageUrl = user['profileImage'] ?? user['imageprofile'];
+                                      // ตรวจสอบว่าเป็น Cloudinary URL หรือไม่
+                                      if (imageUrl.toString().startsWith('http')) {
+                                        return imageUrl.toString();
+                                      }
+                                      // ถ้าไม่ใช่ ให้ใช้ local uploads
+                                      return 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
+                                    })(),
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      final imageUrl = user['profileImage'] ?? user['imageprofile'];
+                                      print('❌ Error loading profile image: $error');
+                                      print('❌ URL: $imageUrl');
+                                      return Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.person,
+                                          size: 35,
+                                          color: Color(0xFF34D396),
+                                        ),
+                                      );
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) {
+                                        print('✅ Profile image loaded successfully');
+                                        return child;
+                                      }
+                                      print('🔄 Loading profile image...');
+                                      return Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
                               )
                             : CircleAvatar(
                                 radius: 30,
@@ -581,12 +739,15 @@ void showRelationDialog(context, user) {
                                                           '🔄 กดปุ่มสร้างรหัสคนงาน');
                                                       print(
                                                           '👤 user ID: ${user['_id']}');
-                                                      Navigator.of(context)
-                                                          .pop();
+                                                      // เรียก function ก่อน ไม่ปิด dialog
                                                       await _generateRelationCode(
                                                           context,
                                                           'worker',
                                                           user['_id']);
+                                                      // ปิด dialog หลังจากแสดงผลแล้ว
+                                                      if (context.mounted) {
+                                                        Navigator.of(context).pop();
+                                                      }
                                                     },
                                                     child: Text('คนงาน'),
                                                     style: ElevatedButton
@@ -615,12 +776,15 @@ void showRelationDialog(context, user) {
                                                           '🔄 กดปุ่มสร้างรหัสลูกไร่');
                                                       print(
                                                           '👤 user ID: ${user['_id']}');
-                                                      Navigator.of(context)
-                                                          .pop();
+                                                      // เรียก function ก่อน ไม่ปิด dialog
                                                       await _generateRelationCode(
                                                           context,
                                                           'farmer',
                                                           user['_id']);
+                                                      // ปิด dialog หลังจากแสดงผลแล้ว
+                                                      if (context.mounted) {
+                                                        Navigator.of(context).pop();
+                                                      }
                                                     },
                                                     child: Text('ลูกไร่'),
                                                     style: ElevatedButton
@@ -924,8 +1088,24 @@ void showRelationDialog(context, user) {
 Future<void> _generateRelationCode(
     BuildContext context, String type, String ownerId) async {
   String apiUrl = type == 'worker'
-      ? 'http://10.0.2.2:3000/api/profile/create-worker-code'
-      : 'http://10.0.2.2:3000/api/profile/create-farmer-code';
+      ? 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/create-worker-code'
+      : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/create-farmer-code';
+  
+  // แสดง loading dialog
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => AlertDialog(
+      content: Row(
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(width: 20),
+          Text('กำลังสร้างรหัส...'),
+        ],
+      ),
+    ),
+  );
+  
   try {
     print('🔄 กำลังสร้างรหัสสำหรับ $type...');
     print('📤 URL: $apiUrl');
@@ -948,58 +1128,130 @@ Future<void> _generateRelationCode(
       String code = data['code'] ?? '';
       print('✅ สร้างรหัสสำเร็จ: $code');
 
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('รหัส${type == 'worker' ? 'คนงาน' : 'ลูกไร่'}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                  'นำรหัสนี้ไปให้${type == 'worker' ? 'คนงาน' : 'ลูกไร่'}ของคุณ'),
-              SizedBox(height: 16),
-              SelectableText(
-                code,
-                style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green),
+      // ปิด loading dialog ก่อน
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // ใช้ SchedulerBinding เพื่อให้แน่ใจว่า context ยังใช้งานได้
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('รหัส${type == 'worker' ? 'คนงาน' : 'ลูกไร่'}'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                      'นำรหัสนี้ไปให้${type == 'worker' ? 'คนงาน' : 'ลูกไร่'}ของคุณ'),
+                  SizedBox(height: 16),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green, width: 2),
+                    ),
+                    child: SelectableText(
+                      code,
+                      style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'หมดอายุ: ${data['expiresAt'] != null ? DateTime.parse(data['expiresAt']).toString().substring(0, 19) : 'ไม่ระบุ'}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('ปิด'),
+              actions: [
+                TextButton.icon(
+                  onPressed: () {
+                    // คัดลอกรหัส
+                    Clipboard.setData(ClipboardData(text: code));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('คัดลอกรหัสแล้ว: $code'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.copy, size: 18),
+                  label: Text('คัดลอก'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.blue,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('ปิด'),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
+          );
+        } else {
+          print('❌ Context ไม่สามารถใช้งานได้');
+          print('✅ สร้างรหัสสำเร็จ: $code');
+        }
+      });
     } else {
       print('❌ Error status: ${response.statusCode}');
       print('❌ Error body: ${response.body}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('เกิดข้อผิดพลาดในการสร้างรหัส'),
-            backgroundColor: Colors.red),
-      );
+      // ปิด loading dialog ก่อน
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('เกิดข้อผิดพลาดในการสร้างรหัส'),
+              backgroundColor: Colors.red),
+        );
+      }
     }
   } catch (e) {
     print('❌ Exception: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text('เกิดข้อผิดพลาด: ' + e.toString()),
-          backgroundColor: Colors.red),
-    );
+    // ปิด loading dialog ก่อน
+    if (context.mounted) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('เกิดข้อผิดพลาด: ' + e.toString()),
+            backgroundColor: Colors.red),
+      );
+    }
   }
 }
 
 Future<void> connectRelationCode(BuildContext context, String code, String type,
     Map<String, dynamic> user) async {
   String apiUrl = type == 'worker'
-      ? 'http://10.0.2.2:3000/api/profile/add-worker'
-      : 'http://10.0.2.2:3000/api/profile/add-farmer';
+      ? 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/add-worker'
+      : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/add-farmer';
+  
+  // แสดง loading dialog
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => AlertDialog(
+      content: Row(
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(width: 20),
+          Text('กำลังเชื่อมต่อ...'),
+        ],
+      ),
+    ),
+  );
+  
   try {
+    print('🔄 กำลังเชื่อมต่อรหัส $code สำหรับ $type...');
+    print('📤 URL: $apiUrl');
+    print('📤 user ID: ${user['_id']}');
+    
     final response = await http.post(
       Uri.parse(apiUrl),
       headers: {
@@ -1011,52 +1263,150 @@ Future<void> connectRelationCode(BuildContext context, String code, String type,
         // ไม่ต้องส่ง userId เพราะ backend จะดึงจาก req.user
       }),
     );
+    
+    print('📥 Response status: ${response.statusCode}');
+    print('📥 Response body: ${response.body}');
+    
+    // ปิด loading dialog ก่อน
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
+    
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('สำเร็จ'),
-          content: Text(data['message'] ?? 'เชื่อมต่อกับเจ้าของเรียบร้อยแล้ว'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('ตกลง'),
+      print('✅ เชื่อมต่อสำเร็จ: ${data['message']}');
+      
+      // ใช้ SchedulerBinding เพื่อให้แน่ใจว่า context ยังใช้งานได้
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 28),
+                  SizedBox(width: 10),
+                  Text('สำเร็จ'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(data['message'] ?? 'เชื่อมต่อกับเจ้าของเรียบร้อยแล้ว'),
+                  SizedBox(height: 16),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green, width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info, color: Colors.green, size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'ตอนนี้คุณสามารถเข้าถึงข้อมูลของเจ้าของได้แล้ว',
+                            style: TextStyle(fontSize: 12, color: Colors.green[700]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('ตกลง'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.green,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
+          );
+        } else {
+          print('❌ Context ไม่สามารถใช้งานได้');
+          print('✅ เชื่อมต่อสำเร็จ: ${data['message']}');
+        }
+      });
     } else {
       final data = jsonDecode(response.body);
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('ผิดพลาด'),
-          content: Text(
-              'ไม่สามารถเชื่อมต่อได้: \n${data['message'] ?? 'Unknown error'}'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('ตกลง'),
+      print('❌ Error status: ${response.statusCode}');
+      print('❌ Error body: ${response.body}');
+      
+      // ใช้ SchedulerBinding เพื่อให้แน่ใจว่า context ยังใช้งานได้
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.error, color: Colors.red, size: 28),
+                  SizedBox(width: 10),
+                  Text('ผิดพลาด'),
+                ],
+              ),
+              content: Text(
+                  'ไม่สามารถเชื่อมต่อได้: \n${data['message'] ?? 'Unknown error'}'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('ตกลง'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
+          );
+        } else {
+          print('❌ Context ไม่สามารถใช้งานได้');
+          print('❌ Error: ${data['message']}');
+        }
+      });
     }
   } catch (e) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('ผิดพลาด'),
-        content: Text('เกิดข้อผิดพลาด: ' + e.toString()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('ตกลง'),
+    print('❌ Exception: $e');
+    
+    // ปิด loading dialog ก่อน
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
+    
+    // ใช้ SchedulerBinding เพื่อให้แน่ใจว่า context ยังใช้งานได้
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.error, color: Colors.red, size: 28),
+                SizedBox(width: 10),
+                Text('ผิดพลาด'),
+              ],
+            ),
+            content: Text('เกิดข้อผิดพลาด: ' + e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('ตกลง'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
+      } else {
+        print('❌ Context ไม่สามารถใช้งานได้');
+        print('❌ Exception: $e');
+      }
+    });
   }
 }
 

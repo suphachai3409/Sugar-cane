@@ -6,6 +6,9 @@ import 'google_maps_search.dart';
 import 'plot_map_fullscreen.dart';
 import 'sugarcanedata.dart';
 import 'profile.dart';
+import 'menu1.dart';
+import 'menu2.dart';
+import 'menu3.dart';
 
 class Plot1Screen extends StatefulWidget {
   final String userId;
@@ -77,7 +80,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       print('🔄 Fetching owner data for worker: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/plots/owner/${widget.userId}'),
+        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${widget.userId}'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -127,7 +130,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
 
       // ใช้ endpoint สำหรับดึงแปลงของ user
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/plots/$targetUserId'),
+        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$targetUserId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -154,7 +157,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
     }
   }
 
-  final String apiUrl = 'http://10.0.2.2:3000/pulluser';
+  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -202,7 +205,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       return;
     }
 
-    final url = Uri.parse('http://10.0.2.2:3000/api/plots/$plotId');
+    final url = Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId');
 
     final bodyData = {
       "plotName": plotName,
@@ -416,7 +419,25 @@ class _Plot1ScreenState extends State<Plot1Screen> {
             : null, // ✅ ซ่อนปุ่มเมื่อเป็นโหมดคนงาน
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'กำลังโหลดข้อมูลแปลงปลูก...',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            )
           : _buildBody(width, height),
     );
   }
@@ -972,7 +993,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
   Future<void> _deletePlotData(String plotId) async {
     try {
       final response = await http.delete(
-        Uri.parse('http://10.0.2.2:3000/api/plots/$plotId'),
+        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -1161,9 +1182,18 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           bottom: height * 0.01, // 3% จากด้านล่าง
           left: width * 0.07,
           child: GestureDetector(
-            onTap: () {
-              // TODO: ใส่ฟังก์ชันเมื่อกด
-            },
+                      onTap: () {
+                        // ย้อนกลับไปหน้า menu ตาม menu ของ user
+                        if (_currentUser != null) {
+                            if (_currentUser?['menu'] == 1) {
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu1Screen(userId: _currentUser?['_id'] ?? '')));
+                            } else if (_currentUser?['menu'] == 2) {
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu2Screen(userId: _currentUser?['_id'] ?? '')));
+                            } else if (_currentUser?['menu'] == 3) {
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu3Screen(userId: _currentUser?['_id'] ?? '')));
+                            }
+                        }
+                      },
             child: Container(
               width: width * 0.12,
               height: height * 0.05,
@@ -1291,7 +1321,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
     print("📤 =============================== ");
 
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/api/plots'),
+      Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "userId": widget.userId,

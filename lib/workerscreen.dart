@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'profile.dart';
 import 'WorkerTasksScreen.dart';
 import 'cash_advance_requests_screen.dart';
+import 'menu1.dart';
+import 'menu2.dart';
+import 'menu3.dart';
 
 class WorkerScreen extends StatefulWidget {
   final String userId;
@@ -39,7 +42,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     });
 
     try {
-      final apiUrl = 'http://10.0.2.2:3000/pulluser';
+      final apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -74,7 +77,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/cash-advance/requests/${widget.userId}/worker'),
+            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -145,7 +148,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
       print('🔄 กำลังดึงข้อมูลคนงานสำหรับ ownerId: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/profile/workers/${widget.userId}'),
+        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/workers/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.userId}',
@@ -386,9 +389,18 @@ class _WorkerScreenState extends State<WorkerScreen> {
                 bottom: height * 0.01,
                 left: width * 0.07,
                 child: GestureDetector(
-                  onTap: () {
-                    // TODO: ใส่ฟังก์ชันเมื่อกด
-                  },
+                      onTap: () {
+                        // ย้อนกลับไปหน้า menu ตาม menu ของ user
+                        if (_currentUser != null) {
+                          if (_currentUser?['menu'] == 1) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu1Screen(userId: _currentUser?['_id'] ?? '')));
+                          } else if (_currentUser?['menu'] == 2) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu2Screen(userId: _currentUser?['_id'] ?? '')));
+                          } else if (_currentUser?['menu'] == 3) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu3Screen(userId: _currentUser?['_id'] ?? '')));
+                          }
+                        }
+                      },
                   child: Container(
                     width: width * 0.12,
                     height: height * 0.05,
@@ -635,7 +647,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                       ? ClipRRect(
                                           borderRadius: BorderRadius.circular(30),
                                           child: Image.network(
-                                            'http://10.0.2.2:3000/uploads/${worker['userId']['profileImage']}',
+                                            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${worker['userId']['profileImage']}',
                                             fit: BoxFit.cover,
                                             errorBuilder: (context, error, stackTrace) {
                                               return Icon(

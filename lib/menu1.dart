@@ -29,7 +29,7 @@ class Menu1Screen extends StatefulWidget {
 }
 
 class _Menu1ScreenState extends State<Menu1Screen> {
-  final String apiUrl = 'http://10.0.2.2:3000/pulluser';
+  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -83,7 +83,7 @@ class _Menu1ScreenState extends State<Menu1Screen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/cash-advance/requests/${widget.userId}/$type'),
+            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
       );
 
       if (response.statusCode == 200) {
@@ -587,7 +587,12 @@ class _Menu1ScreenState extends State<Menu1Screen> {
                     left: width * 0.07,
                     child: GestureDetector(
                       onTap: () {
-                        // TODO: ใส่ฟังก์ชันเมื่อกด
+                        // ย้อนกลับไปหน้า menu ตาม menu ของ user
+                        if (_currentUser != null) {
+                          if (_currentUser?['menu'] == 1) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu1Screen(userId: _currentUser?['_id'] ?? '')));
+                          }
+                        }
                       },
                       child: Container(
                         width: width * 0.12,

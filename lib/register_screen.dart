@@ -24,7 +24,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   File? selectedImage; // เพิ่มตัวแปรสำหรับเก็บรูปที่เลือก
   String? selectedRelationType; // เพิ่มตัวแปรสำหรับเก็บประเภทความสัมพันธ์
 
+  bool _isLoading = false; // เพิ่มตัวแปร loading
+
   Future<void> _registerUser() async {
+    if (_isLoading) return; // ป้องกันการกดซ้ำ
+    
+    setState(() {
+      _isLoading = true;
+    });
+
     final String phone = _phoneController.text;
     final String name = _nameController.text;
     final String email = _emailController.text;
@@ -38,6 +46,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _usernameController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
+      setState(() {
+        _isLoading = false;
+      });
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -60,6 +71,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     // ตรวจสอบว่า password และ confirm password ตรงกัน
     if (password != confirmPassword) {
+      setState(() {
+        _isLoading = false;
+      });
       // แจ้งเตือนเมื่อ password ไม่ตรงกัน
       showDialog(
         context: context,
@@ -91,9 +105,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
       'relationCode': _relationCodeController.text.trim(), // เพิ่มรหัสความสัมพันธ์
     };
 
+    // แสดง loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('กำลังสมัครสมาชิก...'),
+          ],
+        ),
+      ),
+    );
+
     // ส่งข้อมูลไปยังเซิร์ฟเวอร์
     try {
-      var uri = Uri.parse('http://10.0.2.2:3000/register');
+      print('🔄 กำลังสมัครสมาชิก...');
+      print('👤 Name: $name');
+      print('📧 Email: $email');
+      print('📞 Phone: $phone');
+      print('👤 Username: $username');
+      print('🔑 Password: $password');
+      print('🔗 Relation Code: ${_relationCodeController.text.trim()}');
+      print('🖼️ Has Image: ${selectedImage != null}');
+      
+      var uri = Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/register');
       var request = http.MultipartRequest('POST', uri);
       
       // เพิ่มข้อมูล fields
@@ -104,31 +142,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
       request.fields['password'] = password;
       request.fields['relationCode'] = _relationCodeController.text.trim();
       
-      print('=== SENDING REGISTER DATA ===');
-      print('Name: $name');
-      print('Email: $email');
-      print('Number: $phone');
-      print('Username: $username');
-      print('Password: $password');
-      print('Relation Code: ${_relationCodeController.text.trim()}');
-      print('Has Image: ${selectedImage != null}');
-      
       // เพิ่มรูปภาพถ้ามี
       if (selectedImage != null) {
+        print('📤 อัพโหลดรูป: ${selectedImage!.path}');
         request.files.add(await http.MultipartFile.fromPath('profileImage', selectedImage!.path));
-        print('Image path: ${selectedImage!.path}');
       }
       
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
       
-      print('Response status: ${response.statusCode}');
-      print('Response body: $responseBody');
+      print('📥 Response status: ${response.statusCode}');
+      print('📥 Response body: $responseBody');
+      
+      // ปิด loading dialog ก่อน
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
 
       if (response.statusCode == 200) {
         try {
           var responseData = json.decode(responseBody);
-          print('Parsed response: $responseData');
+          print('✅ สมัครสมาชิกสำเร็จ: $responseData');
+          
+          setState(() {
+            _isLoading = false;
+          });
           
           // เชื่อมต่อรหัสความสัมพันธ์ถ้ามี
           if (_relationCodeController.text.isNotEmpty && selectedRelationType != null) {
@@ -145,64 +183,90 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // เชื่อมต่อรหัสความสัมพันธ์
               await connectRelationCode(context, _relationCodeController.text, selectedRelationType!, newUser);
             } catch (e) {
-              print('Error connecting relation code: $e');
+              print('❌ Error connecting relation code: $e');
               // แสดงข้อความแจ้งเตือนถ้าเชื่อมต่อไม่สำเร็จ
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('สมัครสมาชิกสำเร็จ แต่เชื่อมต่อรหัสความสัมพันธ์ไม่สำเร็จ'),
-              ));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('สมัครสมาชิกสำเร็จ แต่เชื่อมต่อรหัสความสัมพันธ์ไม่สำเร็จ'),
+                ));
+              }
             }
           }
           
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('สำเร็จ'),
-                content: Text('สมัครสมาชิกสำเร็จ'),
-                actions: [
-                  TextButton(
-                    child: Text('OK'),
-                    onPressed: () {
-                      // นำผู้ใช้กลับไปหน้า LoginScreen
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                        (Route<dynamic> route) => false,
-                      );
-
-                      _phoneController.clear();
-                      _nameController.clear();
-                      _emailController.clear();
-                      _usernameController.clear();
-                      _passwordController.clear();
-                      _confirmPasswordController.clear();
-                      _relationCodeController.clear();
-                      selectedImage = null; // เคลียร์รูปที่เลือก
-                      selectedRelationType = null; // เคลียร์ประเภทความสัมพันธ์
-                    },
+          if (context.mounted) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 28),
+                      SizedBox(width: 10),
+                      Text('สำเร็จ'),
+                    ],
                   ),
-                ],
-              );
-            },
-          );
+                  content: Text('สมัครสมาชิกสำเร็จแล้ว'),
+                  actions: [
+                    TextButton(
+                      child: Text('ตกลง'),
+                      onPressed: () {
+                        // นำผู้ใช้กลับไปหน้า LoginScreen
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginScreen()),
+                          (Route<dynamic> route) => false,
+                        );
+
+                        _phoneController.clear();
+                        _nameController.clear();
+                        _emailController.clear();
+                        _usernameController.clear();
+                        _passwordController.clear();
+                        _confirmPasswordController.clear();
+                        _relationCodeController.clear();
+                        selectedImage = null; // เคลียร์รูปที่เลือก
+                        selectedRelationType = null; // เคลียร์ประเภทความสัมพันธ์
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }
         } catch (e) {
-          print('Error parsing response: $e');
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('เกิดข้อผิดพลาดในการประมวลผลข้อมูล'),
-          ));
+          print('❌ Error parsing response: $e');
+          setState(() {
+            _isLoading = false;
+          });
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('เกิดข้อผิดพลาดในการประมวลผลข้อมูล'),
+            ));
+          }
         }
       } else {
         // สมัครสมาชิกไม่สำเร็จ
-        print('Registration failed with status: ${response.statusCode}');
-        print('Error response: $responseBody');
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('สมัครสมาชิกไม่สำเร็จ: ${response.statusCode}'),
-        ));
+        print('❌ Registration failed with status: ${response.statusCode}');
+        print('❌ Error response: $responseBody');
+        setState(() {
+          _isLoading = false;
+        });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('สมัครสมาชิกไม่สำเร็จ: ${response.statusCode}'),
+          ));
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('เกิดข้อผิดพลาดในการเชื่อมต่อ'),
-      ));
+      print('❌ Exception: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('เกิดข้อผิดพลาดในการเชื่อมต่อ: $e'),
+        ));
+      }
     }
   }
 
@@ -731,20 +795,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: SizedBox(
                     width: 150, // คุณสามารถปรับค่านี้ได้ตามขนาดที่ต้องการ
                     child: ElevatedButton(
-                      onPressed: _registerUser,
+                      onPressed: _isLoading ? null : _registerUser,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF34D396),
+                        backgroundColor: _isLoading ? Colors.grey : Color(0xFF34D396),
                         padding: EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text('ลงทะเบียน',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          )),
+                      child: _isLoading
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'กำลังสมัคร...',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              'ลงทะเบียน',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ),

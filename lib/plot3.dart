@@ -6,6 +6,9 @@ import 'plot_map_fullscreen.dart';
 import 'sugarcanedata.dart';
 import 'package:flutter/services.dart';
 import 'profile.dart';
+import 'menu1.dart';
+import 'menu2.dart';
+import 'menu3.dart';
 class Plot3Screen extends StatefulWidget {
   final String userId; // userId ของคนงาน
   final String? ownerId; // ownerId ของเจ้าของ (ถ้ามี)
@@ -17,7 +20,7 @@ class Plot3Screen extends StatefulWidget {
 }
 
 class _Plot3ScreenState extends State<Plot3Screen> {
-  final String apiUrl = 'http://10.0.2.2:3000/pulluser';
+  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> plotList = [];
   bool isLoading = true;
   String? errorMessage;
@@ -104,12 +107,12 @@ class _Plot3ScreenState extends State<Plot3Screen> {
   Future<void> _getOwnerIdFromWorker() async {
     print('🔍 DEBUG: กำลังดึง ownerId จาก API สำหรับ userId: ${widget.userId}');
     print(
-        '🔍 DEBUG: URL ที่เรียก: http://10.0.2.2:3000/api/profile/worker-info/${widget.userId}');
+        '🔍 DEBUG: URL ที่เรียก: https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/worker-info/${widget.userId}');
 
     try {
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/profile/worker-info/${widget.userId}'),
+            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/worker-info/${widget.userId}'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -174,12 +177,12 @@ class _Plot3ScreenState extends State<Plot3Screen> {
 
     print('🔍 DEBUG: กำลังโหลดแปลงปลูกสำหรับ ownerId: $ownerId');
     print(
-        '🔍 DEBUG: URL ที่เรียก: http://10.0.2.2:3000/api/plots/by-owner/$ownerId');
+        '🔍 DEBUG: URL ที่เรียก: https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/by-owner/$ownerId');
 
     try {
       // ดึงแปลงปลูกของเจ้าของด้วย endpoint ใหม่
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/plots/by-owner/$ownerId'),
+        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/by-owner/$ownerId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -266,7 +269,25 @@ class _Plot3ScreenState extends State<Plot3Screen> {
         ),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'กำลังโหลดข้อมูลแปลงปลูก...',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            )
           : errorMessage != null
               ? _buildErrorState(errorMessage!)
               : _buildBody(width, height),
@@ -694,9 +715,18 @@ class _Plot3ScreenState extends State<Plot3Screen> {
           bottom: height * 0.01,
           left: width * 0.07,
           child: GestureDetector(
-            onTap: () {
-              // TODO: ใส่ฟังก์ชันเมื่อกด
-            },
+                      onTap: () {
+                        // ย้อนกลับไปหน้า menu ตาม menu ของ user
+                        if (_currentUser != null) {
+                          if (_currentUser?['menu'] == 1) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu1Screen(userId: _currentUser?['_id'] ?? '')));
+                          } else if (_currentUser?['menu'] == 2) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu2Screen(userId: _currentUser?['_id'] ?? '')));
+                          } else if (_currentUser?['menu'] == 3) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu3Screen(userId: _currentUser?['_id'] ?? '')));
+                          }
+                        }
+                      },
             child: Container(
               width: width * 0.12,
               height: height * 0.05,

@@ -57,7 +57,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
       print('🔍 Fetching tasks for user ID: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/plots/tasks/${widget.userId}'),
+        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/tasks/${widget.userId}'),
         headers: {'user-id': widget.userId}, // ใช้ header นี้
       ).timeout(Duration(seconds: 10));
 
@@ -87,7 +87,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
       print('🔍 Fetching recommendations for user: ${widget.userId}');
 
       final plotsResponse = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/plots/${widget.userId}'),
+        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.userId}'),
         headers: {'user-id': widget.userId},
       ).timeout(Duration(seconds: 10));
 
@@ -106,7 +106,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
               final recResponse = await http
                   .get(
                     Uri.parse(
-                        'http://10.0.2.2:3000/api/plots/$plotId/recommendations'),
+                        'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId/recommendations'),
                   )
                   .timeout(Duration(seconds: 5));
 
@@ -351,7 +351,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
 
       final response = await http
           .get(
-            Uri.parse('http://10.0.2.2:3000/api/plots/$plotId/recommendations'),
+            Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId/recommendations'),
           )
           .timeout(Duration(seconds: 10));
 
