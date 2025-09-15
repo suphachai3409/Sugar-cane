@@ -20,7 +20,7 @@ class Plot2Screen extends StatefulWidget {
 }
 
 class _Plot2ScreenState extends State<Plot2Screen> {
-  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> plotList = [];
   bool isLoading = true;
   LatLng? locationLatLng;
@@ -87,7 +87,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
 
       // ใช้ endpoint ใหม่สำหรับดึงแปลงของลูกไร่โดยตรง
       final response = await http.get(
-        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$farmerUserId'),
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$farmerUserId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -145,6 +145,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
                   Text(
                     'กำลังโหลดข้อมูลแปลงปลูก...',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       color: Colors.grey[600],
                       fontSize: 16,
                     ),
@@ -189,6 +190,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
                 Text(
                   'ยังไม่มีแปลงปลูก',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.grey[600],
@@ -199,6 +201,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
                   'ลูกไร่ยังไม่ได้สร้างแปลงปลูก',
                   textAlign: TextAlign.center,
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 16,
                     color: Colors.grey[500],
                   ),
@@ -391,6 +394,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
                   Text(
                     plot['plotName'] ?? 'ไม่มีชื่อ',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       fontSize: width * 0.045,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF25624B),
@@ -400,6 +404,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
                   Text(
                     '${plot['plantType']} • ${plot['soilType']}',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       fontSize: width * 0.035,
                       color: Colors.grey[600],
                     ),
@@ -416,6 +421,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
                       Text(
                         plot['waterSource'] ?? '',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: width * 0.03,
                           color: Colors.grey[500],
                         ),
@@ -438,6 +444,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
                             ? 'มีขอบเขตพื้นที่'
                             : 'จุดเดียว',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: width * 0.03,
                           color: plotPolygon.length >= 3
                               ? Color(0xFF34D396)

@@ -24,7 +24,41 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.green,
-        fontFamily: 'Kanit',
+        fontFamily: 'NotoSansThai',
+        textTheme: TextTheme(
+          headlineLarge: TextStyle(
+            color: Color(0xFF2D8C8A),
+            fontWeight: FontWeight.bold,
+            fontFamily: 'NotoSansThai',
+            fontSize: 28,
+          ),
+          headlineMedium: TextStyle(
+            color: Color(0xFF2D8C8A),
+            fontWeight: FontWeight.bold,
+            fontFamily: 'NotoSansThai',
+            fontSize: 24,
+          ),
+          titleLarge: TextStyle(
+            color: Color(0xFF2D8C8A),
+            fontWeight: FontWeight.bold,
+            fontFamily: 'NotoSansThai',
+            fontSize: 18,
+          ),
+          titleMedium: TextStyle(
+            color: Color(0xFF2D8C8A),
+            fontWeight: FontWeight.w600,
+            fontFamily: 'NotoSansThai',
+            fontSize: 16,
+          ),
+          bodyLarge: TextStyle(
+            fontFamily: 'NotoSansThai',
+            fontSize: 16,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'NotoSansThai',
+            fontSize: 14,
+          ),
+        ),
       ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -49,7 +83,7 @@ class Menu2Screen extends StatefulWidget {
 }
 
 class _Menu2ScreenState extends State<Menu2Screen> {
-  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -102,7 +136,7 @@ class _Menu2ScreenState extends State<Menu2Screen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
+            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
       );
 
       if (response.statusCode == 200) {
@@ -199,9 +233,9 @@ class _Menu2ScreenState extends State<Menu2Screen> {
                   'Main menu',
                   style: TextStyle(
                     color: Color(0xFF25624B),
-                    fontSize: width * 0.055,
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w500,
+                    fontSize: width * 0.06,
+                    fontFamily: 'NotoSansThai',
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),

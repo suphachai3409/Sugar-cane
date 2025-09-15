@@ -42,7 +42,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     });
 
     try {
-      final apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
+      final apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -77,7 +77,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker'),
+            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -148,7 +148,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
       print('🔄 กำลังดึงข้อมูลคนงานสำหรับ ownerId: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/workers/${widget.userId}'),
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/workers/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.userId}',
@@ -204,6 +204,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                 Text(
                   'รายละเอียดคนงาน',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF25634B),
@@ -213,6 +214,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                 Text(
                   workerName,
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 18,
                     color: Colors.grey[700],
                   ),
@@ -249,6 +251,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                   Text(
                                     'งานที่รับ',
                                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                       color: Color(0xFF34D396),
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
@@ -293,6 +296,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                       Text(
                                         'คำขอเบิกเงิน',
                                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                           color: Color(0xFF34D396),
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
@@ -317,6 +321,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                 child: Text(
                                   requestCount.toString(),
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Colors.white,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -337,6 +342,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                   child: Text(
                     'ปิด',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       color: Colors.grey[600],
                       fontSize: 16,
                     ),
@@ -497,6 +503,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
         title: Text(
           'คนงาน',
           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
             color: Color(0xFF25634B),
             fontWeight: FontWeight.bold,
             fontSize: 20,
@@ -524,6 +531,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                       Text(
                         'กำลังโหลดข้อมูลคนงาน...',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           color: Colors.grey[600],
                           fontSize: 16,
                         ),
@@ -545,6 +553,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                           Text(
                             'เกิดข้อผิดพลาด',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.red[700],
@@ -555,6 +564,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                             errorMessage!,
                             textAlign: TextAlign.center,
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               color: Colors.grey[600],
                             ),
                           ),
@@ -584,6 +594,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                               Text(
                                 'ยังไม่มีคนงาน',
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey[600],
@@ -594,6 +605,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                 'สร้างรหัสความสัมพันธ์เพื่อเพิ่มคนงาน',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   color: Colors.grey[500],
                                 ),
                               ),
@@ -647,13 +659,24 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                       ? ClipRRect(
                                           borderRadius: BorderRadius.circular(30),
                                           child: Image.network(
-                                            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${worker['userId']['profileImage']}',
+                                            worker['userId']['profileImage'],
                                             fit: BoxFit.cover,
                                             errorBuilder: (context, error, stackTrace) {
+                                              print('❌ Worker profile image load error: $error');
+                                              print('❌ Failed URL: ${worker['userId']['profileImage']}');
                                               return Icon(
                                                 Icons.engineering,
                                                 color: Color(0xFF34D396),
                                                 size: 30,
+                                              );
+                                            },
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                print('✅ Worker profile image loaded: ${worker['userId']['profileImage']}');
+                                                return child;
+                                              }
+                                              return Center(
+                                                child: CircularProgressIndicator(),
                                               );
                                             },
                                           ),
@@ -667,6 +690,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                 title: Text(
                                   workerName,
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                     color: Color(0xFF25634B),
@@ -679,6 +703,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                     Text(
                                       'เบอร์โทร: ${worker['userId']?['number'] ?? 'ไม่มีข้อมูล'}',
                                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                         color: Colors.grey[600],
                                         fontSize: 14,
                                       ),
@@ -688,6 +713,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                       Text(
                                         'อีเมล: ${worker['userId']['email']}',
                                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                           color: Colors.grey[600],
                                           fontSize: 14,
                                         ),

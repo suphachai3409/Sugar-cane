@@ -25,6 +25,68 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? selectedRelationType; // เพิ่มตัวแปรสำหรับเก็บประเภทความสัมพันธ์
 
   bool _isLoading = false; // เพิ่มตัวแปร loading
+  bool _isCheckingUsername = false; // เพิ่มตัวแปรสำหรับตรวจสอบ username
+  String? _usernameError; // เพิ่มตัวแปรสำหรับแสดง error ของ username
+
+  // ฟังก์ชันตรวจสอบ username แบบ real-time
+  Future<void> _checkUsernameRealTime(String username) async {
+    if (username.isEmpty) {
+      setState(() {
+        _usernameError = null;
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isCheckingUsername = true;
+      _usernameError = null;
+    });
+
+    bool isAvailable = await _checkUsernameAvailability(username);
+    
+    if (mounted) {
+      setState(() {
+        _isCheckingUsername = false;
+        if (!isAvailable) {
+          _usernameError = 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว';
+        } else {
+          _usernameError = null;
+        }
+      });
+    }
+  }
+
+  // ฟังก์ชันตรวจสอบ username
+  Future<bool> _checkUsernameAvailability(String username) async {
+    try {
+      print('🔍 กำลังตรวจสอบ username: $username');
+      
+      final response = await http.post(
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/check-username'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'username': username}),
+      );
+      
+      print('📥 Username check response status: ${response.statusCode}');
+      print('📥 Username check response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        bool isAvailable = data['available'] ?? false;
+        print('✅ Username available: $isAvailable');
+        return isAvailable;
+      } else {
+        print('❌ Username check failed: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Username check error: $e');
+      return false;
+    }
+  }
 
   Future<void> _registerUser() async {
     if (_isLoading) return; // ป้องกันการกดซ้ำ
@@ -95,6 +157,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // ตรวจสอบ username ก่อนสมัคร
+    print('🔍 กำลังตรวจสอบ username: $username');
+    
+    // แสดง loading dialog ขณะตรวจสอบ username
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('กำลังตรวจสอบชื่อผู้ใช้...'),
+          ],
+        ),
+      ),
+    );
+    
+    bool isUsernameAvailable = await _checkUsernameAvailability(username);
+    
+    // ปิด loading dialog
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
+    
+    if (!isUsernameAvailable) {
+      setState(() {
+        _isLoading = false;
+      });
+      
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.warning, color: Colors.orange, size: 28),
+                SizedBox(width: 10),
+                Text('ชื่อผู้ใช้ไม่ว่าง'),
+              ],
+            ),
+            content: Text('ชื่อผู้ใช้ "$username" ถูกใช้งานแล้ว กรุณาเลือกชื่ออื่น'),
+            actions: [
+              TextButton(
+                child: Text('ตกลง'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     // สร้างข้อมูลที่จะส่ง
     final Map<String, dynamic> requestBody = {
       'name': name,
@@ -131,7 +249,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       print('🔗 Relation Code: ${_relationCodeController.text.trim()}');
       print('🖼️ Has Image: ${selectedImage != null}');
       
-      var uri = Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/register');
+      var uri = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/register');
       var request = http.MultipartRequest('POST', uri);
       
       // เพิ่มข้อมูล fields
@@ -316,6 +434,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Text(
                               'รหัสความสัมพันธ์',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -324,6 +443,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Text(
                               'เชื่อมต่อกับเจ้าของไร่',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 color: Colors.white70,
                                 fontSize: 14,
                               ),
@@ -338,6 +458,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   'รหัสความสัมพันธ์คืออะไร?',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF25634B),
@@ -348,6 +469,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   'รหัสความสัมพันธ์เป็นรหัสที่เจ้าของไร่สร้างขึ้นเพื่อให้คุณสามารถเชื่อมต่อกับไร่ของเขาได้',
                   textAlign: TextAlign.center,
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 14,
                     color: Colors.grey[700],
                   ),
@@ -375,6 +497,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Text(
                           'หากคุณไม่มีรหัส สามารถข้ามขั้นตอนนี้ได้',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             fontSize: 12,
                             color: Colors.amber[700],
                             fontWeight: FontWeight.w500,
@@ -403,6 +526,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Text(
                           'ปิด',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
@@ -427,6 +551,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Text(
                           'กรอกรหัส',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
@@ -470,7 +595,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     SizedBox(height: 10),
                     Text(
                       'กรอกรหัสความสัมพันธ์',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                      style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontWeight: FontWeight.bold, fontSize: 20),
                     ),
                     SizedBox(height: 16),
                     // ปุ่มเลือกประเภท
@@ -523,7 +649,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: Text('ปิด', style: TextStyle(fontSize: 16)),
+                            child: Text('ปิด', style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 16)),
                           ),
                         ),
                         SizedBox(width: 12),
@@ -545,7 +672,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: Text('บันทึก', style: TextStyle(fontSize: 16)),
+                            child: Text('บันทึก', style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 16)),
                           ),
                         ),
                       ],
@@ -574,6 +702,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   'สมัครสมาชิก',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 50,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF25634B),
@@ -625,6 +754,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 Text(
                                   'เลือกรูปภาพ',
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Color(0xFF34D396),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
@@ -640,7 +770,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _nameController,
                   decoration: InputDecoration(
                     labelText: 'ชื่อ-สกุล',
-                    labelStyle: TextStyle(color: Colors.grey[500]),
+                    labelStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[500]),
                     filled: true,
                     fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
@@ -654,21 +785,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _usernameController,
                   decoration: InputDecoration(
                     labelText: 'ชื่อผู้ใช้',
-                    labelStyle: TextStyle(color: Colors.grey[500]),
+                    labelStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[500]),
                     filled: true,
                     fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
                     ),
+                    errorText: _usernameError,
+                    suffixIcon: _isCheckingUsername 
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF34D396)),
+                            ),
+                          )
+                        : _usernameError == null && _usernameController.text.isNotEmpty
+                            ? Icon(Icons.check_circle, color: Colors.green, size: 20)
+                            : null,
                   ),
+                  onChanged: (value) {
+                    // ตรวจสอบ username แบบ real-time หลังจากผู้ใช้หยุดพิมพ์ 1 วินาที
+                    Future.delayed(Duration(seconds: 1), () {
+                      if (value == _usernameController.text) {
+                        _checkUsernameRealTime(value);
+                      }
+                    });
+                  },
                 ),
                 SizedBox(height: 16),
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
                     labelText: 'อีเมล',
-                    labelStyle: TextStyle(color: Colors.grey[500]),
+                    labelStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[500]),
                     filled: true,
                     fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
@@ -684,7 +838,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _phoneController,
                   decoration: InputDecoration(
                     labelText: 'เบอร์โทรศัพท์',
-                    labelStyle: TextStyle(color: Colors.grey[500]),
+                    labelStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[500]),
                     filled: true,
                     fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
@@ -711,7 +866,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'รหัสผ่าน',
-                    labelStyle: TextStyle(color: Colors.grey[500]),
+                    labelStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[500]),
                     filled: true,
                     fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
@@ -726,7 +882,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _confirmPasswordController,
                   decoration: InputDecoration(
                     labelText: 'ยืนยันรหัสผ่าน',
-                    labelStyle: TextStyle(color: Colors.grey[500]),
+                    labelStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[500]),
                     filled: true,
                     fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
@@ -754,6 +911,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ? 'กรอกรหัสความสัมพันธ์ (ไม่บังคับ)'
                           : 'รหัสความสัมพันธ์: ${_relationCodeController.text}',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -782,6 +940,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Text(
                         'ไม่ทราบรหัสความสัมพันธ์?',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           color: Color(0xFF34D396),
                           fontSize: 12,
                           decoration: TextDecoration.underline,
@@ -795,9 +954,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: SizedBox(
                     width: 150, // คุณสามารถปรับค่านี้ได้ตามขนาดที่ต้องการ
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _registerUser,
+                      onPressed: (_isLoading || _isCheckingUsername || _usernameError != null) ? null : _registerUser,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _isLoading ? Colors.grey : Color(0xFF34D396),
+                        backgroundColor: (_isLoading || _isCheckingUsername || _usernameError != null) ? Colors.grey : Color(0xFF34D396),
                         padding: EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -819,6 +978,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 Text(
                                   'กำลังสมัคร...',
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -826,14 +986,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               ],
                             )
-                          : Text(
-                              'ลงทะเบียน',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                          : _isCheckingUsername
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'กำลังตรวจสอบ...',
+                                      style: TextStyle(
+                                fontFamily: 'NotoSansThai',
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Text(
+                                  'ลงทะเบียน',
+                                  style: TextStyle(
+                                fontFamily: 'NotoSansThai',
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                     ),
                   ),
                 ),
@@ -848,6 +1033,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Text(
                     'เข้าสู่ระบบ',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       color: Color(0xFF25634B),
                       fontWeight: FontWeight.bold,
                     ),

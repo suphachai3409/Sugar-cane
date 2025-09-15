@@ -57,7 +57,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
       print('🔍 Fetching tasks for user ID: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/tasks/${widget.userId}'),
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/tasks/${widget.userId}'),
         headers: {'user-id': widget.userId}, // ใช้ header นี้
       ).timeout(Duration(seconds: 10));
 
@@ -87,7 +87,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
       print('🔍 Fetching recommendations for user: ${widget.userId}');
 
       final plotsResponse = await http.get(
-        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.userId}'),
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.userId}'),
         headers: {'user-id': widget.userId},
       ).timeout(Duration(seconds: 10));
 
@@ -106,7 +106,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
               final recResponse = await http
                   .get(
                     Uri.parse(
-                        'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId/recommendations'),
+                        'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId/recommendations'),
                   )
                   .timeout(Duration(seconds: 5));
 
@@ -210,6 +210,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                       child: Text(
                         'รายละเอียดงานที่เสร็จสมบูรณ์',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -235,6 +236,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                 Text(
                   'ข้อมูลที่บันทึก:',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF25634B),
                   ),
@@ -351,7 +353,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
 
       final response = await http
           .get(
-            Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId/recommendations'),
+            Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId/recommendations'),
           )
           .timeout(Duration(seconds: 10));
 
@@ -421,6 +423,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                           Text(
                             'ประวัติการบันทึก',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -429,6 +432,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                           Text(
                             task['taskType'] ?? 'งาน',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               color: Colors.white70,
                               fontSize: 14,
                             ),
@@ -513,6 +517,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                 Text(
                   rec['date'] ?? 'ไม่มีวันที่',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF25634B),
@@ -545,7 +550,8 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
             if (rec['message']?.isNotEmpty ?? false)
               Text(
                 rec['message']!,
-                style: TextStyle(fontSize: 14),
+                style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 14),
               ),
             if (rec['images'] != null && (rec['images'] as List).isNotEmpty)
               Column(
@@ -554,7 +560,8 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                   SizedBox(height: 8),
                   Text(
                     'รูปภาพ: ${(rec['images'] as List).length} รูป',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
@@ -563,7 +570,8 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
             SizedBox(height: 4),
             Text(
               'บันทึกเมื่อ: ${_formatDate(rec['createdAt'])}',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
@@ -601,6 +609,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                       child: Text(
                         'รายละเอียดการบันทึก',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -618,6 +627,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                 Text(
                   'ข้อความ:',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF25634B),
                   ),
@@ -639,6 +649,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                 Text(
                   'รูปภาพ:',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF25634B),
                   ),
@@ -698,6 +709,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
             child: Text(
               "$label: ",
               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF25634B),
               ),
@@ -706,7 +718,8 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
           Expanded(
             child: Text(
               value,
-              style: TextStyle(color: Colors.grey[800]),
+              style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[800]),
             ),
           ),
         ],
@@ -746,12 +759,14 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
           SizedBox(height: 16),
           Text(
             'ยังไม่มีประวัติการบันทึก',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 16, color: Colors.grey),
           ),
           SizedBox(height: 8),
           Text(
             'กด "บันทึกใหม่" เพื่อเริ่มบันทึก',
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 14, color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
         ],
@@ -813,6 +828,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                     child: Text(
                       taskType,
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF25634B),
@@ -837,6 +853,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                     child: Text(
                       status,
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         color: isCompleted
                             ? Colors.green[800]
                             : Colors.orange[800],
@@ -850,7 +867,8 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
               SizedBox(height: 12),
               Text(
                 '📅 วันที่ครบกำหนด: ${taskMap['dueDate'] ?? 'ไม่มีวันที่'}',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 14, color: Colors.grey[700]),
               ),
               SizedBox(height: 4),
               if (isCompleted && hasHistory) ...[
@@ -864,6 +882,7 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                     Text(
                       'มีการบันทึกข้อมูลแล้ว',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           color: Colors.green, fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -921,7 +940,8 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                       SizedBox(height: 16),
                       Text(
                         _errorMessage,
-                        style: TextStyle(fontSize: 16, color: Colors.red),
+                        style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 16, color: Colors.red),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16),
@@ -942,12 +962,14 @@ class _WorkerTasksScreenState extends State<WorkerTasksScreen> {
                           SizedBox(height: 16),
                           Text(
                             'ไม่มีงานที่ได้รับมอบหมาย',
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                            style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 18, color: Colors.grey),
                           ),
                           SizedBox(height: 8),
                           Text(
                             'รอการมอบหมายงานจากผู้จัดการ',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontSize: 14, color: Colors.grey[600]),
                             textAlign: TextAlign.center,
                           ),

@@ -149,7 +149,8 @@ class _SearchLocationWidgetState extends State<SearchLocationWidget> {
                     leading: Icon(Icons.location_on, color: Color(0xFF34D396)),
                     title: Text(
                       place.formattedAddress,
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 14),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -180,7 +181,8 @@ class _SearchLocationWidgetState extends State<SearchLocationWidget> {
 
     return Text(
       details,
-      style: TextStyle(fontSize: 12),
+      style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 12),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );

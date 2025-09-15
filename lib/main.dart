@@ -26,10 +26,45 @@ class MyApp extends StatelessWidget {
           primary: Color(0xFF25634B),
           secondary: Color(0xFF4CAF50),
         ),
+        fontFamily: 'NotoSansThai',
         textTheme: TextTheme(
+          headlineLarge: TextStyle(
+            color: Color(0xFF2D8C8A),
+            fontWeight: FontWeight.bold,
+            fontFamily: 'NotoSansThai',
+            fontSize: 28,
+          ),
           headlineMedium: TextStyle(
             color: Color(0xFF2D8C8A),
             fontWeight: FontWeight.bold,
+            fontFamily: 'NotoSansThai',
+            fontSize: 24,
+          ),
+          headlineSmall: TextStyle(
+            color: Color(0xFF2D8C8A),
+            fontWeight: FontWeight.bold,
+            fontFamily: 'NotoSansThai',
+            fontSize: 20,
+          ),
+          titleLarge: TextStyle(
+            color: Color(0xFF2D8C8A),
+            fontWeight: FontWeight.bold,
+            fontFamily: 'NotoSansThai',
+            fontSize: 18,
+          ),
+          titleMedium: TextStyle(
+            color: Color(0xFF2D8C8A),
+            fontWeight: FontWeight.w600,
+            fontFamily: 'NotoSansThai',
+            fontSize: 16,
+          ),
+          bodyLarge: TextStyle(
+            fontFamily: 'NotoSansThai',
+            fontSize: 16,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'NotoSansThai',
+            fontSize: 14,
           ),
         ),
       ),
@@ -191,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // ส่งข้อมูลไปยังเซิร์ฟเวอร์เพื่อตรวจสอบ
       final response = await http.post(
-        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/login'),
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/login'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

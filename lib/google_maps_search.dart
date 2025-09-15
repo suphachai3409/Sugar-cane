@@ -360,7 +360,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         controller: _searchController,
                         decoration: InputDecoration(
                           hintText: 'ค้นหาสถานที่...',
-                          hintStyle: TextStyle(color: Colors.grey[600]),
+                          hintStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[600]),
                           prefixIcon: Icon(Icons.search, color: Color(0xFF34D396)),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
@@ -379,7 +380,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         ),
                         onChanged: _performSearch,
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 16),
                       ),
 
                       // ผลการค้นหา (ปรับแต่งใหม่)
@@ -426,13 +428,15 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                       title: Text(
                                         place.name,
                                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                           fontWeight: FontWeight.w600,
                                           fontSize: 15,
                                         ),
                                       ),
                                       subtitle: Text(
                                         place.address,
-                                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                        style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[600], fontSize: 13),
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -477,6 +481,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                             Text(
                               'ตำแหน่งที่เลือก:',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                                 color: Color(0xFF25634B),
@@ -487,7 +492,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         SizedBox(height: 8),
                         Text(
                           _selectedAddress,
-                          style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                          style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[700], fontSize: 14),
                         ),
                         SizedBox(height: 16),
                         SizedBox(
@@ -507,6 +513,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                       child: Text(
                                         'เลือกตำแหน่งนี้',
                                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
@@ -528,6 +535,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                             child: Text(
                                               'ข้าม',
                                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.white,
@@ -549,6 +557,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                             child: Text(
                                               'ย้อนกลับจุด',
                                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.white,
@@ -612,6 +621,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                                   ? (_canFinishDrawing ? 'ถัดไป' : 'วาดเพิ่ม')
                                                   : 'เลือกตำแหน่งนี้',
                                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.white,
@@ -657,7 +667,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                     children: [
                       CircularProgressIndicator(color: Color(0xFF34D396)),
                       SizedBox(height: 10),
-                      Text('กำลังโหลด...', style: TextStyle(color: Color(0xFF25634B))),
+                      Text('กำลังโหลด...', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Color(0xFF25634B))),
                     ],
                   ),
                 ),
@@ -978,7 +989,8 @@ class _SearchLocationWidgetState extends State<SearchLocationWidget> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'ค้นหาสถานที่...',
-                hintStyle: TextStyle(color: Colors.grey[600]),
+                hintStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey[600]),
                 prefixIcon: Icon(Icons.search, color: Color(0xFF34D396)),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -1000,7 +1012,8 @@ class _SearchLocationWidgetState extends State<SearchLocationWidget> {
                 contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
               onChanged: _performSearch,
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 16),
             ),
           ),
 
@@ -1048,6 +1061,7 @@ class _SearchLocationWidgetState extends State<SearchLocationWidget> {
                       title: Text(
                         place.name,
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
@@ -1055,6 +1069,7 @@ class _SearchLocationWidgetState extends State<SearchLocationWidget> {
                       subtitle: Text(
                         place.address,
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           color: Colors.grey[600],
                           fontSize: 14,
                         ),

@@ -127,14 +127,15 @@ class FullScreenImage extends StatelessWidget {
                           // ตรวจสอบว่า imageUrl เป็น full URL หรือไม่
                           final fullImageUrl = imageUrl.startsWith('http') 
                               ? imageUrl 
-                              : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
+                              : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
                           print('🖼️ Loading full screen image: $fullImageUrl');
                           
                           return Image.network(
                             fullImageUrl,
                             fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
-                              print('❌ Full screen image load error for $fullImageUrl: $error');
+                              print('❌ Money transfer full screen image load error for $fullImageUrl: $error');
+                              print('❌ Stack trace: $stackTrace');
                               return Container(
                                 color: Colors.grey[800],
                                 child: Center(
@@ -146,7 +147,8 @@ class FullScreenImage extends StatelessWidget {
                                       SizedBox(height: 10),
                                       Text(
                                         'ไม่สามารถโหลดรูปภาพ',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(
+                            fontFamily: 'NotoSansThai', color: Colors.white),
                                       ),
                                     ],
                                   ),
@@ -154,7 +156,10 @@ class FullScreenImage extends StatelessWidget {
                               );
                             },
                             loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
+                              if (loadingProgress == null) {
+                                print('✅ Money transfer full screen image loaded: $fullImageUrl');
+                                return child;
+                              }
                               return Container(
                                 color: Colors.grey[800],
                                 child: Center(
@@ -225,6 +230,7 @@ class FullScreenImage extends StatelessWidget {
                   child: Text(
                     'แตะนอกพื้นที่เพื่อปิด',
                     style: TextStyle(
+                      fontFamily: 'NotoSansThai',
                       color: Colors.white,
                       fontSize: 14,
                     ),
@@ -257,7 +263,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   List<CashAdvanceRequest> requests = [];
   int? selectedRequestIndex;
   // เพิ่มตัวแปรสำหรับ profile
-  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -272,7 +278,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
+            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
         headers: {
           'Content-Type': 'application/json',
           'user-id': _currentUser!['_id']
@@ -399,7 +405,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 // เพิ่มฟังก์ชันสำหรับอัพโหลดรูปภาพ
   Future<List<String>> _uploadImages(List<File> imageFiles) async {
     List<String> imageUrls = [];
-    var uri = Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/upload');
+    var uri = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/upload');
 
     for (var imageFile in imageFiles) {
       var request = http.MultipartRequest('POST', uri);
@@ -473,7 +479,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
       // ใช้ API ที่ถูกต้อง - หา ownerId จากแปลงปลูก
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${_currentUser!['_id']}'),
+            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${_currentUser!['_id']}'),
         headers: {'user-id': _currentUser!['_id']},
       ).timeout(Duration(seconds: 10));
 
@@ -506,7 +512,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
+            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
         headers: {
           'Content-Type': 'application/json',
           'user-id': _currentUser!['_id']
@@ -635,6 +641,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                 Text(
                   'กำลังโหลดข้อมูลการเงิน...',
                   style: TextStyle(
+                    fontFamily: 'NotoSansThai',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF25634B),
@@ -684,6 +691,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                 Text(
                   'กำลังโหลดข้อมูลการเงิน...',
                   style: TextStyle(
+                    fontFamily: 'NotoSansThai',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF25634B),
@@ -747,6 +755,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           child: Text(
                             'เบิกล่วงหน้า',
                             style: TextStyle(
+                              fontFamily: 'NotoSansThai',
                               color: Color(0xFF25634B),
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
@@ -759,6 +768,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         const Text(
                           'ชื่อ-นามสกุล',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             color: Color(0xFF30C39E),
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -780,6 +790,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                 ? _nameController.text
                                 : 'ไม่พบข้อมูลชื่อ',
                             style: TextStyle(
+                              fontFamily: 'NotoSansThai',
                               color: _nameController.text.isNotEmpty
                                   ? Colors.black
                                   : Colors.grey,
@@ -793,6 +804,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         const Text(
                           'เบอร์โทรศัพท์',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             color: Color(0xFF30C39E),
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -813,6 +825,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                 ? _phoneController.text
                                 : 'ไม่พบข้อมูลเบอร์โทร',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               color: _phoneController.text.isNotEmpty
                                   ? Colors.black
                                   : Colors.grey,
@@ -826,6 +839,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         const Text(
                           'จำนวนเงินที่ต้องการเบิก',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             color: Color(0xFF30C39E),
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -838,7 +852,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           decoration: InputDecoration(
                             hintText: 'ระบุจำนวนเงิน',
                             suffixText: 'บาท',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: TextStyle(
+                            fontFamily: 'NotoSansThai', color: Colors.grey),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -858,6 +873,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         const Text(
                           'วันที่',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             color: Color(0xFF30C39E),
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -869,7 +885,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           readOnly: true,
                           decoration: InputDecoration(
                             hintText: 'เลือกวันที่',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: TextStyle(
+                            fontFamily: 'NotoSansThai', color: Colors.grey),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -889,6 +906,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         const Text(
                           'วัตถุประสงค์/เหตุผล',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             color: Color(0xFF30C39E),
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -903,7 +921,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                             hintText:
                                 'ระบุวัตถุประสงค์ในการเบิกเงิน (เช่น ซ่อมบำรุง, ค่าอุปกรณ์, ฯลฯ)',
                             hintStyle:
-                                TextStyle(color: Colors.grey, fontSize: 14),
+                                TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey, fontSize: 14),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -926,6 +945,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                             const Text(
                               'แนบรูปภาพ (ถ้ามี)',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 color: Color(0xFF30C39E),
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
@@ -1025,6 +1045,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                 child: const Text(
                                   'กลับ',
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Color(0xFF30C39E),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
@@ -1050,6 +1071,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                 child: const Text(
                                   'บันทึก',
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Color(0xFFFFFFFF),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
@@ -1187,6 +1209,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                       ? 'กำลังบันทึกการแก้ไข...' 
                       : 'กำลังส่งคำขอเบิกเงิน...',
                   style: TextStyle(
+                    fontFamily: 'NotoSansThai',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF25634B),
@@ -1211,7 +1234,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/check-relation/${_currentUser!['_id']}/$ownerId'),
+            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/check-relation/${_currentUser!['_id']}/$ownerId'),
         headers: {'user-id': _currentUser!['_id']},
       );
 
@@ -1229,8 +1252,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
           print('📤 Sending purpose: $purposeText'); // Debug log
 
           final String apiUrl = selectedRequestIndex != null
-              ? 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${requests[selectedRequestIndex!].id}'
-              : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request';
+              ? 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${requests[selectedRequestIndex!].id}'
+              : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request';
 
           final httpMethod =
               selectedRequestIndex != null ? http.put : http.post;
@@ -1333,14 +1356,16 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('ยกเลิก', style: TextStyle(color: Colors.grey)),
+              child: const Text('ยกเลิก', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey)),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _deleteRequest();
               },
-              child: const Text('ลบ', style: TextStyle(color: Colors.red)),
+              child: const Text('ลบ', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.red)),
             ),
           ],
         );
@@ -1385,6 +1410,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   Text(
                     'กำลังลบคำขอ...',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF25634B),
@@ -1400,7 +1426,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
       try {
         final response = await http.delete(
           Uri.parse(
-              'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${request.id}'),
+              'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${request.id}'),
           headers: {'user-id': _currentUser!['_id']},
         );
 
@@ -1465,6 +1491,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
       appBar: AppBar(
         title: const Text('เบิกล่วงหน้า',
             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
               fontSize: 20,
               color: Color(0xFF25634B),
               fontWeight: FontWeight.w800,
@@ -1501,6 +1528,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
             Text(
               'กำลังโหลดข้อมูลการเงิน...',
               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                 color: Colors.grey[600],
                 fontSize: 16,
               ),
@@ -1550,6 +1578,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         child: Text(
                           'คำขอที่รอดำเนินการ (${pendingRequests.length})',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                             color: Color(0xFF25634B),
@@ -1566,6 +1595,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         child: Text(
                           'ประวัติคำขอ (${completedRequests.length})',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                             color: Color(0xFF25634B),
@@ -1597,6 +1627,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     label: const Text(
                       'เพิ่มการขอเบิก',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         color: Color(0xFFFFFFFF),
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -1649,6 +1680,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
               const Text(
                 'กดเพื่อเบิกล่วงหน้า',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   fontSize: 18,
                   color: Color(0xFF25634B),
                   fontWeight: FontWeight.w800,
@@ -1687,6 +1719,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                       Text(
                         'วัตถุประสงค์:',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF25634B),
                           fontSize: 14,
@@ -1696,6 +1729,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                       Text(
                         request.purpose,
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: 14,
                           color: Colors.grey[700],
                         ),
@@ -1709,6 +1743,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                 Text(
                   "ชื่อ ${request.name}",
                   style: const TextStyle(
+                    fontFamily: 'NotoSansThai',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF25634B),
@@ -1718,6 +1753,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                 Text(
                   "โทร: ${request.phone}",
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 14,
                     color: Colors.grey[600],
                   ),
@@ -1730,6 +1766,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     Text(
                       "${request.amount} บาท",
                       style: const TextStyle(
+                        fontFamily: 'NotoSansThai',
                         color: Color(0xFF25634B),
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1738,6 +1775,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     Text(
                       formattedDate,
                       style: const TextStyle(
+                        fontFamily: 'NotoSansThai',
                         fontSize: 12,
                         color: Colors.grey,
                       ),
@@ -1756,6 +1794,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                   child: Text(
                     _getStatusText(request.status),
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -1831,6 +1870,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     child: Text(
                       'เบิกล่วงหน้า',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF25634B),
@@ -1842,6 +1882,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     child: Text(
                       "ชื่อ ${request.name} tel. ${request.phone}",
                       style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF25634B),
@@ -1865,6 +1906,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           child: Text(
                             "วัตถุประสงค์:",
                             style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF25634B),
                               fontSize: 14,
@@ -1876,6 +1918,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           child: Text(
                             request.purpose ?? 'ไม่ระบุ',
                             style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
                               fontSize: 14,
                               color: Colors.black87,
                             ),
@@ -1900,6 +1943,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                             child: Text(
                               "เหตุผลการปฏิเสธ:",
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontWeight: FontWeight.bold,
                                 color: Colors.red[700],
                                 fontSize: 14,
@@ -1911,6 +1955,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                             child: Text(
                               request.rejectionReason!,
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontSize: 14,
                                 color: Colors.red[700],
                                 fontStyle: FontStyle.italic,
@@ -1937,6 +1982,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     Text(
                       'รูปภาพที่แนบมา:',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF25634B),
@@ -1952,7 +1998,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           // ตรวจสอบว่า image เป็น full URL หรือไม่
                           final imageUrl = request.images[index].startsWith('http') 
                               ? request.images[index] 
-                              : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${request.images[index]}';
+                              : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${request.images[index]}';
                           print('🖼️ Loading image $index: $imageUrl');
                           
                           return GestureDetector(
@@ -1981,7 +2027,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                       imageUrl,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) {
-                                        print('❌ Image load error for $imageUrl: $error');
+                                        print('❌ Money transfer image load error for $imageUrl: $error');
+                                        print('❌ Stack trace: $stackTrace');
                                         return Container(
                                           color: Colors.grey[200],
                                           child: Center(
@@ -1993,6 +2040,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                                 SizedBox(height: 4),
                                                 Text('โหลดไม่ได้', 
                                                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                         fontSize: 10, 
                                                         color: Colors.grey)),
                                               ],
@@ -2001,14 +2049,17 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                         );
                                       },
                                       loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
+                                        if (loadingProgress == null) {
+                                          print('✅ Money transfer image loaded: $imageUrl');
+                                          return child;
+                                        }
                                         return Container(
-                                          color: Colors.grey[100],
+                                          color: Colors.grey[200],
                                           child: Center(
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation<Color>(
-                                                  Color(0xFF34D396)),
+                                            child: SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(strokeWidth: 2),
                                             ),
                                           ),
                                         );
@@ -2043,6 +2094,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                     Text(
                       'รูปภาพการอนุมัติ:',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF25634B),
@@ -2074,14 +2126,15 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                 // ตรวจสอบว่า approvalImage เป็น full URL หรือไม่
                                 final approvalImageUrl = request.approvalImage!.startsWith('http') 
                                     ? request.approvalImage! 
-                                    : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${request.approvalImage}';
+                                    : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${request.approvalImage}';
                                 print('🖼️ Loading approval image: $approvalImageUrl');
                                 
                                 return Image.network(
                                   approvalImageUrl,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
-                                    print('❌ Approval image load error for $approvalImageUrl: $error');
+                                    print('❌ Money transfer approval image load error for $approvalImageUrl: $error');
+                                    print('❌ Stack trace: $stackTrace');
                                     return Container(
                                       color: Colors.grey[200],
                                       child: Center(
@@ -2093,6 +2146,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                             SizedBox(height: 8),
                                             Text('ไม่สามารถโหลดรูปภาพ',
                                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                     fontSize: 12,
                                                     color: Colors.grey)),
                                           ],
@@ -2100,16 +2154,15 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                       ),
                                     );
                                   },
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) {
+                                      print('✅ Money transfer approval image loaded: $approvalImageUrl');
+                                      return child;
+                                    }
                                     return Container(
-                                      color: Colors.grey[100],
+                                      color: Colors.grey[200],
                                       child: Center(
-                                        child: CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                              Color(0xFF34D396)),
-                                        ),
+                                        child: CircularProgressIndicator(),
                                       ),
                                     );
                                   },
@@ -2166,6 +2219,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           ),
                           child: Text('แก้ไข',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
@@ -2186,6 +2240,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         ),
                         child: Text('ลบ',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
@@ -2208,6 +2263,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                         ),
                         child: Text('ปิด',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
@@ -2239,6 +2295,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
             child: Text(
               "$label:",
               style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF25634B),
                 fontSize: 14,
@@ -2250,6 +2307,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
             child: Text(
               value,
               style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
                 fontSize: 14,
                 color: Colors.black87,
               ),

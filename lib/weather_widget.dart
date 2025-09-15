@@ -105,7 +105,8 @@ class _WeatherWidgetState extends State<WeatherWidget> {
           ? Center(
         child: Text(
           _errorMessage,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.white),
         ),
       )
           : Column(
@@ -114,6 +115,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
           Text(
             _currentDateTime,
             style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
               color: Colors.white,
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -123,6 +125,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
           Text(
             _currentAddress,
             style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -141,6 +144,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                     Text(
                       '${_weatherInfo!.temperature.toStringAsFixed(1)}°C',
                       style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
                         color: Colors.white,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -150,6 +154,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                     Text(
                       _weatherInfo!.description,
                       style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
                         color: Colors.white,
                         fontSize: 16,
                       ),
@@ -158,6 +163,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                     Text(
                       'ความชื้น: ${_weatherInfo!.humidity.toStringAsFixed(0)}%',
                       style: const TextStyle(
+                            fontFamily: 'NotoSansThai',
                         color: Colors.white,
                         fontSize: 14,
                       ),

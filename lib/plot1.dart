@@ -80,7 +80,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       print('🔄 Fetching owner data for worker: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${widget.userId}'),
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${widget.userId}'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -130,7 +130,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
 
       // ใช้ endpoint สำหรับดึงแปลงของ user
       final response = await http.get(
-        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$targetUserId'),
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$targetUserId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -157,7 +157,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
     }
   }
 
-  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -205,7 +205,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       return;
     }
 
-    final url = Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId');
+    final url = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId');
 
     final bodyData = {
       "plotName": plotName,
@@ -288,6 +288,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       appBar: AppBar(
         title: const Text('แปลงปลูก',
             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
               fontSize: 20,
               color: Color(0xFF25634B),
               fontWeight: FontWeight.w800,
@@ -410,7 +411,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                         Icon(Icons.add, color: Colors.white, size: 16),
                         SizedBox(width: 4),
                         Text('เพิ่มแปลง',
-                            style: TextStyle(color: Colors.white)),
+                            style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.white)),
                       ],
                     ),
                   ),
@@ -431,6 +433,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                   Text(
                     'กำลังโหลดข้อมูลแปลงปลูก...',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       color: Colors.grey[600],
                       fontSize: 16,
                     ),
@@ -596,6 +599,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                         const Text(
                           'กดเพื่อสร้างแปลง',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             fontSize: 18,
                             color: Color(0xFF25634B),
                             fontWeight: FontWeight.w800,
@@ -617,6 +621,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                       Text(
                         '${widget.farmerName ?? "ลูกไร่"} ยังไม่มีแปลงปลูก',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: 18,
                           color: Color(0xFF25634B),
                           fontWeight: FontWeight.w800,
@@ -654,6 +659,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                     child: Text(
                       'แปลงปลูกของ ${widget.farmerName!}',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF25634B),
@@ -845,6 +851,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                         child: Text(
                           plot['plotName'] ?? 'ไม่มีชื่อ',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             fontSize: width * 0.045,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF25624B),
@@ -931,6 +938,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                   Text(
                     '${plot['plantType']} • ${plot['soilType']}',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       fontSize: width * 0.035,
                       color: Colors.grey[600],
                     ),
@@ -947,6 +955,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                       Text(
                         plot['waterSource'] ?? '',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: width * 0.03,
                           color: Colors.grey[500],
                         ),
@@ -969,6 +978,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                             ? 'มีขอบเขตพื้นที่'
                             : 'จุดเดียว',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: width * 0.03,
                           color: plotPolygon.length >= 3
                               ? Color(0xFF34D396)
@@ -993,7 +1003,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
   Future<void> _deletePlotData(String plotId) async {
     try {
       final response = await http.delete(
-        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId'),
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -1044,6 +1054,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               Text(
                 'ยืนยันการลบ',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1052,13 +1063,15 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           ),
           content: Text(
             'คุณต้องการลบแปลงปลูก "${plot['plotName']}" หรือไม่?\n\nการลบแล้วจะไม่สามารถกู้คืนได้',
-            style: TextStyle(fontSize: width * 0.04),
+            style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: width * 0.04),
           ),
           actions: <Widget>[
             TextButton(
               child: Text(
                 'ยกเลิก',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.grey,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1071,6 +1084,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               child: Text(
                 'ลบ',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.red,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1117,6 +1131,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               Text(
                 'ลบสำเร็จ',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.green,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1125,13 +1140,15 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           ),
           content: Text(
             'แปลงปลูกถูกลบเรียบร้อยแล้ว',
-            style: TextStyle(fontSize: width * 0.04),
+            style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: width * 0.04),
           ),
           actions: <Widget>[
             TextButton(
               child: Text(
                 'ปิด',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.green,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1321,7 +1338,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
     print("📤 =============================== ");
 
     final response = await http.post(
-      Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/plots'),
+      Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "userId": widget.userId,
@@ -1406,6 +1423,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                     Text(
                       'พืชไร่ชนิดที่ปลูก',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: width * 0.05,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF25624B),
@@ -1518,6 +1536,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                     Text(
                       'แหล่งน้ำที่ใช้ปลูก',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: width * 0.05,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF25624B),
@@ -1635,6 +1654,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                     Text(
                       'ดินที่ใช้ปลูก',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: width * 0.05,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF25624B),
@@ -1744,6 +1764,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               Text(
                 'บันทึกสำเร็จ',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Color(0xFF25624B),
                   fontWeight: FontWeight.bold,
                 ),
@@ -1752,13 +1773,15 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           ),
           content: Text(
             'แปลงปลูก "$plotName" ถูกบันทึกเรียบร้อยแล้ว',
-            style: TextStyle(fontSize: width * 0.04),
+            style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: width * 0.04),
           ),
           actions: <Widget>[
             TextButton(
               child: Text(
                 'ปิด',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Color(0xFF34D396),
                   fontWeight: FontWeight.w600,
                 ),
@@ -1808,6 +1831,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                   Text(
                     'แก้ไขชื่อแปลงปลูก',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       fontSize: width * 0.05,
                       fontWeight: FontWeight.bold,
                       color: Colors.orange,
@@ -1841,6 +1865,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                               'แก้ไขชื่อแปลงปลูกของคุณ',
                               textAlign: TextAlign.center,
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontSize: width * 0.035,
                                 color: Colors.grey[600],
                               ),
@@ -1861,6 +1886,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                                 decoration: InputDecoration(
                                   hintText: 'เช่น ไร่อ้อย',
                                   hintStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Colors.grey[400],
                                     fontSize: width * 0.035,
                                   ),
@@ -1876,6 +1902,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                                   ),
                                 ),
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   fontSize: width * 0.035,
                                   color: Colors.black87,
                                 ),
@@ -1998,7 +2025,8 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                                 SnackBar(
                                   content: Text(
                                     'กรุณาใส่ชื่อแปลงปลูก',
-                                    style: TextStyle(fontSize: width * 0.035),
+                                    style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: width * 0.035),
                                   ),
                                   backgroundColor: Colors.orange,
                                   behavior: SnackBarBehavior.floating,
@@ -2064,6 +2092,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                     Text(
                       'แก้ไขพืชไร่ชนิดที่ปลูก',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: width * 0.05,
                         fontWeight: FontWeight.bold,
                         color: Colors.orange,
@@ -2175,6 +2204,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                     Text(
                       'แก้ไขแหล่งน้ำที่ใช้ปลูก',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: width * 0.05,
                         fontWeight: FontWeight.bold,
                         color: Colors.orange,
@@ -2292,6 +2322,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
                     Text(
                       'แก้ไขดินที่ใช้ปลูก',
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                         fontSize: width * 0.05,
                         fontWeight: FontWeight.bold,
                         color: Colors.orange,
@@ -2400,6 +2431,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               Text(
                 'อัพเดทสำเร็จ',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.orange,
                   fontWeight: FontWeight.bold,
                 ),
@@ -2408,13 +2440,15 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           ),
           content: Text(
             'แปลงปลูก "$plotName" ถูกอัพเดทเรียบร้อยแล้ว',
-            style: TextStyle(fontSize: width * 0.04),
+            style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: width * 0.04),
           ),
           actions: <Widget>[
             TextButton(
               child: Text(
                 'ปิด',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.orange,
                   fontWeight: FontWeight.w600,
                 ),
@@ -2459,6 +2493,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
               Text(
                 'เกิดข้อผิดพลาด',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
                 ),
@@ -2467,13 +2502,15 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           ),
           content: Text(
             message,
-            style: TextStyle(fontSize: width * 0.04),
+            style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: width * 0.04),
           ),
           actions: <Widget>[
             TextButton(
               child: Text(
                 'ปิด',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.red,
                   fontWeight: FontWeight.w600,
                 ),
@@ -2543,6 +2580,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
           Text(
             label,
             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
               fontSize: width * 0.035,
               fontWeight: FontWeight.bold,
               color: Colors.black,
@@ -2595,6 +2633,7 @@ class PlotDialogs {
                   Text(
                     'ตั้งชื่อแปลงปลูก',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       fontSize: width * 0.05,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF25624B),
@@ -2626,6 +2665,7 @@ class PlotDialogs {
                               'กรุณาใส่ชื่อแปลงปลูกของคุณ',
                               textAlign: TextAlign.center,
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontSize: width * 0.035,
                                 color: Colors.grey[600],
                               ),
@@ -2645,6 +2685,7 @@ class PlotDialogs {
                                 decoration: InputDecoration(
                                   hintText: 'เช่น แปลงข้าวโพดหลังบ้าน',
                                   hintStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Colors.grey[400],
                                     fontSize: width * 0.035,
                                   ),
@@ -2660,6 +2701,7 @@ class PlotDialogs {
                                   ),
                                 ),
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   fontSize: width * 0.035,
                                   color: Colors.black87,
                                 ),
@@ -2699,7 +2741,8 @@ class PlotDialogs {
                                 SnackBar(
                                   content: Text(
                                     'กรุณาใส่ชื่อแปลงปลูก',
-                                    style: TextStyle(fontSize: width * 0.035),
+                                    style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: width * 0.035),
                                   ),
                                   backgroundColor: Colors.orange,
                                   behavior: SnackBarBehavior.floating,

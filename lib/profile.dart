@@ -4,6 +4,18 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'main.dart';
+
+// ฟังก์ชันตรวจสอบสถานะของรูปภาพ
+Future<bool> _checkImageUrl(String url) async {
+  try {
+    final response = await http.head(Uri.parse(url));
+    return response.statusCode == 200;
+  } catch (e) {
+    print('❌ Error checking image URL: $e');
+    return false;
+  }
+}
 
 Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
     {VoidCallback? refreshUser}) async {
@@ -72,7 +84,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                                     ? CircleAvatar(
                                         radius: 30,
                                         backgroundImage: NetworkImage(
-                                            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${user['profileImage']}'),
+                                            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${user['profileImage']}'),
                                         backgroundColor: Colors.white,
                                       )
                                     : CircleAvatar(
@@ -93,6 +105,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                                 Text(
                                   'แก้ไขโปรไฟล์',
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Colors.white,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -101,6 +114,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                                 Text(
                                   'ข้อมูลส่วนตัว',
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Colors.white70,
                                     fontSize: 14,
                                   ),
@@ -162,6 +176,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                             child: Text(
                               'ยกเลิก',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -197,7 +212,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                                 
                                 // อัปเดตข้อมูลและอัปโหลดรูปไป backend
                                 var uri = Uri.parse(
-                                    'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/updateuser/${user['_id']}');
+                                    'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/updateuser/${user['_id']}');
                                 var request = http.MultipartRequest('PUT', uri);
                                 request.fields['name'] = nameController.text;
                                 request.fields['email'] = emailController.text;
@@ -284,6 +299,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                             child: Text(
                               'บันทึก',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -364,6 +380,16 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                               profileImage.toString().isNotEmpty;
                           print('🔍 Profile image condition: $hasImage');
                           print('🔍 Using image: $profileImage');
+                          
+                          // ตรวจสอบสถานะของรูปภาพถ้าเป็น Cloudinary URL
+                          if (hasImage && profileImage.toString().contains('res.cloudinary.com')) {
+                            _checkImageUrl(profileImage.toString()).then((isValid) {
+                              if (!isValid) {
+                                print('⚠️ Cloudinary image URL is not accessible: $profileImage');
+                              }
+                            });
+                          }
+                          
                           return hasImage;
                         })()
                             ? ClipOval(
@@ -380,12 +406,16 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                                   child: Image.network(
                                     (() {
                                       final imageUrl = user['profileImage'] ?? user['imageprofile'];
+                                      print('🔍 Profile image URL: $imageUrl');
                                       // ตรวจสอบว่าเป็น Cloudinary URL หรือไม่
                                       if (imageUrl.toString().startsWith('http')) {
+                                        print('✅ Using Cloudinary URL: $imageUrl');
                                         return imageUrl.toString();
                                       }
                                       // ถ้าไม่ใช่ ให้ใช้ local uploads
-                                      return 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
+                                      final localUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
+                                      print('✅ Using local URL: $localUrl');
+                                      return localUrl;
                                     })(),
                                     width: 60,
                                     height: 60,
@@ -393,7 +423,36 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                                     errorBuilder: (context, error, stackTrace) {
                                       final imageUrl = user['profileImage'] ?? user['imageprofile'];
                                       print('❌ Error loading profile image: $error');
-                                      print('❌ URL: $imageUrl');
+                                      print('❌ Stack trace: $stackTrace');
+                                      print('❌ Failed URL: $imageUrl');
+                                      
+                                      // ลองใช้ fallback URL ถ้าเป็น Cloudinary URL
+                                      if (imageUrl.toString().contains('res.cloudinary.com')) {
+                                        print('🔄 Trying fallback for Cloudinary URL...');
+                                        return Image.network(
+                                          imageUrl.toString(),
+                                          width: 60,
+                                          height: 60,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error2, stackTrace2) {
+                                            print('❌ Fallback also failed: $error2');
+                                            return Container(
+                                              width: 60,
+                                              height: 60,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[200],
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.person,
+                                                size: 35,
+                                                color: Color(0xFF34D396),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      }
+                                      
                                       return Container(
                                         width: 60,
                                         height: 60,
@@ -453,6 +512,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                               Text(
                                 'โปรไฟล์ของฉัน',
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -461,6 +521,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                               Text(
                                 'ข้อมูลส่วนตัว',
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   color: Colors.white70,
                                   fontSize: 14,
                                 ),
@@ -604,7 +665,8 @@ void _logout(BuildContext context) {
             Navigator.of(context).popUntil((route) => route.isFirst);
             // หรือ Navigator.pushReplacementNamed(context, '/login');
           },
-          child: Text('ออกจากระบบ', style: TextStyle(color: Colors.red)),
+          child: Text('ออกจากระบบ', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.red)),
         ),
       ],
     ),
@@ -663,6 +725,7 @@ void showRelationDialog(context, user) {
                               Text(
                                 'เชื่อมความสัมพันธ์',
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -671,6 +734,7 @@ void showRelationDialog(context, user) {
                               Text(
                                 'สร้างหรือเชื่อมต่อรหัสความสัมพันธ์',
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   color: Colors.white70,
                                   fontSize: 14,
                                 ),
@@ -726,6 +790,7 @@ void showRelationDialog(context, user) {
                                             Text(
                                               'เลือกประเภทการสร้างรหัส',
                                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 20),
                                             ),
@@ -824,7 +889,8 @@ void showRelationDialog(context, user) {
                                               ),
                                               child: Text('ปิด',
                                                   style:
-                                                      TextStyle(fontSize: 16)),
+                                                      TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 16)),
                                             ),
                                           ],
                                         ),
@@ -846,6 +912,7 @@ void showRelationDialog(context, user) {
                           child: Text(
                             'สร้างการเชื่อมต่อ',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -900,6 +967,7 @@ void showRelationDialog(context, user) {
                                                 Text(
                                                   'กรอกรหัสการเชื่อม',
                                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       fontSize: 20),
@@ -956,8 +1024,6 @@ void showRelationDialog(context, user) {
                                                     Expanded(
                                                       child: ElevatedButton(
                                                         onPressed: () async {
-                                                          Navigator.of(context)
-                                                              .pop();
                                                           await connectRelationCode(
                                                               context,
                                                               codeController
@@ -984,6 +1050,7 @@ void showRelationDialog(context, user) {
                                                         ),
                                                         child: Text('เชื่อมต่อ',
                                                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                                 fontSize: 16)),
                                                       ),
                                                     ),
@@ -1013,6 +1080,7 @@ void showRelationDialog(context, user) {
                                                         ),
                                                         child: Text('ปิด',
                                                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                                 fontSize: 16)),
                                                       ),
                                                     ),
@@ -1040,6 +1108,7 @@ void showRelationDialog(context, user) {
                           child: Text(
                             'กรอกรหัสการเชื่อม',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -1067,6 +1136,7 @@ void showRelationDialog(context, user) {
                           child: Text(
                             'ปิด',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -1088,8 +1158,8 @@ void showRelationDialog(context, user) {
 Future<void> _generateRelationCode(
     BuildContext context, String type, String ownerId) async {
   String apiUrl = type == 'worker'
-      ? 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/create-worker-code'
-      : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/create-farmer-code';
+      ? 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/create-worker-code'
+      : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/create-farmer-code';
   
   // แสดง loading dialog
   showDialog(
@@ -1156,6 +1226,7 @@ Future<void> _generateRelationCode(
                     child: SelectableText(
                       code,
                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.green),
@@ -1164,7 +1235,8 @@ Future<void> _generateRelationCode(
                   SizedBox(height: 8),
                   Text(
                     'หมดอายุ: ${data['expiresAt'] != null ? DateTime.parse(data['expiresAt']).toString().substring(0, 19) : 'ไม่ระบุ'}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -1229,8 +1301,8 @@ Future<void> _generateRelationCode(
 Future<void> connectRelationCode(BuildContext context, String code, String type,
     Map<String, dynamic> user) async {
   String apiUrl = type == 'worker'
-      ? 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/add-worker'
-      : 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/add-farmer';
+      ? 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/add-worker'
+      : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/add-farmer';
   
   // แสดง loading dialog
   showDialog(
@@ -1279,6 +1351,9 @@ Future<void> connectRelationCode(BuildContext context, String code, String type,
       // ใช้ SchedulerBinding เพื่อให้แน่ใจว่า context ยังใช้งานได้
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) {
+          // ปิด dialog กรอกรหัสก่อน
+          Navigator.of(context).pop();
+          
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -1308,7 +1383,8 @@ Future<void> connectRelationCode(BuildContext context, String code, String type,
                         Expanded(
                           child: Text(
                             'ตอนนี้คุณสามารถเข้าถึงข้อมูลของเจ้าของได้แล้ว',
-                            style: TextStyle(fontSize: 12, color: Colors.green[700]),
+                            style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 12, color: Colors.green[700]),
                           ),
                         ),
                       ],
@@ -1318,7 +1394,41 @@ Future<void> connectRelationCode(BuildContext context, String code, String type,
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // ปิด dialog
+                    
+                    // แสดง popup แจ้งเตือนว่าต้องเข้าสู่ระบบใหม่
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Row(
+                          children: [
+                            Icon(Icons.info, color: Colors.blue, size: 28),
+                            SizedBox(width: 10),
+                            Text('แจ้งเตือน'),
+                          ],
+                        ),
+                        content: Text('การเชื่อมต่อสำเร็จแล้ว\nจำเป็นต้องเข้าสู่ระบบใหม่เพื่อให้เมนูอัพเดต'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด popup
+                              // ไปหน้า login
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(builder: (context) => LoginScreen()),
+                                (Route<dynamic> route) => false,
+                              );
+                            },
+                            child: Text('เข้าสู่ระบบใหม่'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                   child: Text('ตกลง'),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.green,
@@ -1340,6 +1450,9 @@ Future<void> connectRelationCode(BuildContext context, String code, String type,
       // ใช้ SchedulerBinding เพื่อให้แน่ใจว่า context ยังใช้งานได้
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) {
+          // ปิด dialog กรอกรหัสก่อน
+          Navigator.of(context).pop();
+          
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -1380,6 +1493,9 @@ Future<void> connectRelationCode(BuildContext context, String code, String type,
     // ใช้ SchedulerBinding เพื่อให้แน่ใจว่า context ยังใช้งานได้
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (context.mounted) {
+        // ปิด dialog กรอกรหัสก่อน
+        Navigator.of(context).pop();
+        
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -1471,6 +1587,7 @@ Widget _buildInfoCard({
               Text(
                 title,
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   fontSize: 12,
                   color: Colors.grey.shade600,
                   fontWeight: FontWeight.w500,
@@ -1480,6 +1597,7 @@ Widget _buildInfoCard({
               Text(
                 value,
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey.shade800,

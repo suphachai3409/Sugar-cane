@@ -63,7 +63,8 @@ class FullScreenImageViewer extends StatelessWidget {
             child: Center(
               child: Text(
                 '${initialIndex + 1}/${imagePaths.length}',
-                style: TextStyle(color: Colors.white, fontSize: 18),
+                style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.white, fontSize: 18),
               ),
             ),
           ),
@@ -84,6 +85,8 @@ class FullScreenImageViewer extends StatelessWidget {
                           imagePaths[index],
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
+                            print('❌ Equipment image load error: $error');
+                            print('❌ Failed URL: ${imagePaths[index]}');
                             return Container(
                               color: Colors.grey[200],
                               child: Center(
@@ -92,9 +95,22 @@ class FullScreenImageViewer extends StatelessWidget {
                                   children: [
                                     Icon(Icons.broken_image, color: Colors.grey, size: 60),
                                     SizedBox(height: 16),
-                                    Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                                    Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey, fontSize: 16)),
                                   ],
                                 ),
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              print('✅ Equipment image loaded: ${imagePaths[index]}');
+                              return child;
+                            }
+                            return Container(
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: CircularProgressIndicator(),
                               ),
                             );
                           },
@@ -111,7 +127,8 @@ class FullScreenImageViewer extends StatelessWidget {
                                   children: [
                                     Icon(Icons.broken_image, color: Colors.grey, size: 60),
                                     SizedBox(height: 16),
-                                    Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                                    Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey, fontSize: 16)),
                                   ],
                                 ),
                               ),
@@ -226,7 +243,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
   bool showForm = false;
   int? selectedRequestIndex;
 
-  final String apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/equipment';
+  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/equipment';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -259,7 +276,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
 
     try {
       final response =
-          await http.get(Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser'));
+          await http.get(Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser'));
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = jsonDecode(response.body);
@@ -415,6 +432,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
               Text(
                 'กำลังโหลดข้อมูลอุปกรณ์...',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   color: Colors.grey[600],
                   fontSize: 16,
                 ),
@@ -470,6 +488,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
               const Text(
                 'กดเพื่อเพิ่มอุปกรณ์',
                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                   fontSize: 18,
                   color: Color(0xFF25634B),
                   fontWeight: FontWeight.w800,
@@ -645,7 +664,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
   // ฟังก์ชันอัพโหลดรูปภาพไปยัง server
   Future<List<String>> _uploadImages(List<String> imagePaths) async {
     List<String> imageUrls = [];
-    var uri = Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/upload');
+    var uri = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/upload');
 
     for (var imagePath in imagePaths) {
       try {
@@ -815,14 +834,16 @@ class _EquipmentAppState extends State<EquipmentApp> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('ยกเลิก', style: TextStyle(color: Colors.grey)),
+              child: const Text('ยกเลิก', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey)),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 deleteEquipmentRequest(id);
               },
-              child: const Text('ลบ', style: TextStyle(color: Colors.red)),
+              child: const Text('ลบ', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.red)),
             ),
           ],
         );
@@ -854,6 +875,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
         appBar: AppBar(
           title: const Text('อุปกรณ์',
               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                 fontSize: 20,
                 color: Color(0xFF25634B),
                 fontWeight: FontWeight.w800,
@@ -914,6 +936,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                       Text(
                         'ยังไม่มีอุปกรณ์',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF2D3748),
@@ -923,6 +946,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                       Text(
                         'เริ่มเพิ่มอุปกรณ์แรกของคุณ',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: 12,
                           color: Color(0xFF718096),
                         ),
@@ -1020,6 +1044,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                           Text(
                                             request.equipmentName,
                                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                               fontSize: 15,
                                               fontWeight: FontWeight.w600,
                                               color: Color(0xFF2D3748),
@@ -1048,6 +1073,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                                 child: Text(
                                                   formattedDate,
                                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.w500,
                                                     color: isCurrentUser
@@ -1074,6 +1100,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                                   child: Text(
                                                     'ผู้ใช้: ${request.name}',
                                                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                       fontSize: 10,
                                                       fontWeight:
                                                           FontWeight.w500,
@@ -1121,6 +1148,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                               child: Text(
                                                 request.name,
                                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w500,
                                                   color: Color(0xFF2D3748),
@@ -1151,6 +1179,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                           Text(
                                             request.phone,
                                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                               fontSize: 12,
                                               fontWeight: FontWeight.w500,
                                               color: Color(0xFF2D3748),
@@ -1185,6 +1214,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                       Text(
                                         '${request.imagePaths.length} รูป',
                                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                           fontSize: 11,
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF4A5568),
@@ -1214,11 +1244,31 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                                     height: 60,
                                                     fit: BoxFit.cover,
                                                     errorBuilder: (context, error, stackTrace) {
+                                                      print('❌ Equipment list image load error: $error');
+                                                      print('❌ Failed URL: ${request.imagePaths[imgIndex]}');
                                                       return Container(
                                                         width: 60,
                                                         height: 60,
                                                         color: Colors.grey[200],
                                                         child: Icon(Icons.broken_image, color: Colors.grey),
+                                                      );
+                                                    },
+                                                    loadingBuilder: (context, child, loadingProgress) {
+                                                      if (loadingProgress == null) {
+                                                        print('✅ Equipment list image loaded: ${request.imagePaths[imgIndex]}');
+                                                        return child;
+                                                      }
+                                                      return Container(
+                                                        width: 60,
+                                                        height: 60,
+                                                        color: Colors.grey[200],
+                                                        child: Center(
+                                                          child: SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                                          ),
+                                                        ),
                                                       );
                                                     },
                                                   )
@@ -1247,6 +1297,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                       child: Text(
                                         '+${request.imagePaths.length - 3} รูปเพิ่ม',
                                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                           fontSize: 10,
                                           color: Color(0xFF718096),
                                         ),
@@ -1301,6 +1352,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                             Text(
                                               'ดูรายละเอียด',
                                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w600,
                                                 color: isSelected
@@ -1357,6 +1409,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                       Text(
                         'เพิ่มอุปกรณ์ใหม่',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -1413,6 +1466,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                 ? 'แก้ไขอุปกรณ์'
                                 : 'เพิ่มอุปกรณ์ใหม่',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -1483,6 +1537,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                             Text(
                               'วันที่*',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 color: Color(0xFF30C39E),
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -1494,7 +1549,8 @@ class _EquipmentAppState extends State<EquipmentApp> {
                               readOnly: true,
                               decoration: InputDecoration(
                                 hintText: 'เลือกวันที่',
-                                hintStyle: TextStyle(color: Colors.grey),
+                                hintStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide: BorderSide(color: Colors.grey),
@@ -1520,6 +1576,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                             Text(
                               'รูปภาพอุปกรณ์* (สูงสุด 5 รูป)',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 color: Color(0xFF30C39E),
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -1529,6 +1586,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                             Text(
                               'เพิ่มรูปภาพอุปกรณ์ที่ต้องการแสดง',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontSize: 12,
                                 color: Colors.grey,
                               ),
@@ -1616,7 +1674,8 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                     icon: Icon(Icons.add_a_photo, size: 20),
                                     label: Text(
                                       'เพิ่มรูปภาพ',
-                                      style: TextStyle(fontSize: 14),
+                                      style: TextStyle(
+                            fontFamily: 'NotoSansThai',fontSize: 14),
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor:
@@ -1640,6 +1699,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                 child: Text(
                                   _imagesError!,
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                       color: Colors.red, fontSize: 12),
                                 ),
                               ),
@@ -1649,6 +1709,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                             Text(
                               '* หมายถึงข้อมูลที่จำเป็นต้องกรอก',
                               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                 fontSize: 12,
                                 color: Colors.grey,
                                 fontStyle: FontStyle.italic,
@@ -1665,6 +1726,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                   child: Text(
                                     'ยกเลิก',
                                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                       color: Color(0xFF30C39E),
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -1692,6 +1754,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                     child: Text(
                                       'บันทึก',
                                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                         color: Colors.white,
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -1731,6 +1794,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
         Text(
           label,
           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
             color: Color(0xFF30C39E),
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -1742,7 +1806,8 @@ class _EquipmentAppState extends State<EquipmentApp> {
           readOnly: isReadOnly,
           decoration: InputDecoration(
             hintText: label,
-            hintStyle: TextStyle(color: Colors.grey),
+            hintStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: Colors.grey),
@@ -1774,6 +1839,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
         Text(
           label,
           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
             color: Color(0xFF30C39E),
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -1785,7 +1851,8 @@ class _EquipmentAppState extends State<EquipmentApp> {
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: Colors.grey),
+            hintStyle: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: Colors.grey),
@@ -1828,6 +1895,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                       TextSpan(
                         text: "โดย  ",
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: 16,
                           color: Colors.grey[600],
                           fontStyle: FontStyle.italic,
@@ -1836,6 +1904,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                       TextSpan(
                         text: request.name,
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           fontSize: 16,
                           color: Color(0xFF30C39E),
                           fontWeight: FontWeight.bold,
@@ -1880,6 +1949,8 @@ class _EquipmentAppState extends State<EquipmentApp> {
                               request.imagePaths[index],
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
+                                print('❌ Equipment gallery image load error: $error');
+                                print('❌ Failed URL: ${request.imagePaths[index]}');
                                 return Container(
                                   color: Colors.grey[200],
                                   child: Center(
@@ -1888,9 +1959,22 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                       children: [
                                         Icon(Icons.broken_image, color: Colors.grey, size: 40),
                                         SizedBox(height: 8),
-                                        Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(color: Colors.grey)),
+                                        Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey)),
                                       ],
                                     ),
+                                  ),
+                                );
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) {
+                                  print('✅ Equipment gallery image loaded: ${request.imagePaths[index]}');
+                                  return child;
+                                }
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
                                   ),
                                 );
                               },
@@ -1907,7 +1991,8 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                       children: [
                                         Icon(Icons.broken_image, color: Colors.grey, size: 40),
                                         SizedBox(height: 8),
-                                        Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(color: Colors.grey)),
+                                        Text('ไม่สามารถโหลดรูปภาพ', style: TextStyle(
+                            fontFamily: 'NotoSansThai',color: Colors.grey)),
                                       ],
                                     ),
                                   ),
@@ -1931,6 +2016,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                 child: Text(
                   '${request.imagePaths.length} รูปภาพ',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     color: Color(0xFF25634B),
                     fontSize: 14,
                   ),
@@ -1993,6 +2079,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                       Text(
                         'แก้ไข',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold),
@@ -2021,6 +2108,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
                         Text(
                           'ลบ',
                           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold),
@@ -2048,6 +2136,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
             Text(
               label,
               style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                 fontSize: 16,
                 color: Colors.grey[600],
                 fontWeight: FontWeight.w500,
@@ -2061,6 +2150,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
           child: Text(
             value,
             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
               fontSize: 16,
               color: Color(0xFF25634B),
               fontWeight: FontWeight.w600,

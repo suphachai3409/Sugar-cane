@@ -41,7 +41,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/farmer'),
+            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/farmer'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -86,7 +86,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
     });
 
     try {
-      final apiUrl = 'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/pulluser';
+      final apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -128,7 +128,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
       print('🔄 กำลังดึงข้อมูลลูกไร่สำหรับ ownerId: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/api/profile/farmers/${widget.userId}'),
+        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/farmers/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.userId}',
@@ -199,6 +199,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                 Text(
                   'รายละเอียดลูกไร่',
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF25634B),
@@ -208,6 +209,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                 Text(
                   farmerName,
                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                     fontSize: 18,
                     color: Colors.grey[700],
                   ),
@@ -255,6 +257,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                   Text(
                                     'ดูแปลงปลูก',
                                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                       color: Color(0xFF34D396),
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
@@ -301,6 +304,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                       Text(
                                         'คำขอเบิกเงิน',
                                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                           color: Color(0xFF34D396),
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
@@ -325,6 +329,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                 child: Text(
                                   requestCount.toString(),
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     color: Colors.white,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -345,6 +350,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                   child: Text(
                     'ปิด',
                     style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                       color: Colors.grey[600],
                       fontSize: 16,
                     ),
@@ -505,6 +511,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
         title: Text(
           'ลูกไร่',
           style: TextStyle(
+                            fontFamily: 'NotoSansThai',
             color: Color(0xFF25634B),
             fontWeight: FontWeight.bold,
             fontSize: 20,
@@ -533,6 +540,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                       Text(
                         'กำลังโหลดข้อมูลลูกไร่...',
                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                           color: Colors.grey[600],
                           fontSize: 16,
                         ),
@@ -554,6 +562,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                           Text(
                             'เกิดข้อผิดพลาด',
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.red[700],
@@ -564,6 +573,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                             errorMessage!,
                             textAlign: TextAlign.center,
                             style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                               color: Colors.grey[600],
                             ),
                           ),
@@ -593,6 +603,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                               Text(
                                 'ยังไม่มีลูกไร่',
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey[600],
@@ -603,6 +614,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                 'สร้างรหัสความสัมพันธ์เพื่อเพิ่มลูกไร่',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                   color: Colors.grey[500],
                                 ),
                               ),
@@ -657,14 +669,25 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                           borderRadius:
                                               BorderRadius.circular(30),
                                           child: Image.network(
-                                            'https://sugarcane-czzs8k3ah-suphachais-projects-d3438f04.vercel.app/uploads/${farmer['userId']['profileImage']}',
+                                            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${farmer['userId']['profileImage']}',
                                             fit: BoxFit.cover,
                                             errorBuilder:
                                                 (context, error, stackTrace) {
+                                              print('❌ Farmer profile image load error: $error');
+                                              print('❌ Failed URL: https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${farmer['userId']['profileImage']}');
                                               return Icon(
                                                 Icons.engineering,
                                                 color: Color(0xFF34D396),
                                                 size: 30,
+                                              );
+                                            },
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                print('✅ Farmer profile image loaded: ${farmer['userId']['profileImage']}');
+                                                return child;
+                                              }
+                                              return Center(
+                                                child: CircularProgressIndicator(),
                                               );
                                             },
                                           ),
@@ -680,6 +703,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                       farmer['name'] ??
                                       'ไม่มีชื่อ',
                                   style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                     color: Color(0xFF25634B),
@@ -692,6 +716,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                     Text(
                                       'เบอร์โทร: ${farmer['userId']?['number'] ?? 'ไม่มีข้อมูล'}',
                                       style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                         color: Colors.grey[600],
                                         fontSize: 14,
                                       ),
@@ -701,6 +726,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                       Text(
                                         'อีเมล: ${farmer['userId']['email']}',
                                         style: TextStyle(
+                            fontFamily: 'NotoSansThai',
                                           color: Colors.grey[600],
                                           fontSize: 14,
                                         ),

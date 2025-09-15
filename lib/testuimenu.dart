@@ -91,7 +91,7 @@ class ResponsiveHomeScreen extends StatelessWidget {
                 style: TextStyle(
                   color: Color(0xFF25624B),
                   fontSize: width * 0.05, // 5% ของความกว้างหน้าจอ
-                  fontFamily: 'Roboto',
+                  fontFamily: 'NotoSansThai',
                   fontWeight: FontWeight.w500,
                 ),
               ),
