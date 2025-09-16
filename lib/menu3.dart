@@ -83,7 +83,7 @@ class Menu3Screen extends StatefulWidget {
 }
 
 class _Menu3ScreenState extends State<Menu3Screen> {
-  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -103,7 +103,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
       // ใช้ ownerId ที่ดึงมาจาก _fetchOwnerData
       if (_ownerId != null) {
         final response = await http.get(
-          Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$_ownerId'),
+          Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/$_ownerId'),
           headers: {"Content-Type": "application/json"},
         );
 
@@ -135,7 +135,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
   Future<void> _fetchOwnerData() async {
     try {
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${widget.userId}'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${widget.userId}'),
       );
 
       if (response.statusCode == 200) {
@@ -157,7 +157,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
 
     try {
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/count/$_ownerId'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/count/$_ownerId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -213,7 +213,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/worker-tasks/${widget.userId}'),
+            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/worker-tasks/${widget.userId}'),
       );
       if (response.statusCode == 200) {
         final tasks = jsonDecode(response.body);
@@ -283,6 +283,28 @@ class _Menu3ScreenState extends State<Menu3Screen> {
                     fontSize: width * 0.06, // 5% ของความกว้างหน้าจอ
                     fontFamily: 'NotoSansThai',
                     fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(1, 1),
+                        blurRadius: 2,
+                        color: Colors.white,
+                      ),
+                      Shadow(
+                        offset: Offset(-1, -1),
+                        blurRadius: 2,
+                        color: Colors.white,
+                      ),
+                      Shadow(
+                        offset: Offset(1, -1),
+                        blurRadius: 2,
+                        color: Colors.white,
+                      ),
+                      Shadow(
+                        offset: Offset(-1, 1),
+                        blurRadius: 2,
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -299,7 +321,7 @@ class _Menu3ScreenState extends State<Menu3Screen> {
                   try {
                     final response = await http.get(
                       Uri.parse(
-                          'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/worker-info/${widget.userId}'),
+                          'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/worker-info/${widget.userId}'),
                       headers: {"Content-Type": "application/json"},
                     );
 

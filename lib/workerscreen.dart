@@ -27,6 +27,9 @@ class _WorkerScreenState extends State<WorkerScreen> {
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoadingUser = false;
+  
+  // เพิ่มตัวแปรสำหรับ notification badge
+  Map<String, int> workerNotifications = {};
 
   @override
   void initState() {
@@ -34,6 +37,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     fetchWorkers();
     _fetchCashAdvanceCounts();
     fetchUserData();
+    _fetchWorkerNotifications();
   }
 
   Future<void> fetchUserData() async {
@@ -42,7 +46,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     });
 
     try {
-      final apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
+      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -77,7 +81,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker'),
+            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -87,7 +91,9 @@ class _WorkerScreenState extends State<WorkerScreen> {
 
         if (data['success'] == true && data['requests'] != null) {
           for (var request in data['requests']) {
-            String workerId = request['userId'];
+            String workerId = request['userId'] is String 
+                ? request['userId'] 
+                : request['userId']['_id'];
             counts[workerId] = (counts[workerId] ?? 0) + 1;
           }
         }
@@ -99,6 +105,61 @@ class _WorkerScreenState extends State<WorkerScreen> {
     } catch (e) {
       print('Error fetching cash advance counts: $e');
     }
+  }
+
+  // ฟังก์ชันดึงข้อมูลการแจ้งเตือนของคนงาน
+  Future<void> _fetchWorkerNotifications() async {
+    try {
+      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/worker-notifications/${widget.userId}';
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success']) {
+          Map<String, int> notifications = {};
+          for (var notification in data['notifications']) {
+            notifications[notification['workerId']] = notification['notificationCount'];
+          }
+          setState(() {
+            workerNotifications = notifications;
+          });
+          print('🔔 Worker notifications loaded: $workerNotifications');
+        }
+      }
+    } catch (e) {
+      print('Error fetching worker notifications: $e');
+    }
+  }
+
+  // ฟังก์ชันดึงข้อมูลการขอเบิกเงินล่วงหน้าของคนงานแต่ละคน
+  Future<List<Map<String, dynamic>>> _fetchWorkerCashAdvanceRequests(String workerId) async {
+    try {
+      print('🔍 Fetching cash advance requests for workerId: $workerId');
+      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker';
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('📥 Cash advance response: ${data['requests']?.length ?? 0} requests');
+        
+        if (data['requests'] != null) {
+          List<Map<String, dynamic>> requests = List<Map<String, dynamic>>.from(data['requests']);
+          // กรองเฉพาะคำขอของคนงานนี้ที่ยังไม่ได้อนุมัติ
+          List<Map<String, dynamic>> filteredRequests = requests.where((request) {
+            String requestUserId = request['userId'] is String 
+                ? request['userId'] 
+                : request['userId']['_id'];
+            return requestUserId == workerId && request['status'] == 'pending';
+          }).toList();
+          
+          print('✅ Filtered requests for worker $workerId: ${filteredRequests.length}');
+          return filteredRequests;
+        }
+      }
+    } catch (e) {
+      print('Error fetching worker cash advance requests: $e');
+    }
+    return [];
   }
 
   // ฟังก์ชันดูงานของคนงาน
@@ -135,6 +196,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     await Future.wait([
       fetchWorkers(),
       _fetchCashAdvanceCounts(),
+      _fetchWorkerNotifications(),
     ]);
   }
 
@@ -148,7 +210,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
       print('🔄 กำลังดึงข้อมูลคนงานสำหรับ ownerId: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/workers/${widget.userId}'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/workers/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.userId}',
@@ -632,21 +694,23 @@ class _WorkerScreenState extends State<WorkerScreen> {
                             final workerName = worker['userId']?['name'] ?? worker['name'] ?? 'ไม่มีชื่อ';
                             final requestCount = cashAdvanceCounts[workerId] ?? 0;
 
-                            return Container(
-                              margin: EdgeInsets.only(bottom: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.1),
-                                    spreadRadius: 1,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2),
+                            return Stack(
+                              children: [
+                                Container(
+                                  margin: EdgeInsets.only(bottom: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.1),
+                                        spreadRadius: 1,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: ListTile(
+                                  child: ListTile(
                                 contentPadding: EdgeInsets.all(16),
                                 leading: Container(
                                   width: 60,
@@ -730,6 +794,38 @@ class _WorkerScreenState extends State<WorkerScreen> {
                                   _showWorkerDetailDialog(context, worker, workerId, workerName, requestCount);
                                 },
                               ),
+                                ),
+                                // Notification badge at top-right of the card
+                                if (worker['userId'] != null && worker['userId']['_id'] != null)
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: FutureBuilder<List<Map<String, dynamic>>>(
+                                      future: _fetchWorkerCashAdvanceRequests(worker['userId']['_id']),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                                          print('🔔 Showing notification badge for worker ${worker['userId']['_id']}: ${snapshot.data!.length}');
+                                          return Container(
+                                            padding: EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Text(
+                                              snapshot.data!.length.toString(),
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        return SizedBox();
+                                      },
+                                    ),
+                                  ),
+                              ],
                             );
                           },
                         ),

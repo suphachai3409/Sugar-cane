@@ -243,11 +243,15 @@ class _EquipmentAppState extends State<EquipmentApp> {
   bool showForm = false;
   int? selectedRequestIndex;
 
-  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/equipment';
+  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/equipment';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
   String get userId => widget.userId;
+  
+  // ข้อมูลความสัมพันธ์
+  List<String> _relatedUserIds = []; // รายการ userId ที่เกี่ยวข้องกัน
+  String? _currentUserOwnerId; // ownerId ของผู้ใช้ปัจจุบัน
 
   @override
   void initState() {
@@ -258,6 +262,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
     _selectedDate = DateTime.now();
     _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
     fetchUserData();
+    fetchUserRelationships();
     fetchEquipmentRequests();
   }
 
@@ -276,7 +281,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
 
     try {
       final response =
-          await http.get(Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser'));
+          await http.get(Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser'));
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = jsonDecode(response.body);
@@ -306,22 +311,226 @@ class _EquipmentAppState extends State<EquipmentApp> {
     }
   }
 
+  // ฟังก์ชันดึงข้อมูลความสัมพันธ์ของผู้ใช้
+  Future<void> fetchUserRelationships() async {
+    try {
+      // เริ่มต้นด้วย userId ของตัวเอง
+      _relatedUserIds = [userId];
+      
+      // ตรวจสอบว่าผู้ใช้ปัจจุบันเป็นคนงานหรือลูกไร่ของใคร
+      await _checkCurrentUserRelationship();
+      
+      // ดึงข้อมูลคนงานที่เกี่ยวข้อง (สำหรับเจ้าของ)
+      final workersResponse = await http.get(
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/workers/$userId'),
+        headers: {'Authorization': 'Bearer $userId'},
+      );
+      
+      print('🔍 Fetching workers - Status: ${workersResponse.statusCode}');
+      print('🔍 Workers response: ${workersResponse.body}');
+      
+      if (workersResponse.statusCode == 200) {
+        final workersData = jsonDecode(workersResponse.body);
+        if (workersData['success'] == true && workersData['workers'] != null) {
+          print('✅ Found ${workersData['workers'].length} workers');
+          for (var worker in workersData['workers']) {
+            if (worker['userId'] != null) {
+              final workerId = worker['userId']['_id'] ?? worker['userId'].toString();
+              _relatedUserIds.add(workerId);
+              print('👷 Added worker: $workerId');
+            }
+          }
+        } else {
+          print('ℹ️ No workers found or invalid response');
+        }
+      } else {
+        print('❌ Error fetching workers: ${workersResponse.statusCode}');
+      }
+      
+      // ดึงข้อมูลลูกไร่ที่เกี่ยวข้อง (สำหรับเจ้าของ)
+      final farmersResponse = await http.get(
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/farmers/$userId'),
+        headers: {'Authorization': 'Bearer $userId'},
+      );
+      
+      print('🔍 Fetching farmers - Status: ${farmersResponse.statusCode}');
+      print('🔍 Farmers response: ${farmersResponse.body}');
+      
+      if (farmersResponse.statusCode == 200) {
+        final farmersData = jsonDecode(farmersResponse.body);
+        if (farmersData['success'] == true && farmersData['farmers'] != null) {
+          print('✅ Found ${farmersData['farmers'].length} farmers');
+          for (var farmer in farmersData['farmers']) {
+            if (farmer['userId'] != null) {
+              final farmerId = farmer['userId']['_id'] ?? farmer['userId'].toString();
+              _relatedUserIds.add(farmerId);
+              print('👨‍🌾 Added farmer: $farmerId');
+            }
+          }
+        } else {
+          print('ℹ️ No farmers found or invalid response');
+        }
+      } else {
+        print('❌ Error fetching farmers: ${farmersResponse.statusCode}');
+      }
+      
+      // ถ้าผู้ใช้ปัจจุบันเป็นลูกไร่ ให้ดึงข้อมูลคนงานของลูกไร่
+      if (_currentUserOwnerId != null) {
+        await _fetchFarmerWorkers();
+      }
+      
+      print('🔗 Related User IDs: $_relatedUserIds');
+      print('👤 Current User Owner ID: $_currentUserOwnerId');
+      
+    } catch (e) {
+      print('❌ Error fetching user relationships: $e');
+      // ถ้าเกิดข้อผิดพลาด ให้ใช้แค่ userId ของตัวเอง
+      _relatedUserIds = [userId];
+    }
+  }
+
+  // ตรวจสอบว่าผู้ใช้ปัจจุบันเป็นคนงานหรือลูกไร่ของใคร
+  Future<void> _checkCurrentUserRelationship() async {
+    try {
+      // ใช้ API endpoint ใหม่ที่เราสร้างขึ้น
+      final response = await http.get(
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/check-relationship/$userId'),
+        headers: {'Authorization': 'Bearer $userId'},
+      );
+      
+      print('🔍 Checking user relationship - Status: ${response.statusCode}');
+      print('🔍 Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['ownerId'] != null) {
+          _currentUserOwnerId = data['ownerId'];
+          _relatedUserIds.add(data['ownerId']);
+          print('✅ Found relationship - Owner ID: ${data['ownerId']}, User Type: ${data['userType']}');
+          return;
+        }
+      } else if (response.statusCode == 404) {
+        print('ℹ️ User is not a worker or farmer - likely an owner');
+        // ถ้าไม่พบความสัมพันธ์ แสดงว่าผู้ใช้เป็นเจ้าของ
+        _currentUserOwnerId = null;
+      } else {
+        print('❌ Error response: ${response.statusCode} - ${response.body}');
+      }
+      
+    } catch (e) {
+      print('❌ Error checking current user relationship: $e');
+    }
+  }
+
+  // ตรวจสอบสิทธิ์การดูอุปกรณ์
+  bool _canViewEquipment(EquipmentRequest request) {
+    return _relatedUserIds.contains(request.userId);
+  }
+
+  // ตรวจสอบสิทธิ์การแก้ไขอุปกรณ์
+  bool _canEditEquipment(EquipmentRequest request) {
+    return request.userId == userId;
+  }
+
+  // ตรวจสอบสิทธิ์การลบอุปกรณ์
+  bool _canDeleteEquipment(EquipmentRequest request) {
+    return request.userId == userId;
+  }
+
+  // ดึงข้อมูลคนงานของลูกไร่ (ห้ามเพิ่มเจ้าของ)
+  Future<void> _fetchFarmerWorkers() async {
+    try {
+      print('🔍 Fetching farmer workers for owner: $_currentUserOwnerId');
+      
+      // ดึงข้อมูลคนงานของลูกไร่ (คนงานที่เชื่อมต่อกับเจ้าของคนเดียวกับลูกไร่)
+      final farmerWorkersResponse = await http.get(
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/workers/$_currentUserOwnerId'),
+        headers: {'Authorization': 'Bearer $userId'},
+      );
+      
+      print('🔍 Farmer workers response - Status: ${farmerWorkersResponse.statusCode}');
+      print('🔍 Farmer workers response: ${farmerWorkersResponse.body}');
+      
+      if (farmerWorkersResponse.statusCode == 200) {
+        final farmerWorkersData = jsonDecode(farmerWorkersResponse.body);
+        if (farmerWorkersData['success'] == true && farmerWorkersData['workers'] != null) {
+          print('✅ Found ${farmerWorkersData['workers'].length} farmer workers');
+          for (var worker in farmerWorkersData['workers']) {
+            if (worker['userId'] != null) {
+              final workerId = worker['userId']['_id'] ?? worker['userId'].toString();
+              // เพิ่มเฉพาะคนงานที่ไม่ใช่ตัวเอง
+              if (workerId != userId) {
+                _relatedUserIds.add(workerId);
+                print('👷 Added farmer worker: $workerId');
+              }
+            }
+          }
+        } else {
+          print('ℹ️ No farmer workers found or invalid response');
+        }
+      } else {
+        print('❌ Error fetching farmer workers: ${farmerWorkersResponse.statusCode}');
+      }
+      
+      // ลบเจ้าของออกจาก _relatedUserIds (ลูกไร่ห้ามเห็นอุปกรณ์ของเจ้าของ)
+      if (_currentUserOwnerId != null && _relatedUserIds.contains(_currentUserOwnerId)) {
+        _relatedUserIds.remove(_currentUserOwnerId);
+        print('🚫 Removed owner from related users (farmer cannot see owner equipment)');
+      }
+      
+      // ลบ userId ของลูกไร่ออกจาก _relatedUserIds (เพื่อไม่ให้เห็นอุปกรณ์ของตัวเองในรายการ)
+      if (_relatedUserIds.contains(userId)) {
+        _relatedUserIds.remove(userId);
+        print('🚫 Removed farmer own ID from related users (farmer sees own equipment separately)');
+      }
+      
+      print('👨‍🌾 Farmer workers process completed');
+      
+    } catch (e) {
+      print('❌ Error fetching farmer workers: $e');
+    }
+  }
+
   Future<void> fetchEquipmentRequests() async {
     setState(() => _isLoading = true);
     try {
-      // เปลี่ยนจากการส่ง userId ไปดึงข้อมูลเฉพาะ เป็นดึงทั้งหมด
+      // ดึงข้อมูลอุปกรณ์ทั้งหมด
       final response = await http.get(
-        Uri.parse(apiUrl), // ลบ ?userId=$userId ออก
+        Uri.parse(apiUrl),
         headers: {'Authorization': 'Bearer $userId'},
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = jsonDecode(response.body);
+        
+        // กรองเฉพาะอุปกรณ์ของคนที่เกี่ยวข้องกัน
+        List<EquipmentRequest> filteredRequests = jsonData
+            .map((item) => EquipmentRequest.fromJson(item))
+            .where((request) => _relatedUserIds.contains(request.userId))
+            .toList();
+            
+        // สำหรับลูกไร่: เพิ่มอุปกรณ์ของตัวเองเข้าไปด้วย
+        if (_currentUserOwnerId != null) {
+          final ownEquipment = jsonData
+              .map((item) => EquipmentRequest.fromJson(item))
+              .where((request) => request.userId == userId)
+              .toList();
+          filteredRequests.addAll(ownEquipment);
+          print('👨‍🌾 Added farmer own equipment: ${ownEquipment.length} items');
+        }
+            
         setState(() {
-          requests =
-              jsonData.map((item) => EquipmentRequest.fromJson(item)).toList();
+          requests = filteredRequests;
           _isLoading = false;
         });
+        
+        print('🔍 Filtered equipment requests: ${requests.length} items');
+        print('📋 Related user IDs: $_relatedUserIds');
+        
+        // แสดงข้อความแจ้งเตือนถ้ามีความสัมพันธ์กับคนอื่น
+        if (_relatedUserIds.length > 1) {
+          print('🔗 User has relationships with ${_relatedUserIds.length - 1} other users');
+        }
       } else {
         setState(() => _isLoading = false);
         print(
@@ -547,6 +756,44 @@ class _EquipmentAppState extends State<EquipmentApp> {
     _showEquipmentFormPopup();
   }
 
+  // รีเฟรชข้อมูลความสัมพันธ์และอุปกรณ์
+  Future<void> _refreshData() async {
+    await fetchUserRelationships();
+    await fetchEquipmentRequests();
+  }
+
+  // ฟังก์ชันแสดงคำอธิบายความสัมพันธ์
+  String _getRelationshipDescription() {
+    if (_relatedUserIds.length <= 1) {
+      return 'แสดงอุปกรณ์ของคุณเท่านั้น';
+    }
+    
+    // ตรวจสอบประเภทผู้ใช้
+    if (_currentUserOwnerId == null) {
+      // เจ้าของ - เห็นอุปกรณ์ของตัวเอง + คนงาน + ลูกไร่
+      return 'แสดงอุปกรณ์ของเจ้าของ + คนงาน + ลูกไร่ (${_relatedUserIds.length} คน)';
+    } else {
+      // ลูกไร่ - เห็นอุปกรณ์ของตัวเอง + คนงานเท่านั้น (ห้ามเห็นอุปกรณ์ของเจ้าของ)
+      return 'แสดงอุปกรณ์ของลูกไร่ + คนงาน (${_relatedUserIds.length} คน)';
+    }
+  }
+
+  // ฟังก์ชันแสดงข้อความเมื่อไม่มีอุปกรณ์
+  String _getEmptyStateMessage() {
+    if (_relatedUserIds.length <= 1) {
+      return 'เริ่มเพิ่มอุปกรณ์แรกของคุณ';
+    }
+    
+    // ตรวจสอบประเภทผู้ใช้
+    if (_currentUserOwnerId == null) {
+      // เจ้าของ
+      return 'เริ่มเพิ่มอุปกรณ์แรกของคุณ หรือรอให้คนงานและลูกไร่เพิ่มอุปกรณ์';
+    } else {
+      // ลูกไร่
+      return 'เริ่มเพิ่มอุปกรณ์แรกของคุณ หรือรอให้คนงานเพิ่มอุปกรณ์';
+    }
+  }
+
   void _resetErrors() {
     _equipmentNameError = null;
     _descriptionError = null;
@@ -664,7 +911,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
   // ฟังก์ชันอัพโหลดรูปภาพไปยัง server
   Future<List<String>> _uploadImages(List<String> imagePaths) async {
     List<String> imageUrls = [];
-    var uri = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/upload');
+    var uri = Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/upload');
 
     for (var imagePath in imagePaths) {
       try {
@@ -784,7 +1031,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
   void _editRequest(int index) {
     final request = requests[index];
 
-    // ตรวจสอบว่าเป็นอุปกรณ์ของตัวเองเท่านั้นจึงจะแก้ไขได้
+    // ตรวจสอบสิทธิ์การแก้ไข - เฉพาะเจ้าของอุปกรณ์เท่านั้น
     if (request.userId != userId) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -811,7 +1058,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
   }
 
   void _showDeleteConfirmation(String id, String requestUserId) {
-    // ตรวจสอบว่าเป็นอุปกรณ์ของตัวเองเท่านั้นจึงจะลบได้
+    // ตรวจสอบสิทธิ์การลบ - เฉพาะเจ้าของอุปกรณ์เท่านั้น
     if (requestUserId != userId) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -896,9 +1143,58 @@ class _EquipmentAppState extends State<EquipmentApp> {
               }
             },
           ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: _refreshData,
+              tooltip: 'รีเฟรชข้อมูล',
+            ),
+          ],
         ),
         body: SafeArea(
-          child: _buildCurrentScreen(),
+          child: Column(
+            children: [
+              // แสดงข้อมูลความสัมพันธ์
+              if (_relatedUserIds.length > 1)
+                Container(
+                  width: double.infinity,
+                  margin: EdgeInsets.all(16),
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF30C39E).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Color(0xFF30C39E).withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.people_outline,
+                        color: Color(0xFF30C39E),
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _getRelationshipDescription(),
+                          style: TextStyle(
+                            fontFamily: 'NotoSansThai',
+                            fontSize: 12,
+                            color: Color(0xFF25634B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: _buildCurrentScreen(),
+              ),
+            ],
+          ),
         ),
         bottomNavigationBar: _buildBottomNavigationBar(),
       ),
@@ -944,12 +1240,13 @@ class _EquipmentAppState extends State<EquipmentApp> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'เริ่มเพิ่มอุปกรณ์แรกของคุณ',
+                        _getEmptyStateMessage(),
                         style: TextStyle(
                             fontFamily: 'NotoSansThai',
                           fontSize: 12,
                           color: Color(0xFF718096),
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -963,6 +1260,9 @@ class _EquipmentAppState extends State<EquipmentApp> {
                         DateFormat('dd MMM').format(request.date);
                     final isSelected = selectedRequestIndex == index;
                     final isCurrentUser = request.userId == userId;
+                    final canView = _canViewEquipment(request);
+                    final canEdit = _canEditEquipment(request);
+                    final canDelete = _canDeleteEquipment(request);
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -1099,6 +1399,59 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                                   ),
                                                   child: Text(
                                                     'ผู้ใช้: ${request.name}',
+                                                    style: TextStyle(
+                            fontFamily: 'NotoSansThai',
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Color(0xFF634B25),
+                                                    ),
+                                                  ),
+                                                ),
+                                              // ลูกไร่ห้ามเห็นป้าย "เจ้าของ" (เพราะห้ามเห็นอุปกรณ์ของเจ้าของ)
+                                              if (!isCurrentUser && _currentUserOwnerId == null && request.userId != userId)
+                                                Container(
+                                                  margin: EdgeInsets.only(left: 4),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xFF30C39E)
+                                                        .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  child: Text(
+                                                    'เจ้าของ',
+                                                    style: TextStyle(
+                            fontFamily: 'NotoSansThai',
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Color(0xFF25634B),
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (!isCurrentUser && _currentUserOwnerId != null && request.userId != _currentUserOwnerId && request.userId != userId)
+                                                Container(
+                                                  margin: EdgeInsets.only(left: 4),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xFF9E30C3)
+                                                        .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  child: Text(
+                                                    'คนงาน',
                                                     style: TextStyle(
                             fontFamily: 'NotoSansThai',
                                                       fontSize: 10,
@@ -1743,9 +2096,40 @@ class _EquipmentAppState extends State<EquipmentApp> {
                                 SizedBox(width: 10),
                                 Expanded(
                                   child: ElevatedButton(
-                                    onPressed: () {
+                                    onPressed: () async {
                                       if (_validateInputs()) {
-                                        saveEquipmentRequest();
+                                        // แสดง loading dialog
+                                        showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              content: Row(
+                                                children: [
+                                                  CircularProgressIndicator(
+                                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF30C39E)),
+                                                  ),
+                                                  SizedBox(width: 20),
+                                                  Text(
+                                                    'กำลังเพิ่มอุปกรณ์...',
+                                                    style: TextStyle(
+                                                      fontFamily: 'NotoSansThai',
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        );
+                                        
+                                        // บันทึกข้อมูล
+                                        await saveEquipmentRequest();
+                                        
+                                        // ปิด loading dialog
+                                        Navigator.of(context).pop();
+                                        
+                                        // ปิด form dialog
                                         Navigator.of(context).pop();
                                       } else {
                                         setStateDialog(() {});
@@ -2059,36 +2443,38 @@ class _EquipmentAppState extends State<EquipmentApp> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ElevatedButton(
-                  onPressed: () {
-                    _editRequest(selectedRequestIndex!);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF30C39E),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                if (_canEditEquipment(request))
+                  ElevatedButton(
+                    onPressed: () {
+                      _editRequest(selectedRequestIndex!);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF30C39E),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.edit, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'แก้ไข',
+                          style: TextStyle(
+                              fontFamily: 'NotoSansThai',
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.edit, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'แก้ไข',
-                        style: TextStyle(
-                            fontFamily: 'NotoSansThai',
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                if (request.userId == userId)
+                if (_canEditEquipment(request) && _canDeleteEquipment(request))
+                  const SizedBox(width: 16),
+                if (_canDeleteEquipment(request))
                   ElevatedButton(
                     onPressed: () =>
                         _showDeleteConfirmation(request.id, request.userId),

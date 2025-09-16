@@ -63,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       print('🔍 กำลังตรวจสอบ username: $username');
       
       final response = await http.post(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/check-username'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/check-username'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -249,7 +249,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       print('🔗 Relation Code: ${_relationCodeController.text.trim()}');
       print('🖼️ Has Image: ${selectedImage != null}');
       
-      var uri = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/register');
+      var uri = Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/register');
       var request = http.MultipartRequest('POST', uri);
       
       // เพิ่มข้อมูล fields

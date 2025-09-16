@@ -564,7 +564,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // เพิ่มตัวแปรสำหรับเก็บข้อมูลผู้ใช้
-  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -694,7 +694,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String username,
     String password,
   ) async {
-    final updateUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/updateuser/$userId';
+    final updateUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/updateuser/$userId';
     try {
       final response = await http.put(
         Uri.parse(updateUrl),
@@ -1880,7 +1880,7 @@ class _SuggestionTabState extends State<SuggestionTab> {
       final response = await http
           .get(
             Uri.parse(
-                'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations'),
+                'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations'),
           )
           .timeout(const Duration(seconds: 10));
 
@@ -2070,7 +2070,7 @@ class _SuggestionTabState extends State<SuggestionTab> {
                             try {
                               final response = await http.get(
                                 Uri.parse(
-                                    'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations/${topic.title}'),
+                                    'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations/${topic.title}'),
                               );
 
                               if (response.statusCode == 200) {
@@ -2388,7 +2388,7 @@ class _HistoryTabState extends State<HistoryTab> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations'),
+            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations'),
       );
 
       if (response.statusCode == 200) {
@@ -2396,7 +2396,7 @@ class _HistoryTabState extends State<HistoryTab> {
 
         // ดึงข้อมูล tasks เพื่อหาชื่อคนงาน
         final tasksResponse = await http.get(
-          Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks'),
+          Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks'),
         );
 
         if (tasksResponse.statusCode == 200) {
@@ -2458,7 +2458,7 @@ class _HistoryTabState extends State<HistoryTab> {
     for (final workerId in workerIds) {
       try {
         final response = await http.get(
-          Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/workers/$workerId'),
+          Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/workers/$workerId'),
         );
 
         if (response.statusCode == 200) {
@@ -2671,7 +2671,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
     setState(() => _isLoadingWorkers = true);
     try {
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/workers/${widget.userId}'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/workers/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.userId}',
@@ -2700,7 +2700,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'title': widget.topic,
@@ -2814,7 +2814,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   // ฟังก์ชันอัพโหลดรูปภาพไปยัง server
   Future<List<String>> _uploadImages(List<String> imagePaths) async {
     List<String> imageUrls = [];
-    var uri = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/upload');
+    var uri = Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/upload');
 
     for (var imagePath in imagePaths) {
       try {
@@ -2873,13 +2873,13 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
       final response = widget.isEditing
           ? await http.put(
               Uri.parse(
-                  'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations/${widget.topic}'),
+                  'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations/${widget.topic}'),
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode(requestData),
             )
           : await http.post(
               Uri.parse(
-                  'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations'), // ✅ ต้องมี s
+                  'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations'), // ✅ ต้องมี s
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode(requestData),
             );
@@ -2892,7 +2892,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
         try {
           final taskResponse = await http.put(
             Uri.parse(
-                'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks/${widget.taskId}/status'),
+                'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks/${widget.taskId}/status'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'status': 'completed',
@@ -2953,7 +2953,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                 try {
                   final response = await http.delete(
                     Uri.parse(
-                        'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations/${widget.topic}'),
+                        'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/recommendations/${widget.topic}'),
                   );
 
                   if (response.statusCode == 200) {
@@ -2961,7 +2961,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
                     if (widget.isWorker && widget.taskId != null) {
                       await http.put(
                         Uri.parse(
-                            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks/${widget.taskId}/status'),
+                            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks/${widget.taskId}/status'),
                         headers: {'Content-Type': 'application/json'},
                         body: jsonEncode({
                           'status': 'completed',
@@ -3025,7 +3025,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   Future<void> _checkIfTaskAssigned() async {
     try {
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/${widget.plotId}/tasks'),
       );
 
       if (response.statusCode == 200) {
@@ -3066,7 +3066,7 @@ class _AnalyzeSoilScreenState extends State<AnalyzeSoilScreen> {
   Future<void> _fetchAssignedWorkerInfo(String workerId) async {
     try {
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/workers/$workerId'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/workers/$workerId'),
       );
 
       if (response.statusCode == 200) {

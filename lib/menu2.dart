@@ -83,7 +83,7 @@ class Menu2Screen extends StatefulWidget {
 }
 
 class _Menu2ScreenState extends State<Menu2Screen> {
-  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -136,7 +136,7 @@ class _Menu2ScreenState extends State<Menu2Screen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
+            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
       );
 
       if (response.statusCode == 200) {
@@ -236,6 +236,28 @@ class _Menu2ScreenState extends State<Menu2Screen> {
                     fontSize: width * 0.06,
                     fontFamily: 'NotoSansThai',
                     fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(1, 1),
+                        blurRadius: 2,
+                        color: Colors.white,
+                      ),
+                      Shadow(
+                        offset: Offset(-1, -1),
+                        blurRadius: 2,
+                        color: Colors.white,
+                      ),
+                      Shadow(
+                        offset: Offset(1, -1),
+                        blurRadius: 2,
+                        color: Colors.white,
+                      ),
+                      Shadow(
+                        offset: Offset(-1, 1),
+                        blurRadius: 2,
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
                 ),
               ),

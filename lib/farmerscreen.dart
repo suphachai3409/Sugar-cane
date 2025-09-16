@@ -41,7 +41,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/farmer'),
+            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/farmer'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -65,6 +65,29 @@ class _FarmerSreenState extends State<FarmerSreen> {
     }
   }
 
+  // ฟังก์ชันดึงข้อมูลการขอเบิกเงินล่วงหน้าของลูกไร่แต่ละคน
+  Future<List<Map<String, dynamic>>> _fetchFarmerCashAdvanceRequests(String farmerId) async {
+    try {
+      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/farmer';
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['requests'] != null) {
+          List<Map<String, dynamic>> requests = List<Map<String, dynamic>>.from(data['requests']);
+          // กรองเฉพาะคำขอของลูกไร่นี้ที่ยังไม่ได้อนุมัติ
+          return requests.where((request) => 
+            request['userId'] == farmerId && 
+            request['status'] == 'pending'
+          ).toList();
+        }
+      }
+    } catch (e) {
+      print('Error fetching farmer cash advance requests: $e');
+    }
+    return [];
+  }
+
   // ✅ ฟังก์ชันดูคำขอเบิกเงินของลูกไร่
   void _viewCashAdvanceRequests(String farmerId, String farmerName) {
     Navigator.push(
@@ -86,7 +109,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
     });
 
     try {
-      final apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
+      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -128,7 +151,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
       print('🔄 กำลังดึงข้อมูลลูกไร่สำหรับ ownerId: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/profile/farmers/${widget.userId}'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/farmers/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.userId}',
@@ -637,21 +660,23 @@ class _FarmerSreenState extends State<FarmerSreen> {
                           itemCount: farmers.length,
                           itemBuilder: (context, index) {
                             final farmer = farmers[index];
-                            return Container(
-                              margin: EdgeInsets.only(bottom: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.1),
-                                    spreadRadius: 1,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2),
+                            return Stack(
+                              children: [
+                                Container(
+                                  margin: EdgeInsets.only(bottom: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.1),
+                                        spreadRadius: 1,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: ListTile(
+                                  child: ListTile(
                                 contentPadding: EdgeInsets.all(16),
                                 leading: Container(
                                   width: 60,
@@ -669,12 +694,12 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                           borderRadius:
                                               BorderRadius.circular(30),
                                           child: Image.network(
-                                            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${farmer['userId']['profileImage']}',
+                                            farmer['userId']['profileImage'],
                                             fit: BoxFit.cover,
                                             errorBuilder:
                                                 (context, error, stackTrace) {
                                               print('❌ Farmer profile image load error: $error');
-                                              print('❌ Failed URL: https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${farmer['userId']['profileImage']}');
+                                              print('❌ Failed URL: ${farmer['userId']['profileImage']}');
                                               return Icon(
                                                 Icons.engineering,
                                                 color: Color(0xFF34D396),
@@ -743,6 +768,38 @@ class _FarmerSreenState extends State<FarmerSreen> {
                                   _showFarmerDetailDialog(context, farmer);
                                 },
                               ),
+                                ),
+                                // Notification badge at top-right of the card
+                                if (farmer['userId'] != null && farmer['userId']['_id'] != null)
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: FutureBuilder<List<Map<String, dynamic>>>(
+                                      future: _fetchFarmerCashAdvanceRequests(farmer['userId']['_id']),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                                          print('🔔 Showing notification badge for farmer ${farmer['userId']['_id']}: ${snapshot.data!.length}');
+                                          return Container(
+                                            padding: EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Text(
+                                              snapshot.data!.length.toString(),
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        return SizedBox();
+                                      },
+                                    ),
+                                  ),
+                              ],
                             );
                           },
                         ),

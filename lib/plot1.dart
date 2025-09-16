@@ -80,7 +80,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       print('🔄 Fetching owner data for worker: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${widget.userId}'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${widget.userId}'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -130,7 +130,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
 
       // ใช้ endpoint สำหรับดึงแปลงของ user
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$targetUserId'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/$targetUserId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -157,7 +157,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
     }
   }
 
-  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -205,7 +205,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
       return;
     }
 
-    final url = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId');
+    final url = Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId');
 
     final bodyData = {
       "plotName": plotName,
@@ -1003,7 +1003,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
   Future<void> _deletePlotData(String plotId) async {
     try {
       final response = await http.delete(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/$plotId'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -1338,7 +1338,7 @@ class _Plot1ScreenState extends State<Plot1Screen> {
     print("📤 =============================== ");
 
     final response = await http.post(
-      Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots'),
+      Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "userId": widget.userId,

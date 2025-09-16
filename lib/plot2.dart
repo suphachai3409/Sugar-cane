@@ -20,7 +20,7 @@ class Plot2Screen extends StatefulWidget {
 }
 
 class _Plot2ScreenState extends State<Plot2Screen> {
-  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> plotList = [];
   bool isLoading = true;
   LatLng? locationLatLng;
@@ -87,7 +87,7 @@ class _Plot2ScreenState extends State<Plot2Screen> {
 
       // ใช้ endpoint ใหม่สำหรับดึงแปลงของลูกไร่โดยตรง
       final response = await http.get(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/$farmerUserId'),
+        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/$farmerUserId'),
         headers: {"Content-Type": "application/json"},
       );
 

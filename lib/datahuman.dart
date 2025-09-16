@@ -8,7 +8,7 @@ class DataHumanScreen extends StatefulWidget {
 }
 
 class _DataHumanScreenState extends State<DataHumanScreen> {
-  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   bool _isLoading = true;
 
@@ -138,7 +138,7 @@ class _DataHumanScreenState extends State<DataHumanScreen> {
       String password,
       int menu,
       ) async {
-    final updateUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/updateuser/$userId';
+    final updateUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/updateuser/$userId';
     try {
       final response = await http.put(
         Uri.parse(updateUrl),
