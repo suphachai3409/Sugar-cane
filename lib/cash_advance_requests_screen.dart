@@ -28,12 +28,12 @@ class FullScreenImage extends StatelessWidget {
               child: Image.network(
                 imageUrl.startsWith('http') 
                     ? imageUrl 
-                    : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl',
+                    : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl',
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   final fullImageUrl = imageUrl.startsWith('http') 
                       ? imageUrl 
-                      : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
+                      : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
                   print('❌ Cash advance full screen image load error: $error');
                   print('❌ Failed URL: $fullImageUrl');
                   return Center(
@@ -44,7 +44,7 @@ class FullScreenImage extends StatelessWidget {
                   if (loadingProgress == null) {
                     final fullImageUrl = imageUrl.startsWith('http') 
                         ? imageUrl 
-                        : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
+                        : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
                     print('✅ Cash advance full screen image loaded: $fullImageUrl');
                     return child;
                   }
@@ -124,7 +124,7 @@ class _CashAdvanceRequestsScreenState extends State<CashAdvanceRequestsScreen> {
           builder: (context) => Center(child: CircularProgressIndicator()),
         );
 
-        var uri = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/upload');
+        var uri = Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/upload');
         var request = http.MultipartRequest('POST', uri);
         request.files
             .add(await http.MultipartFile.fromPath('image', pickedFile.path));
@@ -141,7 +141,7 @@ class _CashAdvanceRequestsScreenState extends State<CashAdvanceRequestsScreen> {
 
           final updateResponse = await http.put(
             Uri.parse(
-                'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/$requestId'),
+                'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/$requestId'),
             headers: {
               "Content-Type": "application/json",
               "user-id": widget.userId
@@ -274,7 +274,7 @@ class _CashAdvanceRequestsScreenState extends State<CashAdvanceRequestsScreen> {
   Future<void> _rejectRequest(String requestId, String reason) async {
     try {
       final updateResponse = await http.put(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/$requestId'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/$requestId'),
         headers: {"Content-Type": "application/json", "user-id": widget.userId},
         body: jsonEncode({
           'status': 'rejected',
@@ -326,7 +326,7 @@ class _CashAdvanceRequestsScreenState extends State<CashAdvanceRequestsScreen> {
 
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${widget.targetUserId}'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${widget.targetUserId}'),
         headers: {
           "Content-Type": "application/json",
           "user-id": widget.targetUserId // ✅ ใช้ targetUserId แทน userId
@@ -381,7 +381,7 @@ class _CashAdvanceRequestsScreenState extends State<CashAdvanceRequestsScreen> {
   Future<void> _updateRequestStatus(String requestId, String status) async {
     try {
       final response = await http.put(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/$requestId'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/$requestId'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({'status': status}),
       );
@@ -849,7 +849,7 @@ class _CashAdvanceRequestsScreenState extends State<CashAdvanceRequestsScreen> {
                             image: NetworkImage(
                                 request['images'][index].toString().startsWith('http') 
                                     ? request['images'][index].toString()
-                                    : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${request['images'][index]}'),
+                                    : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/${request['images'][index]}'),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -956,12 +956,12 @@ class _CashAdvanceRequestsScreenState extends State<CashAdvanceRequestsScreen> {
                       Image.network(
                         request['approvalImage'].toString().startsWith('http') 
                             ? request['approvalImage'].toString()
-                            : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${request['approvalImage']}',
+                            : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/${request['approvalImage']}',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           final imageUrl = request['approvalImage'].toString().startsWith('http') 
                               ? request['approvalImage'].toString()
-                              : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${request['approvalImage']}';
+                              : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/${request['approvalImage']}';
                           print('❌ Cash advance approval image load error: $error');
                           print('❌ Failed URL: $imageUrl');
                           return Center(
@@ -982,7 +982,7 @@ class _CashAdvanceRequestsScreenState extends State<CashAdvanceRequestsScreen> {
                           if (loadingProgress == null) {
                             final imageUrl = request['approvalImage'].toString().startsWith('http') 
                                 ? request['approvalImage'].toString()
-                                : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${request['approvalImage']}';
+                                : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/${request['approvalImage']}';
                             print('✅ Cash advance approval image loaded: $imageUrl');
                             return child;
                           }
@@ -1380,7 +1380,7 @@ class _CashAdvanceRequestsScreenState extends State<CashAdvanceRequestsScreen> {
   Future<void> _deleteRequest(String requestId) async {
     try {
       final response = await http.delete(
-        Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/$requestId'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/$requestId'),
         headers: {'user-id': widget.userId},
       );
 

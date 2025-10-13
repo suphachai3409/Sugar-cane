@@ -46,7 +46,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     });
 
     try {
-      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
+      final apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/pulluser';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -81,7 +81,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -110,7 +110,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
   // ฟังก์ชันดึงข้อมูลการแจ้งเตือนของคนงาน
   Future<void> _fetchWorkerNotifications() async {
     try {
-      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/worker-notifications/${widget.userId}';
+      final apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/worker-notifications/${widget.userId}';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -135,7 +135,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
   Future<List<Map<String, dynamic>>> _fetchWorkerCashAdvanceRequests(String workerId) async {
     try {
       print('🔍 Fetching cash advance requests for workerId: $workerId');
-      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker';
+      final apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/worker';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -210,7 +210,7 @@ class _WorkerScreenState extends State<WorkerScreen> {
       print('🔄 กำลังดึงข้อมูลคนงานสำหรับ ownerId: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/workers/${widget.userId}'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/workers/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.userId}',

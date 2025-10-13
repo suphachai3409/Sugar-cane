@@ -83,7 +83,7 @@ class Menu2Screen extends StatefulWidget {
 }
 
 class _Menu2ScreenState extends State<Menu2Screen> {
-  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -136,7 +136,7 @@ class _Menu2ScreenState extends State<Menu2Screen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
       );
 
       if (response.statusCode == 200) {
@@ -162,8 +162,24 @@ class _Menu2ScreenState extends State<Menu2Screen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('ลูกไร่'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         automaticallyImplyLeading: false,
+        title: Container(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'ลูกไร่',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -361,7 +377,7 @@ class _Menu2ScreenState extends State<Menu2Screen> {
                           children: [
                             Expanded(
                               child: Image.asset(
-                                'assets/worker.jpg',
+                                'assets/คนงาน.png',
                                 fit: BoxFit.cover,
                                 width: 149,
                               ),

@@ -212,7 +212,7 @@ Future<void> showProfileDialog(BuildContext context, Map<String, dynamic> user,
                                 
                                 // อัปเดตข้อมูลและอัปโหลดรูปไป backend
                                 var uri = Uri.parse(
-                                    'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/updateuser/${user['_id']}');
+                                    'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/updateuser/${user['_id']}');
                                 var request = http.MultipartRequest('PUT', uri);
                                 request.fields['name'] = nameController.text;
                                 request.fields['email'] = emailController.text;
@@ -1158,8 +1158,8 @@ void showRelationDialog(context, user) {
 Future<void> _generateRelationCode(
     BuildContext context, String type, String ownerId) async {
   String apiUrl = type == 'worker'
-      ? 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/create-worker-code'
-      : 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/create-farmer-code';
+      ? 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/create-worker-code'
+      : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/create-farmer-code';
   
   // แสดง loading dialog
   showDialog(
@@ -1301,8 +1301,8 @@ Future<void> _generateRelationCode(
 Future<void> connectRelationCode(BuildContext context, String code, String type,
     Map<String, dynamic> user) async {
   String apiUrl = type == 'worker'
-      ? 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/add-worker'
-      : 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/add-farmer';
+      ? 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/add-worker'
+      : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/add-farmer';
   
   // แสดง loading dialog
   showDialog(

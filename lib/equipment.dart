@@ -175,6 +175,8 @@ class EquipmentRequest {
   final DateTime date;
   final List<String> imagePaths;
   final int menu;
+  final String? parentEquipmentId; // ถ้าเป็นโน้ต จะอ้างถึงอุปกรณ์หลัก
+  final bool isNote; // ใช้แยกประเภทว่าเป็นโน้ต
 
   EquipmentRequest({
     this.id = '',
@@ -186,6 +188,8 @@ class EquipmentRequest {
     required this.date,
     required this.imagePaths,
     required this.menu,
+    this.parentEquipmentId,
+    this.isNote = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -199,6 +203,8 @@ class EquipmentRequest {
       'date': date.toIso8601String(),
       'imagePaths': imagePaths,
       'menu': menu,
+      'parentEquipmentId': parentEquipmentId,
+      'isNote': isNote,
     };
   }
 
@@ -213,6 +219,8 @@ class EquipmentRequest {
       date: DateTime.parse(json['date']),
       imagePaths: List<String>.from(json['imagePaths']),
       menu: json['menu'],
+      parentEquipmentId: json['parentEquipmentId'],
+      isNote: json['isNote'] == true,
     );
   }
 }
@@ -243,7 +251,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
   bool showForm = false;
   int? selectedRequestIndex;
 
-  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/equipment';
+  final String apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/equipment';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -261,9 +269,24 @@ class _EquipmentAppState extends State<EquipmentApp> {
     _dateController = TextEditingController();
     _selectedDate = DateTime.now();
     _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
-    fetchUserData();
-    fetchUserRelationships();
-    fetchEquipmentRequests();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      await fetchUserData();
+      await fetchUserRelationships();
+      await fetchEquipmentRequests();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -281,7 +304,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
 
     try {
       final response =
-          await http.get(Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser'));
+          await http.get(Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/pulluser'));
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = jsonDecode(response.body);
@@ -322,7 +345,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
       
       // ดึงข้อมูลคนงานที่เกี่ยวข้อง (สำหรับเจ้าของ)
       final workersResponse = await http.get(
-        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/workers/$userId'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/workers/$userId'),
         headers: {'Authorization': 'Bearer $userId'},
       );
       
@@ -349,7 +372,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
       
       // ดึงข้อมูลลูกไร่ที่เกี่ยวข้อง (สำหรับเจ้าของ)
       final farmersResponse = await http.get(
-        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/farmers/$userId'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/farmers/$userId'),
         headers: {'Authorization': 'Bearer $userId'},
       );
       
@@ -394,7 +417,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
     try {
       // ใช้ API endpoint ใหม่ที่เราสร้างขึ้น
       final response = await http.get(
-        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/check-relationship/$userId'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/check-relationship/$userId'),
         headers: {'Authorization': 'Bearer $userId'},
       );
       
@@ -444,7 +467,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
       
       // ดึงข้อมูลคนงานของลูกไร่ (คนงานที่เชื่อมต่อกับเจ้าของคนเดียวกับลูกไร่)
       final farmerWorkersResponse = await http.get(
-        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/workers/$_currentUserOwnerId'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/workers/$_currentUserOwnerId'),
         headers: {'Authorization': 'Bearer $userId'},
       );
       
@@ -503,17 +526,17 @@ class _EquipmentAppState extends State<EquipmentApp> {
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = jsonDecode(response.body);
         
-        // กรองเฉพาะอุปกรณ์ของคนที่เกี่ยวข้องกัน
+        // กรองเฉพาะอุปกรณ์หลักของคนที่เกี่ยวข้องกัน (ไม่รวมโน้ต isNote=true)
         List<EquipmentRequest> filteredRequests = jsonData
             .map((item) => EquipmentRequest.fromJson(item))
-            .where((request) => _relatedUserIds.contains(request.userId))
+            .where((request) => _relatedUserIds.contains(request.userId) && request.isNote != true)
             .toList();
             
         // สำหรับลูกไร่: เพิ่มอุปกรณ์ของตัวเองเข้าไปด้วย
         if (_currentUserOwnerId != null) {
           final ownEquipment = jsonData
               .map((item) => EquipmentRequest.fromJson(item))
-              .where((request) => request.userId == userId)
+              .where((request) => request.userId == userId && request.isNote != true)
               .toList();
           filteredRequests.addAll(ownEquipment);
           print('👨‍🌾 Added farmer own equipment: ${ownEquipment.length} items');
@@ -911,7 +934,7 @@ class _EquipmentAppState extends State<EquipmentApp> {
   // ฟังก์ชันอัพโหลดรูปภาพไปยัง server
   Future<List<String>> _uploadImages(List<String> imagePaths) async {
     List<String> imageUrls = [];
-    var uri = Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/upload');
+    var uri = Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/upload');
 
     for (var imagePath in imagePaths) {
       try {
@@ -2267,6 +2290,59 @@ class _EquipmentAppState extends State<EquipmentApp> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // แถวปุ่มด่วน: ดูประวัติ และ เพิ่มโน้ต
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    _showEquipmentHistory(request);
+                  },
+                  icon: Icon(Icons.history, color: const Color(0xFF30C39E), size: 18),
+                  label: Text(
+                    'ดูประวัติ',
+                    style: TextStyle(
+                      fontFamily: 'NotoSansThai',
+                      color: const Color(0xFF30C39E),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF30C39E)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _canEditEquipment(request)
+                      ? () {
+                          _startAddNoteForEquipment(request);
+                        }
+                      : null,
+                  icon: const Icon(Icons.note_add, size: 18, color: Colors.white),
+                  label: const Text(
+                    'เพิ่มโน้ต',
+                    style: TextStyle(
+                      fontFamily: 'NotoSansThai',
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF30C39E),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           // ส่วนหัวข้อมูล - แสดงชื่อคน (owner) แบบใหม่
           Container(
             margin: const EdgeInsets.only(bottom: 20),
@@ -2558,7 +2634,6 @@ class _EquipmentAppState extends State<EquipmentApp> {
           padding: const EdgeInsets.all(16.0),
           child: Stack(
             children: [
-              // Custom bottom navigation bar container (white background)
               Positioned(
                 bottom: 0,
                 left: width * 0.03,
@@ -2581,13 +2656,11 @@ class _EquipmentAppState extends State<EquipmentApp> {
                   ),
                 ),
               ),
-              //ปุ่มล่างสุด ซ้าย
               Positioned(
                 bottom: height * 0.01,
                 left: width * 0.07,
                 child: GestureDetector(
                       onTap: () {
-                        // ย้อนกลับไปหน้า menu ตาม menu ของ user
                         if (_currentUser != null) {
                           if (_currentUser?['menu'] == 1) {
                             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Menu1Screen(userId: _currentUser?['_id'] ?? '')));
@@ -2620,8 +2693,6 @@ class _EquipmentAppState extends State<EquipmentApp> {
                   ),
                 ),
               ),
-
-              // ปุ่มขวา
               Positioned(
                 bottom: height * 0.01,
                 right: width * 0.07,
@@ -2674,6 +2745,816 @@ class _EquipmentAppState extends State<EquipmentApp> {
           ),
         );
       },
+    );
+  }
+
+  // เปิดหน้าต่างประวัติของอุปกรณ์ (ตามชื่ออุปกรณ์ + ผู้ใช้เดียวกัน)
+  void _showEquipmentHistory(EquipmentRequest baseRequest) {
+    final String baseId = baseRequest.id;
+
+    Future<List<EquipmentRequest>> _fetchNotes() async {
+      try {
+        final res = await http.get(
+          Uri.parse('$apiUrl/$baseId/notes'),
+          headers: {'Authorization': 'Bearer $userId'},
+        );
+        if (res.statusCode == 200) {
+          final List<dynamic> jsonData = jsonDecode(res.body);
+          final items = jsonData.map((e) => EquipmentRequest.fromJson(e)).toList();
+          items.sort((a, b) => b.date.compareTo(a.date));
+          return items;
+        }
+      } catch (_) {}
+      return [];
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'ประวัติ: ${baseRequest.equipmentName}',
+                        style: const TextStyle(
+                          fontFamily: 'NotoSansThai',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF25634B),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: FutureBuilder<List<EquipmentRequest>>(
+                    future: _fetchNotes(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final historyItems = snapshot.data ?? [];
+                      if (historyItems.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'ยังไม่มีประวัติสำหรับอุปกรณ์นี้',
+                            style: TextStyle(
+                              fontFamily: 'NotoSansThai',
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        );
+                      }
+                      return ListView.separated(
+                        itemCount: historyItems.length,
+                        separatorBuilder: (_, __) => const Divider(height: 16),
+                        itemBuilder: (context, index) {
+                          final item = historyItems[index];
+                          final dateStr = DateFormat('dd/MM/yyyy').format(item.date);
+                          return InkWell(
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              _showNoteDetail(item);
+                            },
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF30C39E).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    dateStr,
+                                    style: const TextStyle(
+                                      fontFamily: 'NotoSansThai',
+                                      fontSize: 12,
+                                      color: Color(0xFF25634B),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.description,
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'NotoSansThai',
+                                          fontSize: 14,
+                                          color: Color(0xFF2D3748),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.photo_library_outlined, size: 14, color: Color(0xFF25634B)),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${item.imagePaths.length} รูป',
+                                            style: const TextStyle(
+                                              fontFamily: 'NotoSansThai',
+                                              fontSize: 12,
+                                              color: Color(0xFF4A5568),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // แสดงรายละเอียดโน้ต พร้อมแกลเลอรี่รูป และกดดูภาพเต็มได้
+  void _showNoteDetail(EquipmentRequest note) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: const EdgeInsets.all(16),
+          child: Container
+            (
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'รายละเอียดโน้ต',
+                        style: const TextStyle(
+                          fontFamily: 'NotoSansThai',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF25634B),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (note.imagePaths.isNotEmpty)
+                  SizedBox(
+                    height: 220,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: PageView.builder(
+                        itemCount: note.imagePaths.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () => _showFullScreenImage(note.imagePaths, index),
+                            child: note.imagePaths[index].startsWith('http')
+                                ? Image.network(
+                                    note.imagePaths[index],
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[200],
+                                        child: const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 40)),
+                                      );
+                                    },
+                                  )
+                                : Image.file(
+                                    File(note.imagePaths[index]),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[200],
+                                        child: const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 40)),
+                                      );
+                                    },
+                                  ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Text(
+                  DateFormat('dd/MM/yyyy').format(note.date),
+                  style: const TextStyle(
+                    fontFamily: 'NotoSansThai',
+                    fontSize: 14,
+                    color: Color(0xFF25634B),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      note.description,
+                      style: const TextStyle(
+                        fontFamily: 'NotoSansThai',
+                        fontSize: 15,
+                        color: Color(0xFF2D3748),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // เริ่มการเพิ่มโน้ตให้กับอุปกรณ์ (สร้างรายการใหม่โดยคงชื่ออุปกรณ์เดิม)
+  void _startAddNoteForEquipment(EquipmentRequest baseRequest) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EquipmentNotePage(
+          userId: userId,
+          equipmentName: baseRequest.equipmentName,
+          name: _currentUser?['name'] ?? '',
+          phone: _currentUser?['number']?.toString() ?? '',
+          menu: _currentUser?['menu'] ?? 1,
+          apiUrl: apiUrl,
+          parentEquipmentId: baseRequest.id,
+          onSaved: () async {
+            await fetchEquipmentRequests();
+            if (mounted) {
+              setState(() {});
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+}
+
+// หน้าเพิ่มโน้ตสำหรับอุปกรณ์ โดยยึดชื่ออุปกรณ์เดิม และใช้ API เดิมในการบันทึก
+class EquipmentNotePage extends StatefulWidget {
+  final String userId;
+  final String equipmentName;
+  final String name;
+  final String phone;
+  final int menu;
+  final String apiUrl;
+  final String parentEquipmentId;
+  final Future<void> Function() onSaved;
+
+  const EquipmentNotePage({
+    Key? key,
+    required this.userId,
+    required this.equipmentName,
+    required this.name,
+    required this.phone,
+    required this.menu,
+    required this.apiUrl,
+    required this.parentEquipmentId,
+    required this.onSaved,
+  }) : super(key: key);
+  @override
+  State<EquipmentNotePage> createState() => _EquipmentNotePageState();
+}
+
+class _EquipmentNotePageState extends State<EquipmentNotePage> {
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+  final ImagePicker _picker = ImagePicker();
+  List<String> _selectedImagePaths = [];
+
+  String? _descriptionError;
+  String? _imagesError;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    _dateController.dispose();
+    super.dispose();
+  }
+
+  bool _validate() {
+    bool ok = true;
+    if (_descriptionController.text.isEmpty) {
+      setState(() => _descriptionError = 'กรุณากรอกคำอธิบาย');
+      ok = false;
+    }
+    if (_selectedImagePaths.isEmpty) {
+      setState(() => _imagesError = 'กรุณาเพิ่มรูปภาพอย่างน้อย 1 รูป');
+      ok = false;
+    }
+    return ok;
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF30C39E),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF30C39E)),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
+      });
+    }
+  }
+
+  Future<void> _getImageFromCamera() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+      if (image != null) {
+        final String permanentPath = await _copyImageToPermanentLocation(image.path);
+        setState(() => _selectedImagePaths.add(permanentPath));
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _getImageFromGallery() async {
+    try {
+      final List<XFile> images = await _picker.pickMultiImage();
+      if (images.isNotEmpty) {
+        final int remainingSlots = 5 - _selectedImagePaths.length;
+        if (remainingSlots <= 0) return;
+        final List<XFile> selectedImages = images.length > remainingSlots ? images.sublist(0, remainingSlots) : images;
+        final List<String> permanentPaths = [];
+        for (final image in selectedImages) {
+          final String permanentPath = await _copyImageToPermanentLocation(image.path);
+          permanentPaths.add(permanentPath);
+        }
+        setState(() => _selectedImagePaths.addAll(permanentPaths));
+      }
+    } catch (_) {}
+  }
+
+  Future<String> _copyImageToPermanentLocation(String sourcePath) async {
+    try {
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      final Directory imageDir = Directory(path.join(appDir.path, 'equipment_images'));
+      if (!await imageDir.exists()) {
+        await imageDir.create(recursive: true);
+      }
+      final String fileName = 'equipment_${DateTime.now().millisecondsSinceEpoch}_${path.basename(sourcePath)}';
+      final String destinationPath = path.join(imageDir.path, fileName);
+      await File(sourcePath).copy(destinationPath);
+      return destinationPath;
+    } catch (e) {
+      return sourcePath;
+    }
+  }
+
+  Future<List<String>> _uploadImages(List<String> imagePaths) async {
+    final List<String> imageUrls = [];
+    final uri = Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/upload');
+    for (final imagePath in imagePaths) {
+      try {
+        final request = http.MultipartRequest('POST', uri);
+        request.files.add(await http.MultipartFile.fromPath('image', imagePath, filename: 'equipment_${DateTime.now().millisecondsSinceEpoch}.jpg'));
+        final response = await request.send();
+        if (response.statusCode == 200) {
+          final responseData = await response.stream.bytesToString();
+          final jsonResponse = jsonDecode(responseData);
+          imageUrls.add(jsonResponse['imageUrl']);
+        }
+      } catch (_) {}
+    }
+    return imageUrls;
+  }
+
+  Future<void> _save() async {
+    if (!_validate()) return;
+    setState(() => _saving = true);
+    try {
+      final uploadedImageUrls = await _uploadImages(_selectedImagePaths);
+      final payload = {
+        'userId': widget.userId,
+        'name': widget.name,
+        'phone': widget.phone,
+        'equipmentName': widget.equipmentName,
+        'description': _descriptionController.text,
+        'date': _selectedDate.toIso8601String(),
+        'imagePaths': uploadedImageUrls,
+        'menu': widget.menu,
+        'parentEquipmentId': widget.parentEquipmentId,
+        'isNote': true,
+      };
+      final response = await http.post(
+        Uri.parse(widget.apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.userId}',
+        },
+        body: jsonEncode(payload),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('บันทึกโน้ตสำเร็จ'), backgroundColor: Color(0xFF30C39E)),
+          );
+        }
+        await widget.onSaved();
+        if (mounted) Navigator.of(context).pop();
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('เกิดข้อผิดพลาด: ${response.statusCode}'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('เกิดข้อผิดพลาด: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _showImageSourceOptions() async {
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Color(0xFF30C39E)),
+                title: const Text('ถ่ายรูปใหม่'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _getImageFromCamera();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Color(0xFF30C39E)),
+                title: const Text('เลือกรูปจากแกลเลอรี่'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _getImageFromGallery();
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('เพิ่มโน้ตอุปกรณ์',
+            style: TextStyle(
+              fontFamily: 'NotoSansThai',
+              fontSize: 20,
+              color: Color(0xFF25634B),
+              fontWeight: FontWeight.w800,
+            )),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ชื่อ-นามสกุล (อ่านอย่างเดียว)
+              const Text('ชื่อ-นามสกุล',
+                  style: TextStyle(
+                    fontFamily: 'NotoSansThai',
+                    color: Color(0xFF30C39E),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  )),
+              const SizedBox(height: 5),
+              TextFormField(
+                initialValue: widget.name,
+                readOnly: true,
+                decoration: InputDecoration(
+                  hintText: 'ชื่อ-นามสกุล',
+                  hintStyle: const TextStyle(fontFamily: 'NotoSansThai', color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                ),
+              ),
+              const SizedBox(height: 15),
+
+              // เบอร์โทรศัพท์ (อ่านอย่างเดียว)
+              const Text('เบอร์โทรศัพท์',
+                  style: TextStyle(
+                    fontFamily: 'NotoSansThai',
+                    color: Color(0xFF30C39E),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  )),
+              const SizedBox(height: 5),
+              TextFormField(
+                initialValue: widget.phone,
+                readOnly: true,
+                decoration: InputDecoration(
+                  hintText: 'เบอร์โทรศัพท์',
+                  hintStyle: const TextStyle(fontFamily: 'NotoSansThai', color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                ),
+              ),
+              const SizedBox(height: 15),
+
+              // ชื่ออุปกรณ์ (อ่านอย่างเดียว)
+              const Text('ชื่ออุปกรณ์*',
+                  style: TextStyle(
+                    fontFamily: 'NotoSansThai',
+                    color: Color(0xFF30C39E),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  )),
+              const SizedBox(height: 5),
+              TextFormField(
+                initialValue: widget.equipmentName,
+                readOnly: true,
+                decoration: InputDecoration(
+                  hintText: 'ชื่ออุปกรณ์',
+                  hintStyle: const TextStyle(fontFamily: 'NotoSansThai', color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                ),
+              ),
+              const SizedBox(height: 15),
+
+              // คำอธิบาย
+              const Text('คำอธิบาย*',
+                  style: TextStyle(
+                    fontFamily: 'NotoSansThai',
+                    color: Color(0xFF30C39E),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  )),
+              const SizedBox(height: 5),
+              TextField(
+                controller: _descriptionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'กรอกคำอธิบายเกี่ยวกับอุปกรณ์',
+                  hintStyle: const TextStyle(fontFamily: 'NotoSansThai', color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  errorText: _descriptionError,
+                ),
+                onChanged: (_) {
+                  if (_descriptionError != null) setState(() => _descriptionError = null);
+                },
+              ),
+              const SizedBox(height: 15),
+
+              // วันที่
+              const Text('วันที่*',
+                  style: TextStyle(
+                    fontFamily: 'NotoSansThai',
+                    color: Color(0xFF30C39E),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  )),
+              const SizedBox(height: 5),
+              TextField(
+                controller: _dateController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  hintText: 'เลือกวันที่',
+                  hintStyle: const TextStyle(fontFamily: 'NotoSansThai', color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  suffixIcon: const Icon(Icons.calendar_today, size: 20),
+                ),
+                onTap: _selectDate,
+              ),
+              const SizedBox(height: 20),
+
+              // รูปภาพ
+              const Text('รูปภาพอุปกรณ์* (สูงสุด 5 รูป)',
+                  style: TextStyle(
+                    fontFamily: 'NotoSansThai',
+                    color: Color(0xFF30C39E),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  )),
+              const SizedBox(height: 5),
+              const Text('เพิ่มรูปภาพอุปกรณ์ที่ต้องการแสดง',
+                  style: TextStyle(fontFamily: 'NotoSansThai', fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 10),
+
+              if (_selectedImagePaths.isNotEmpty)
+                SizedBox(
+                  height: 120,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _selectedImagePaths.length,
+                    itemBuilder: (context, index) {
+                      return Stack(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(right: 10),
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.file(
+                                File(_selectedImagePaths[index]),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Center(
+                                  child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 5,
+                            right: 5,
+                            child: GestureDetector(
+                              onTap: () => setState(() => _selectedImagePaths.removeAt(index)),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 16),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+
+              if (_imagesError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Text(_imagesError!, style: const TextStyle(fontFamily: 'NotoSansThai', color: Colors.red, fontSize: 12)),
+                ),
+              const SizedBox(height: 10),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _selectedImagePaths.length < 5 ? _showImageSourceOptions : null,
+                      icon: const Icon(Icons.add_a_photo, size: 20),
+                      label: const Text('เพิ่มรูปภาพ', style: TextStyle(fontFamily: 'NotoSansThai', fontSize: 14)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _selectedImagePaths.length < 5 ? const Color(0xFF30C39E) : Colors.grey[400],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // ปุ่มบันทึก
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF30C39E),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                        )
+                      : const Text('บันทึก',
+                          style: TextStyle(
+                            fontFamily: 'NotoSansThai',
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          )),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

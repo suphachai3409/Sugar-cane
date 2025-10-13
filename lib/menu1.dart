@@ -29,7 +29,7 @@ class Menu1Screen extends StatefulWidget {
 }
 
 class _Menu1ScreenState extends State<Menu1Screen> {
-  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -83,7 +83,7 @@ class _Menu1ScreenState extends State<Menu1Screen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/$type'),
       );
 
       if (response.statusCode == 200) {
@@ -159,7 +159,23 @@ class _Menu1ScreenState extends State<Menu1Screen> {
       ],
       home: Scaffold(
         appBar: AppBar(
-          title: Text('เจ้าของ'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'เจ้าของ',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ),
         ),
         body: Stack(
           children: [
@@ -348,7 +364,7 @@ class _Menu1ScreenState extends State<Menu1Screen> {
                                 children: [
                                   Expanded(
                                     child: Image.asset(
-                                      'assets/worker.jpg',
+                                      'assets/คนงาน.png',
                                       fit: BoxFit.cover,
                                       width: 149,
                                     ),

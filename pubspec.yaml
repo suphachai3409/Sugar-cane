@@ -32,11 +32,15 @@ dependencies:
   path_provider: ^2.1.4
   path: ^1.9.0
 
+dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
+
 flutter:
   uses-material-design: true
 
   assets:
     - assets/worker.jpg
+    - assets/คนงาน.png
     - assets/money.png
     - assets/trackter.png
     - assets/kid.png
@@ -66,3 +70,9 @@ flutter:
         - asset: assets/fonts/NotoSansThai-Regular.ttf
         - asset: assets/fonts/NotoSansThai-Bold.ttf
           weight: 700
+
+flutter_launcher_icons:
+  android: true
+  image_path: assets/logo.png
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/logo.png

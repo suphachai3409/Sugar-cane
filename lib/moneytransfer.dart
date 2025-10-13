@@ -127,7 +127,7 @@ class FullScreenImage extends StatelessWidget {
                           // ตรวจสอบว่า imageUrl เป็น full URL หรือไม่
                           final fullImageUrl = imageUrl.startsWith('http') 
                               ? imageUrl 
-                              : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
+                              : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/$imageUrl';
                           print('🖼️ Loading full screen image: $fullImageUrl');
                           
                           return Image.network(
@@ -263,7 +263,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
   List<CashAdvanceRequest> requests = [];
   int? selectedRequestIndex;
   // เพิ่มตัวแปรสำหรับ profile
-  final String apiUrl = 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> _users = [];
   Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
@@ -278,7 +278,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
         headers: {
           'Content-Type': 'application/json',
           'user-id': _currentUser!['_id']
@@ -405,7 +405,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 // เพิ่มฟังก์ชันสำหรับอัพโหลดรูปภาพ
   Future<List<String>> _uploadImages(List<File> imageFiles) async {
     List<String> imageUrls = [];
-    var uri = Uri.parse('https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/upload');
+    var uri = Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/upload');
 
     for (var imageFile in imageFiles) {
       var request = http.MultipartRequest('POST', uri);
@@ -479,7 +479,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
       // ใช้ API ที่ถูกต้อง - หา ownerId จากแปลงปลูก
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${_currentUser!['_id']}'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/plots/owner/${_currentUser!['_id']}'),
         headers: {'user-id': _currentUser!['_id']},
       ).timeout(Duration(seconds: 10));
 
@@ -512,7 +512,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/user-requests/${_currentUser!['_id']}'),
         headers: {
           'Content-Type': 'application/json',
           'user-id': _currentUser!['_id']
@@ -1234,7 +1234,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
 
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/check-relation/${_currentUser!['_id']}/$ownerId'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/check-relation/${_currentUser!['_id']}/$ownerId'),
         headers: {'user-id': _currentUser!['_id']},
       );
 
@@ -1252,8 +1252,8 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
           print('📤 Sending purpose: $purposeText'); // Debug log
 
           final String apiUrl = selectedRequestIndex != null
-              ? 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${requests[selectedRequestIndex!].id}'
-              : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request';
+              ? 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${requests[selectedRequestIndex!].id}'
+              : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request';
 
           final httpMethod =
               selectedRequestIndex != null ? http.put : http.post;
@@ -1426,7 +1426,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
       try {
         final response = await http.delete(
           Uri.parse(
-              'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${request.id}'),
+              'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/request/${request.id}'),
           headers: {'user-id': _currentUser!['_id']},
         );
 
@@ -1998,7 +1998,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                           // ตรวจสอบว่า image เป็น full URL หรือไม่
                           final imageUrl = request.images[index].startsWith('http') 
                               ? request.images[index] 
-                              : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${request.images[index]}';
+                              : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/${request.images[index]}';
                           print('🖼️ Loading image $index: $imageUrl');
                           
                           return GestureDetector(
@@ -2126,7 +2126,7 @@ class _CashAdvanceAppState extends State<CashAdvanceApp> {
                                 // ตรวจสอบว่า approvalImage เป็น full URL หรือไม่
                                 final approvalImageUrl = request.approvalImage!.startsWith('http') 
                                     ? request.approvalImage! 
-                                    : 'https://sugarcane-iqddm6q3o-suphachais-projects-d3438f04.vercel.app/uploads/${request.approvalImage}';
+                                    : 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/uploads/${request.approvalImage}';
                                 print('🖼️ Loading approval image: $approvalImageUrl');
                                 
                                 return Image.network(

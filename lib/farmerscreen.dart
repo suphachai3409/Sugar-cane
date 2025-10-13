@@ -41,7 +41,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/farmer'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/farmer'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -68,7 +68,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
   // ฟังก์ชันดึงข้อมูลการขอเบิกเงินล่วงหน้าของลูกไร่แต่ละคน
   Future<List<Map<String, dynamic>>> _fetchFarmerCashAdvanceRequests(String farmerId) async {
     try {
-      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/farmer';
+      final apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/cash-advance/requests/${widget.userId}/farmer';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -109,7 +109,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
     });
 
     try {
-      final apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
+      final apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/pulluser';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -151,7 +151,7 @@ class _FarmerSreenState extends State<FarmerSreen> {
       print('🔄 กำลังดึงข้อมูลลูกไร่สำหรับ ownerId: ${widget.userId}');
 
       final response = await http.get(
-        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/farmers/${widget.userId}'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/farmers/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.userId}',

@@ -20,7 +20,7 @@ class Plot3Screen extends StatefulWidget {
 }
 
 class _Plot3ScreenState extends State<Plot3Screen> {
-  final String apiUrl = 'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/pulluser';
+  final String apiUrl = 'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/pulluser';
   List<Map<String, dynamic>> plotList = [];
   bool isLoading = true;
   String? errorMessage;
@@ -107,12 +107,12 @@ class _Plot3ScreenState extends State<Plot3Screen> {
   Future<void> _getOwnerIdFromWorker() async {
     print('🔍 DEBUG: กำลังดึง ownerId จาก API สำหรับ userId: ${widget.userId}');
     print(
-        '🔍 DEBUG: URL ที่เรียก: https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/worker-info/${widget.userId}');
+        '🔍 DEBUG: URL ที่เรียก: https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/worker-info/${widget.userId}');
 
     try {
       final response = await http.get(
         Uri.parse(
-            'https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/profile/worker-info/${widget.userId}'),
+            'https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/profile/worker-info/${widget.userId}'),
         headers: {"Content-Type": "application/json"},
       );
 
@@ -177,12 +177,12 @@ class _Plot3ScreenState extends State<Plot3Screen> {
 
     print('🔍 DEBUG: กำลังโหลดแปลงปลูกสำหรับ ownerId: $ownerId');
     print(
-        '🔍 DEBUG: URL ที่เรียก: https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/by-owner/$ownerId');
+        '🔍 DEBUG: URL ที่เรียก: https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/plots/by-owner/$ownerId');
 
     try {
       // ดึงแปลงปลูกของเจ้าของด้วย endpoint ใหม่
       final response = await http.get(
-        Uri.parse('https://sugarcane-eouu2t37j-suphachais-projects-d3438f04.vercel.app/api/plots/by-owner/$ownerId'),
+        Uri.parse('https://sugarcane-9bacy8d0d-suphachais-projects-d3438f04.vercel.app/api/plots/by-owner/$ownerId'),
         headers: {"Content-Type": "application/json"},
       );
 
